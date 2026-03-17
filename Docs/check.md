@@ -37,7 +37,7 @@
 | 1-2 | shadcn/ui 설치 + 초기 컴포넌트  | ✅   | radix-nova preset + 12개 컴포넌트 (toast→sonner 대체)   |                                  |
 | 1-3 | Prisma + Supabase 연결 + 스키마 | ✅   | 12모델+4enum, PrismaPg 어댑터, Supabase 마이그레이션 완료 |                                  |
 | 1-4 | NextAuth.js v5 설정             | ✅   | Credentials+Kakao, PrismaAdapter, JWT, middleware 보호경로 | ⏳ 카카오 앱은 추후 등록         |
-| 1-5 | Sanity.io v3 연결 + 스키마      | ⬜   | 클라이언트 + GROQ 쿼리 + 4개 스키마                     | ❗ Sanity 프로젝트 생성 필요     |
+| 1-5 | Sanity.io v3 연결 + 스키마      | ✅   | next-sanity+image-url, client/queries/image 유틸, 4개 타입 | ⏳ Sanity 프로젝트 생성 후 PROJECT_ID 설정 |
 | 1-6 | 추가 라이브러리 설치            | ⬜   | zustand, tanstack-query, framer-motion, next-intl 등    | Phase 0 완료 필요                |
 
 ### Phase 1 완료 체크포인트
@@ -150,8 +150,8 @@
 | Phase    | 전체 항목 | 완료   | 진행률  |
 | -------- | --------- | ------ | ------- |
 | Phase 0  | 7         | 7      | 100%    |
-| Phase 1  | 6         | 4      | 67%     |
+| Phase 1  | 6         | 5      | 83%     |
 | Phase 2  | 4         | 0      | 0%      |
 | Phase 3  | 6         | 0      | 0%      |
 | Phase 4  | 5         | 0      | 0%      |
-| **전체** | **28**    | **11** | **39%** |
+| **전체** | **28**    | **12** | **43%** |
