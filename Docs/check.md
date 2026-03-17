@@ -22,7 +22,7 @@
 - [x] `npm run lint` — 에러 0건
 - [x] `npx tsc --noEmit` — 에러 0건
 - [x] `npm run build` — 빌드 성공
-- [ ] `npm run dev` — localhost:3000 정상
+- [x] `npm run dev` — localhost:3000 정상
 - [x] `npx prettier --check .` — 포맷 일관성
 - [x] `git branch` — main + develop 존재
 - [x] `.github/workflows/ci.yml` — YAML 유효

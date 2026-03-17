@@ -92,24 +92,24 @@ src/
 
 ### T0: 개발 환경 검증
 
-| ID   | 검증 항목            | 명령어/방법                                 | 기대 결과                              | 상태 |
-| ---- | -------------------- | ------------------------------------------- | -------------------------------------- | ---- |
-| T0-1 | ESLint 통과          | `npm run lint`                              | 에러 0건, 경고만 허용                  | ⬜   |
-| T0-2 | TypeScript 타입 체크 | `npx tsc --noEmit`                          | 에러 0건                               | ⬜   |
-| T0-3 | 프로덕션 빌드 성공   | `npm run build`                             | exit code 0, .next/ 디렉토리 생성      | ⬜   |
-| T0-4 | 개발 서버 실행       | `npm run dev` → 브라우저에서 localhost:3000 | Next.js 기본 페이지 정상 표시          | ⬜   |
-| T0-5 | Git 브랜치 구조      | `git branch`                                | `* main`과 `develop` 두 브랜치 존재    | ⬜   |
-| T0-6 | CI 파일 문법         | YAML lint 또는 GitHub Actions 탭 확인       | 유효한 YAML (파싱 에러 없음)           | ⬜   |
-| T0-7 | Prettier 포맷        | `npx prettier --check .`                    | 모든 파일 포맷 일치 (재포맷 필요 없음) | ⬜   |
-| T0-8 | .gitignore 동작      | `git status` 후 .env 파일 추적 여부 확인    | .env 파일이 tracked 되지 않음          | ⬜   |
+| ID   | 검증 항목            | 명령어/방법                                 | 기대 결과                              | 상태 | 결과 상세                                               |
+| ---- | -------------------- | ------------------------------------------- | -------------------------------------- | ---- | ------------------------------------------------------- |
+| T0-1 | ESLint 통과          | `npm run lint`                              | 에러 0건, 경고만 허용                  | ✅   | exit code 0, 에러/경고 0건 (2026-03-17)                 |
+| T0-2 | TypeScript 타입 체크 | `npx tsc --noEmit`                          | 에러 0건                               | ✅   | exit code 0, 타입 에러 없음 (2026-03-17)                |
+| T0-3 | 프로덕션 빌드 성공   | `npm run build`                             | exit code 0, .next/ 디렉토리 생성      | ✅   | Next.js 16.1.7 (Turbopack) 빌드 성공, 2.4s (2026-03-17) |
+| T0-4 | 개발 서버 실행       | `npm run dev` → 브라우저에서 localhost:3000 | Next.js 기본 페이지 정상 표시          | ✅   | HTTP 200, 1436ms 부팅, GET / 200 정상 (2026-03-17)      |
+| T0-5 | Git 브랜치 구조      | `git branch`                                | `* main`과 `develop` 두 브랜치 존재    | ✅   | main + develop 존재, 현재 develop (2026-03-17)          |
+| T0-6 | CI 파일 문법         | YAML lint 또는 GitHub Actions 탭 확인       | 유효한 YAML (파싱 에러 없음)           | ✅   | 35줄, name/jobs/steps 구조 유효 (2026-03-17)            |
+| T0-7 | Prettier 포맷        | `npx prettier --check .`                    | 모든 파일 포맷 일치 (재포맷 필요 없음) | ✅   | 22개 파일 전체 통과 (2026-03-17)                        |
+| T0-8 | .gitignore 동작      | `git status` 후 .env 파일 추적 여부 확인    | .env 파일이 tracked 되지 않음          | ✅   | .env 미추적, .env.example만 tracked (2026-03-17)        |
 
 ### T0 수동 확인 사항
 
-- [ ] `package.json`에 프로젝트 이름, 버전 정상 설정
-- [ ] `tsconfig.json`에 `strict: true` 확인
-- [ ] `.prettierrc` 설정: semi=false, singleQuote=true, tabWidth=2
-- [ ] `.env.example`에 모든 환경변수 키 나열
-- [ ] `CLAUDE.md` 내용 정확성 확인
+- [x] `package.json`에 프로젝트 이름(`pck-homepage`), 버전(`0.1.0`) 정상 설정
+- [x] `tsconfig.json`에 `strict: true` 확인
+- [x] `.prettierrc` 설정: semi=false, singleQuote=true, tabWidth=2
+- [x] `.env.example`에 모든 환경변수 키(14개) 나열
+- [x] `CLAUDE.md` 내용 정확성 확인
 
 ---
 
@@ -358,12 +358,12 @@ src/
 
 | Phase    | 테스트 항목 수 | 통과  | 실패  | 미실행  |
 | -------- | -------------- | ----- | ----- | ------- |
-| Phase 0  | 8              | 0     | 0     | 8       |
+| Phase 0  | 8              | 8     | 0     | 0       |
 | Phase 1  | 14             | 0     | 0     | 14      |
 | Phase 2  | 28             | 0     | 0     | 28      |
 | Phase 3  | 62             | 0     | 0     | 62      |
 | Phase 4  | 20             | 0     | 0     | 20      |
-| **전체** | **132**        | **0** | **0** | **132** |
+| **전체** | **132**        | **8** | **0** | **124** |
 
 ---
 
