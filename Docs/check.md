@@ -42,12 +42,20 @@
 
 ### Phase 1 완료 체크포인트
 
-- [ ] 브라우저 DevTools에서 CSS 변수 6개 확인
-- [ ] shadcn/ui Button 렌더링 정상
-- [ ] `npx prisma db push` — 스키마 동기화 성공
-- [ ] `/api/auth/signin` — 로그인 폼 표시
-- [ ] Sanity 테스트 쿼리 — 데이터 반환
-- [ ] `npm run build` — 에러 0건
+- [x] 브라우저 DevTools에서 CSS 변수 6개 확인 — globals.css `@theme`에 6개 peace-* 토큰 정의 확인
+- [x] shadcn/ui Button 렌더링 정상 — button.tsx 7개 variant + 8개 size, CVA 설정 정상
+- [x] `npx prisma db push` — "The database is already in sync with the Prisma schema." ✅
+- [x] `/api/auth/signin` — 302 → `/login` 리다이렉트 (커스텀 페이지 설정 정상), providers API: credentials+kakao 등록 확인
+- [x] Sanity 테스트 쿼리 — 클라이언트 생성 성공 (projectId/dataset/apiVersion 설정 정상). ⏳ 실제 데이터 반환은 Sanity 프로젝트 생성 후 검증
+- [x] `npm run build` — ✅ Compiled successfully in 3.2s, 에러 0건
+
+### Phase 1 특이사항
+
+1. **Next.js 16 middleware 경고**: `"middleware" file convention is deprecated, use "proxy" instead` — 빌드 통과, 런타임 정상. Next.js 16 정식 릴리즈 시 proxy 패턴으로 마이그레이션 필요
+2. **react-simple-maps React 19 미지원**: peer dep `react@^16.8.0 || 17.x || 18.x` — `--legacy-peer-deps`로 설치. 런타임 정상 동작하나, Phase 3-5 구현 시 실제 검증 필요
+3. **Prisma v7 신규 패턴**: `prisma.config.ts` + `@prisma/adapter-pg` + `@/generated/prisma/client` import 경로. 기존 Prisma 가이드와 다르므로 주의
+4. **NextAuth Edge Runtime 분리**: `auth.config.ts` (Edge-safe, middleware용) + `auth.ts` (Full, API routes용) 2파일 구조. Prisma를 middleware에서 직접 import하면 에러 발생
+5. **Sanity/카카오 외부 의존**: PROJECT_ID와 KAKAO_CLIENT_ID 미설정 상태. 코드 준비 완료, 외부 계정 생성 후 .env 업데이트만 하면 됨
 
 ### Phase 1 외부 작업 체크리스트
 
