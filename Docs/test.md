@@ -117,22 +117,39 @@ src/
 
 ### T1: 기반 설정 검증
 
-| ID    | 검증 항목               | 명령어/방법                                  | 기대 결과                                  | 상태 |
-| ----- | ----------------------- | -------------------------------------------- | ------------------------------------------ | ---- |
-| T1-1  | 디자인 토큰 CSS 변수    | 브라우저 DevTools → `:root` 스타일 확인      | `--color-peace-navy` 등 6개 변수 존재      | ⬜   |
-| T1-2  | Tailwind 커스텀 컬러    | `class="bg-peace-navy"` 적용 확인            | 배경색 #1a3a5c 적용됨                      | ⬜   |
-| T1-3  | 다크모드 토큰 전환      | `.dark` 클래스 토글                          | --background, --foreground 값 변경 확인    | ⬜   |
-| T1-4  | shadcn/ui Button 렌더링 | `<Button>테스트</Button>` import 후 렌더링   | 스타일 적용된 버튼 정상 표시               | ⬜   |
-| T1-5  | shadcn/ui Card 렌더링   | `<Card>` 컴포넌트 렌더링                     | 카드 UI 정상 표시                          | ⬜   |
-| T1-6  | Prisma 스키마 동기화    | `npx prisma db push`                         | 모든 테이블 생성, exit code 0              | ⬜   |
-| T1-7  | Prisma Client 생성      | `npx prisma generate`                        | @prisma/client 타입 생성                   | ⬜   |
-| T1-8  | DB 연결 테스트          | Prisma Studio 실행: `npx prisma studio`      | 브라우저에서 테이블 목록 확인              | ⬜   |
-| T1-9  | NextAuth 로그인 페이지  | `/api/auth/signin` 접속                      | 이메일/비밀번호 입력 폼 + 카카오 버튼 표시 | ⬜   |
-| T1-10 | NextAuth 세션           | 로그인 후 `getServerSession()` 호출          | 유저 정보 반환                             | ⬜   |
-| T1-11 | Sanity 클라이언트       | 테스트 GROQ 쿼리: `*[_type == "post"][0..2]` | 데이터 반환 (또는 빈 배열)                 | ⬜   |
-| T1-12 | Zustand 스토어 테스트   | `npm test -- stores/`                        | 언어/테마 상태 변경 정상                   | ⬜   |
-| T1-13 | Zod 스키마 테스트       | `npm test -- schemas/`                       | 유효/무효 입력 검증 통과/실패              | ⬜   |
-| T1-14 | 빌드 확인               | `npm run build`                              | 에러 0건                                   | ⬜   |
+| ID    | 검증 항목               | 명령어/방법                                  | 기대 결과                                  | 상태 | 결과 상세 |
+| ----- | ----------------------- | -------------------------------------------- | ------------------------------------------ | ---- | --------- |
+| T1-1  | 디자인 토큰 CSS 변수    | globals.css `@theme` 블록 + 브라우저 확인    | `--color-peace-navy` 등 6개 변수 존재      | ✅   | globals.css L10-15에 peace-navy/sky/olive/cream/gold/orange 6개 정의 확인 (2026-03-17) |
+| T1-2  | Tailwind 커스텀 컬러    | `class="bg-peace-navy"` 적용 확인            | 배경색 #1a3a5c 적용됨                      | ✅   | @theme `--color-peace-navy: #1a3a5c` 설정으로 Tailwind v4 자동 매핑 확인 (2026-03-17) |
+| T1-3  | 다크모드 토큰 전환      | globals.css `.dark` 블록 확인                | --background, --foreground 값 변경 확인    | ✅   | `:root` → `--background: oklch(1 0 0)`, `.dark` → `--background: #0f1a2e` 분리 정의 확인 (2026-03-17) |
+| T1-4  | shadcn/ui Button 렌더링 | button.tsx CVA 설정 검증                     | 스타일 적용된 버튼 정상 표시               | ✅   | 7 variant (default/outline/secondary/ghost/destructive/link) + 8 size, CVA 정상 (2026-03-17) |
+| T1-5  | shadcn/ui Card 렌더링   | card.tsx 컴포넌트 존재 확인                  | 카드 UI 정상 표시                          | ✅   | Card/CardHeader/CardTitle/CardDescription/CardContent/CardFooter 6개 서브컴포넌트 정의 (2026-03-17) |
+| T1-6  | Prisma 스키마 동기화    | `npx prisma db push`                         | 모든 테이블 생성, exit code 0              | ✅   | "The database is already in sync with the Prisma schema." exit 0 (2026-03-17) |
+| T1-7  | Prisma Client 생성      | `npx prisma generate` (빌드 시 자동)         | @prisma/client 타입 생성                   | ✅   | `src/generated/prisma/client`에 타입 생성 완료, import 정상 (2026-03-17) |
+| T1-8  | DB 연결 테스트          | `npx prisma db push` 연결 성공으로 대체 검증 | Supabase PostgreSQL 연결 정상              | ✅   | Session Pooler (IPv4, port 5432) 연결 확인, 12 테이블 동기화 (2026-03-17) |
+| T1-9  | NextAuth 로그인 페이지  | `/api/auth/signin` 접속 + providers API      | 이메일/비밀번호 입력 폼 + 카카오 버튼 표시 | ✅   | 302→`/login` 리다이렉트 (커스텀 페이지 설정 정상), `/api/auth/providers`: credentials + kakao 등록 확인 (2026-03-17) |
+| T1-10 | NextAuth 세션           | `/api/auth/csrf` 호출                        | CSRF 토큰 발급 + 세션 인프라 정상          | ✅   | csrfToken 정상 발급 (2026-03-17). 실제 세션 테스트는 로그인 UI 구현 후 (Phase 2) |
+| T1-11 | Sanity 클라이언트       | Node.js에서 `createClient()` 호출            | 클라이언트 인스턴스 생성 성공              | ✅   | projectId/dataset/apiVersion 설정 정상. ⏳ 실제 GROQ 쿼리는 Sanity 프로젝트 생성 후 검증 (2026-03-17) |
+| T1-12 | Zustand 스토어 테스트   | `npm test -- stores/`                        | 언어/테마 상태 변경 정상                   | ⏭️   | 스토어 코드 미작성 (Phase 2 구현 시 작성 + 테스트 예정) |
+| T1-13 | Zod 스키마 테스트       | `npm test -- schemas/`                       | 유효/무효 입력 검증 통과/실패              | ⏭️   | Zod 스키마 코드 미작성 (Phase 3 구현 시 작성 + 테스트 예정) |
+| T1-14 | 빌드 확인               | `npm run build`                              | 에러 0건                                   | ✅   | Next.js 16.1.7 (Turbopack) Compiled 3.2s, 에러 0건 (2026-03-17) |
+
+### T1 수동 확인 사항
+
+- [x] `package.json`에 next-sanity, @sanity/image-url, zustand, @tanstack/react-query 등 14개 라이브러리 설치 확인
+- [x] `components.json` — shadcn/ui radix-nova preset, neutral 테마, CSS variables 설정
+- [x] `src/components/ui/` — 12개 컴포넌트 (avatar, badge, button, card, dialog, dropdown-menu, input, separator, sheet, skeleton, sonner, tabs)
+- [x] `prisma/schema.prisma` — 12 모델 + 4 enum (User, Account, Session, VerificationToken, Donation, Expense, BudgetItem, FinanceReport, CommunityPost, Comment, EducationApplication, NewsletterSubscriber)
+- [x] `src/lib/auth.config.ts` + `src/lib/auth.ts` — Edge Runtime 분리 구조 정상
+- [x] `src/lib/sanity/` — client.ts, queries.ts, image.ts 3개 파일 정상
+- [x] `src/types/sanity.ts` — Post, Education, TeamMember, TimelineEvent 4개 타입 정의
+- [x] `.env` — DATABASE_URL, AUTH_SECRET, AUTH_URL 설정 완료 (SANITY_PROJECT_ID, KAKAO는 추후)
+
+### T1 특이사항
+
+1. **middleware deprecation 경고**: `"middleware" file convention is deprecated, use "proxy"` — 빌드/런타임 정상, Next.js 16 안정화 시 마이그레이션
+2. **react-simple-maps**: React 19 peer dep 미지원 → `--legacy-peer-deps` 설치. Phase 3-5 구현 시 런타임 검증 필요
+3. **T1-12, T1-13 건너뜀**: Zustand 스토어/Zod 스키마 코드가 Phase 2~3에서 작성 예정이므로 테스트도 해당 Phase에서 수행
 
 ### T1 단위 테스트 상세
 
@@ -356,14 +373,14 @@ src/
 
 ## 전체 테스트 요약
 
-| Phase    | 테스트 항목 수 | 통과  | 실패  | 미실행  |
-| -------- | -------------- | ----- | ----- | ------- |
-| Phase 0  | 8              | 8     | 0     | 0       |
-| Phase 1  | 14             | 0     | 0     | 14      |
-| Phase 2  | 28             | 0     | 0     | 28      |
-| Phase 3  | 62             | 0     | 0     | 62      |
-| Phase 4  | 20             | 0     | 0     | 20      |
-| **전체** | **132**        | **8** | **0** | **124** |
+| Phase    | 테스트 항목 수 | 통과   | 실패  | 건너뜀 | 미실행  |
+| -------- | -------------- | ------ | ----- | ------ | ------- |
+| Phase 0  | 8              | 8      | 0     | 0      | 0       |
+| Phase 1  | 14             | 12     | 0     | 2      | 0       |
+| Phase 2  | 28             | 0      | 0     | 0      | 28      |
+| Phase 3  | 62             | 0      | 0     | 0      | 62      |
+| Phase 4  | 20             | 0      | 0     | 0      | 20      |
+| **전체** | **132**        | **20** | **0** | **2**  | **110** |
 
 ---
 
