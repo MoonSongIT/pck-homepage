@@ -1,0 +1,16 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+# Vercel GitHub 연동 시 자동 배포됨
+# 이 워크플로우는 배포 상태 확인용 placeholder
+jobs:
+  deploy:
+    name: Production Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy notification
+        run: echo "Vercel auto-deploys on push to main via GitHub integration"
