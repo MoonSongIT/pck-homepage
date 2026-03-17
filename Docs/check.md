@@ -10,11 +10,11 @@
 | # | 작업 항목 | 상태 | 세부 내용 | 블로커/비고 |
 |---|----------|------|----------|------------|
 | 0-1 | Next.js 15 프로젝트 초기화 | ✅ | Next.js 16.1.7 + React 19.2.3 + TS strict + Tailwind v4 + App Router + Turbopack | |
-| 0-2 | Git 초기화 + .gitignore + LICENSE | ⬜ | `git init`, .gitignore 확장, MIT LICENSE, .env.example | 0-1 의존 |
-| 0-3 | 브랜치 전략 수립 | ⬜ | main에서 develop 브랜치 생성 | 0-2 의존 |
-| 0-4 | GitHub Actions CI 파이프라인 | ⬜ | `.github/workflows/ci.yml` + `deploy.yml` | 0-1 의존 |
-| 0-5 | 관리 문서 생성 | ⬜ | plan.md, check.md, test.md | |
-| 0-6 | CLAUDE.md 프로젝트 지침 | ⬜ | 코드 스타일, 디렉토리 구조, 명령어 모음 | 0-1 의존 |
+| 0-2 | Git 초기화 + .gitignore + LICENSE | ✅ | git init(main), .gitignore 확장, MIT LICENSE, .env.example | |
+| 0-3 | 브랜치 전략 수립 | ✅ | main + develop 브랜치 생성 완료 | |
+| 0-4 | GitHub Actions CI 파이프라인 | ✅ | ci.yml (lint+typecheck+build) + deploy.yml (placeholder) | |
+| 0-5 | 관리 문서 생성 | ✅ | plan.md, check.md, test.md 작성 + 점검 완료 | |
+| 0-6 | CLAUDE.md 프로젝트 지침 | ✅ | 기술스택, 코드스타일, 디렉토리구조, 명령어, 디자인토큰, 보안, 브랜치전략 | |
 | 0-7 | ESLint + Prettier 통합 | ⬜ | prettier + eslint-config-prettier 설치, .prettierrc | 0-1 의존 |
 
 ### Phase 0 완료 체크포인트
@@ -141,9 +141,9 @@
 
 | Phase | 전체 항목 | 완료 | 진행률 |
 |-------|----------|------|--------|
-| Phase 0 | 7 | 0 | 0% |
+| Phase 0 | 7 | 6 | 86% |
 | Phase 1 | 6 | 0 | 0% |
 | Phase 2 | 4 | 0 | 0% |
 | Phase 3 | 6 | 0 | 0% |
 | Phase 4 | 5 | 0 | 0% |
-| **전체** | **28** | **0** | **0%** |
+| **전체** | **28** | **6** | **21%** |
