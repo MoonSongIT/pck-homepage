@@ -1,9 +1,6 @@
 import type { Metadata } from 'next'
-import { Inter, Noto_Sans_KR, Geist } from 'next/font/google'
+import { Inter, Noto_Sans_KR } from 'next/font/google'
 import './globals.css'
-import { cn } from "@/lib/utils";
-
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 const inter = Inter({
   variable: '--font-inter',
@@ -28,7 +25,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="ko" suppressHydrationWarning className={cn("font-sans", geist.variable)}>
+    <html lang="ko" suppressHydrationWarning>
       <body className={`${inter.variable} ${notoSansKR.variable} antialiased`}>{children}</body>
     </html>
   )
