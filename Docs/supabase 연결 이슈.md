@@ -1,0 +1,140 @@
+# Supabase 연결 이슈 정리
+
+> 작성일: 2026-03-17
+
+## 프로젝트 정보
+
+- **Supabase 프로젝트명**: pck-homepage
+- **Project ID**: bsccnnpebrxuinymziyn
+- **Region**: aws-1-ap-northeast-1 (Tokyo)
+- **Plan**: Free
+
+---
+
+## 이슈 1: Direct Connection — IPv6 전용
+
+### 증상
+
+```
+Error: P1001: Can't reach database server at `db.bsccnnpebrxuinymziyn.supabase.co:5432`
+```
+
+### 원인
+
+Supabase의 Direct Connection(`db.xxx.supabase.co:5432`)은 **IPv6 전용**으로 제공됨.
+대부분의 가정용/사무실 네트워크는 IPv4만 지원하므로 연결 불가.
+
+### 해결
+
+Direct Connection 대신 **Session Pooler** 사용.
+
+| 방식               | 호스트                                       | 포트 | IPv4 | PREPARE | Prisma 호환 |
+| ------------------ | -------------------------------------------- | ---- | ---- | ------- | ----------- |
+| Direct             | db.xxx.supabase.co                           | 5432 | ❌   | ✅      | ❌          |
+| Transaction Pooler | aws-1-ap-northeast-1.pooler.supabase.com     | 6543 | ✅   | ❌      | ❌          |
+| **Session Pooler** | **aws-1-ap-northeast-1.pooler.supabase.com** | 5432 | ✅   | ✅      | **✅**      |
+
+> **Transaction Pooler**는 PREPARE 문을 지원하지 않아 Prisma 마이그레이션 실패.
+> **Session Pooler**만 IPv4 + PREPARE 모두 지원.
+
+---
+
+## 이슈 2: 비밀번호 특수문자 URL 인코딩
+
+### 증상
+
+```
+Error: P1013: The provided database string is invalid. invalid port number in database URL.
+```
+
+### 원인
+
+비밀번호에 `#` 문자가 포함되어 있으면 URL에서 **fragment identifier**로 해석됨.
+`#` 이후의 문자열이 포트/호스트 파싱을 방해.
+
+### 해결
+
+특수문자를 **퍼센트 인코딩**으로 변환:
+
+| 문자 | 인코딩 |
+| ---- | ------ |
+| `#`  | `%23`  |
+| `[`  | `%5B`  |
+| `]`  | `%5D`  |
+| `@`  | `%40`  |
+| `:`  | `%3A`  |
+| `/`  | `%2F`  |
+| `%`  | `%25`  |
+| ` `  | `%20`  |
+
+예시: 비밀번호가 `##ydh3429ydh##`인 경우
+
+```
+# ❌ 잘못됨 — # 이후가 fragment로 해석
+postgresql://user:##password##@host:5432/db
+
+# ✅ 올바름 — # 를 %23 으로 인코딩
+postgresql://user:%23%23password%23%23@host:5432/db
+```
+
+---
+
+## 이슈 3: Supabase `[YOUR-PASSWORD]` 플레이스홀더 혼동
+
+### 증상
+
+```
+Error: P1000: Authentication failed against database server
+```
+
+### 원인
+
+Supabase 대시보드의 Connection string에 표시되는 `[YOUR-PASSWORD]`에서
+대괄호 `[`, `]`는 **"여기에 비밀번호를 넣으세요"라는 플레이스홀더 표기**이며
+비밀번호의 일부가 아님.
+
+### 해결
+
+```
+# Supabase에서 보여주는 형식
+postgresql://postgres.xxx:[YOUR-PASSWORD]@host:5432/postgres
+
+# ❌ 잘못됨 — 대괄호를 비밀번호에 포함
+postgresql://postgres.xxx:[##ydh3429ydh##]@host:5432/postgres
+
+# ✅ 올바름 — 대괄호 제거 + 특수문자 인코딩
+postgresql://postgres.xxx:%23%23ydh3429ydh%23%23@host:5432/postgres
+```
+
+---
+
+## 최종 연결 URL 형식
+
+```
+DATABASE_URL="postgresql://postgres.<PROJECT_REF>:<URL_ENCODED_PASSWORD>@aws-1-ap-northeast-1.pooler.supabase.com:5432/postgres"
+```
+
+### Supabase 연결 방법 (Connect 팝업)
+
+1. 상단 **Connect** 버튼 클릭
+2. **Connection String** 탭
+3. Method: **Session pooler** 선택
+4. `[YOUR-PASSWORD]` 부분을 실제 비밀번호로 교체 (특수문자 URL 인코딩)
+
+---
+
+## 확인 명령어
+
+```bash
+# 마이그레이션 (테이블 생성)
+npx prisma migrate dev --name init
+
+# 스키마 검증
+npx prisma validate
+
+# DB 브라우저
+npx prisma studio
+
+# Client 재생성
+npx prisma generate
+```

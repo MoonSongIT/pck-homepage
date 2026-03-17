@@ -22,7 +22,7 @@
 - [x] `npm run lint` — 에러 0건
 - [x] `npx tsc --noEmit` — 에러 0건
 - [x] `npm run build` — 빌드 성공
-- [ ] `npm run dev` — localhost:3000 정상
+- [x] `npm run dev` — localhost:3000 정상
 - [x] `npx prettier --check .` — 포맷 일관성
 - [x] `git branch` — main + develop 존재
 - [x] `.github/workflows/ci.yml` — YAML 유효
@@ -31,14 +31,14 @@
 
 ## Phase 1 — 기반 설정
 
-| #   | 작업 항목                       | 상태 | 세부 내용                                              | 블로커/비고                      |
-| --- | ------------------------------- | ---- | ------------------------------------------------------ | -------------------------------- |
-| 1-1 | Tailwind CSS v4 디자인 토큰     | ⬜   | CSS Variables 6개 컬러 + 다크모드 + 폰트 설정          | Phase 0 완료 필요                |
-| 1-2 | shadcn/ui 설치 + 초기 컴포넌트  | ⬜   | `npx shadcn@latest init` + Button, Card, Badge 등 12개 | 1-1 의존                         |
-| 1-3 | Prisma + Supabase 연결 + 스키마 | ⬜   | 12개 모델 + 4개 enum + 마이그레이션                    | ❗ Supabase 프로젝트 생성 필요   |
-| 1-4 | NextAuth.js v5 설정             | ⬜   | Credentials + Kakao, PrismaAdapter, middleware         | 1-3 의존, ❗ 카카오 앱 등록 필요 |
-| 1-5 | Sanity.io v3 연결 + 스키마      | ⬜   | 클라이언트 + GROQ 쿼리 + 4개 스키마                    | ❗ Sanity 프로젝트 생성 필요     |
-| 1-6 | 추가 라이브러리 설치            | ⬜   | zustand, tanstack-query, framer-motion, next-intl 등   | Phase 0 완료 필요                |
+| #   | 작업 항목                       | 상태 | 세부 내용                                               | 블로커/비고                      |
+| --- | ------------------------------- | ---- | ------------------------------------------------------- | -------------------------------- |
+| 1-1 | Tailwind CSS v4 디자인 토큰     | ✅   | @theme 6개 컬러 + .dark 다크모드 + Noto Sans KR/Inter   |                                  |
+| 1-2 | shadcn/ui 설치 + 초기 컴포넌트  | ✅   | radix-nova preset + 12개 컴포넌트 (toast→sonner 대체)   |                                  |
+| 1-3 | Prisma + Supabase 연결 + 스키마 | ✅   | 12모델+4enum, PrismaPg 어댑터, Supabase 마이그레이션 완료 |                                  |
+| 1-4 | NextAuth.js v5 설정             | ✅   | Credentials+Kakao, PrismaAdapter, JWT, middleware 보호경로 | ⏳ 카카오 앱은 추후 등록         |
+| 1-5 | Sanity.io v3 연결 + 스키마      | ✅   | next-sanity+image-url, client/queries/image 유틸, 4개 타입 | ⏳ Sanity 프로젝트 생성 후 PROJECT_ID 설정 |
+| 1-6 | 추가 라이브러리 설치            | ✅   | zustand, tanstack-query, framer-motion, next-intl, zod, resend, vitest 등 14개 | ⚠️ react-simple-maps: React 19 peer dep (legacy-peer-deps) |
 
 ### Phase 1 완료 체크포인트
 
@@ -51,7 +51,7 @@
 
 ### Phase 1 외부 작업 체크리스트
 
-- [ ] Supabase 프로젝트 생성 → DATABASE_URL 확보
+- [x] Supabase 프로젝트 생성 → DATABASE_URL 확보
 - [ ] Sanity.io 프로젝트 생성 → PROJECT_ID 확보
 - [ ] 카카오 개발자 앱 등록 → CLIENT_ID / SECRET 확보
 
@@ -147,11 +147,11 @@
 
 ## 전체 진행률 요약
 
-| Phase    | 전체 항목 | 완료  | 진행률  |
-| -------- | --------- | ----- | ------- |
-| Phase 0  | 7         | 7     | 100%    |
-| Phase 1  | 6         | 0     | 0%      |
-| Phase 2  | 4         | 0     | 0%      |
-| Phase 3  | 6         | 0     | 0%      |
-| Phase 4  | 5         | 0     | 0%      |
-| **전체** | **28**    | **7** | **25%** |
+| Phase    | 전체 항목 | 완료   | 진행률  |
+| -------- | --------- | ------ | ------- |
+| Phase 0  | 7         | 7      | 100%    |
+| Phase 1  | 6         | 6      | 100%    |
+| Phase 2  | 4         | 0      | 0%      |
+| Phase 3  | 6         | 0      | 0%      |
+| Phase 4  | 5         | 0      | 0%      |
+| **전체** | **28**    | **13** | **46%** |
