@@ -38,7 +38,7 @@
 | 1-3 | Prisma + Supabase 연결 + 스키마 | ✅   | 12모델+4enum, PrismaPg 어댑터, Supabase 마이그레이션 완료 |                                  |
 | 1-4 | NextAuth.js v5 설정             | ✅   | Credentials+Kakao, PrismaAdapter, JWT, middleware 보호경로 | ⏳ 카카오 앱은 추후 등록         |
 | 1-5 | Sanity.io v3 연결 + 스키마      | ✅   | next-sanity+image-url, client/queries/image 유틸, 4개 타입 | ⏳ Sanity 프로젝트 생성 후 PROJECT_ID 설정 |
-| 1-6 | 추가 라이브러리 설치            | ⬜   | zustand, tanstack-query, framer-motion, next-intl 등    | Phase 0 완료 필요                |
+| 1-6 | 추가 라이브러리 설치            | ✅   | zustand, tanstack-query, framer-motion, next-intl, zod, resend, vitest 등 14개 | ⚠️ react-simple-maps: React 19 peer dep (legacy-peer-deps) |
 
 ### Phase 1 완료 체크포인트
 
@@ -51,7 +51,7 @@
 
 ### Phase 1 외부 작업 체크리스트
 
-- [ ] Supabase 프로젝트 생성 → DATABASE_URL 확보
+- [x] Supabase 프로젝트 생성 → DATABASE_URL 확보
 - [ ] Sanity.io 프로젝트 생성 → PROJECT_ID 확보
 - [ ] 카카오 개발자 앱 등록 → CLIENT_ID / SECRET 확보
 
@@ -150,8 +150,8 @@
 | Phase    | 전체 항목 | 완료   | 진행률  |
 | -------- | --------- | ------ | ------- |
 | Phase 0  | 7         | 7      | 100%    |
-| Phase 1  | 6         | 5      | 83%     |
+| Phase 1  | 6         | 6      | 100%    |
 | Phase 2  | 4         | 0      | 0%      |
 | Phase 3  | 6         | 0      | 0%      |
 | Phase 4  | 5         | 0      | 0%      |
-| **전체** | **28**    | **12** | **43%** |
+| **전체** | **28**    | **13** | **46%** |
