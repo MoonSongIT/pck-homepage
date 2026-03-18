@@ -1,5 +1,9 @@
 import type { Metadata } from 'next'
 import { Inter, Noto_Sans_KR } from 'next/font/google'
+import { ThemeProvider } from 'next-themes'
+
+import { Toaster } from '@/components/ui/sonner'
+
 import './globals.css'
 
 const inter = Inter({
@@ -26,7 +30,17 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko" suppressHydrationWarning>
-      <body className={`${inter.variable} ${notoSansKR.variable} antialiased`}>{children}</body>
+      <body className={`${inter.variable} ${notoSansKR.variable} antialiased`}>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+          <Toaster />
+        </ThemeProvider>
+      </body>
     </html>
   )
 }

@@ -54,3 +54,9 @@ Thumbs.db
 
 # Claude Code
 .claude/
+
+# Prisma generated client
+/src/generated/prisma
+
+# 메모/비밀 정보
+Docs/memo.env
