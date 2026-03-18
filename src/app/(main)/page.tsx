@@ -1,37 +1,11 @@
+import { HeroSection } from '@/components/organisms/HeroSection'
 import { WaveDivider } from '@/components/atoms/WaveDivider'
 import { Button } from '@/components/ui/button'
 
 export default function Home() {
   return (
     <>
-      {/* Hero placeholder */}
-      <section className="bg-peace-navy py-24 text-center text-peace-cream md:py-32">
-        <div className="container mx-auto px-4">
-          <p className="mb-4 text-sm font-medium tracking-widest text-peace-gold">
-            PAX CHRISTI KOREA
-          </p>
-          <h1 className="text-4xl font-bold leading-tight md:text-5xl lg:text-6xl">
-            그리스도의 평화
-          </h1>
-          <p className="mx-auto mt-6 max-w-2xl text-lg text-peace-cream/80">
-            비폭력과 평화, 화해와 연대의 가치를 실천하는
-            <br className="hidden sm:inline" />
-            가톨릭 국제 평화운동 한국 지부
-          </p>
-          <div className="mt-8 flex justify-center gap-4">
-            <Button size="lg" className="bg-peace-orange text-white hover:bg-peace-orange/90">
-              후원하기
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="border-peace-cream/30 text-peace-cream hover:bg-peace-cream/10"
-            >
-              더 알아보기
-            </Button>
-          </div>
-        </div>
-      </section>
+      <HeroSection />
 
       <WaveDivider color="navy" />
 
