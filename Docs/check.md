@@ -1,6 +1,6 @@
 # PCK 웹사이트 리뉴얼 — 진도 체크리스트
 
-> 최종 수정: 2026-03-17
+> 최종 수정: 2026-03-18
 > 상태 표시: ⬜ 미시작 | 🔄 진행 중 | ✅ 완료 | ❌ 블로커 | ⏭️ 건너뜀
 
 ---
@@ -67,25 +67,111 @@
 
 ## Phase 2 — 핵심 페이지 구현
 
-| #   | 작업 항목                   | 상태 | 세부 내용                                                                 | 블로커/비고       |
-| --- | --------------------------- | ---- | ------------------------------------------------------------------------- | ----------------- |
-| 2-1 | 공통 레이아웃               | ⬜   | Header(2단), Footer(4열), WaveDivider, Logo, MobileNav                    | Phase 1 완료 필요 |
-| 2-2 | 메인 홈페이지               | ⬜   | Hero(슬라이더+타이핑), ImpactCounter, LatestNews, DonationCTA, Newsletter | 2-1 의존          |
-| 2-3 | 단체 소개 + 타임라인 + 임원 | ⬜   | about/, history/(타임라인), team/(프로필카드)                             | 2-1 의존          |
-| 2-4 | 뉴스/활동 목록 + 상세 (ISR) | ⬜   | ISR revalidate:3600, 카테고리 필터, 페이지네이션, OG 이미지               | 1-5 (Sanity) 의존 |
+### 2-1. 공통 레이아웃
 
-### Phase 2 완료 체크포인트
+| #     | 작업 항목                          | 상태 | 세부 내용                                                                 |
+| ----- | ---------------------------------- | ---- | ------------------------------------------------------------------------- |
+| 2-1-1 | 루트 레이아웃 수정                 | ✅   | `src/app/layout.tsx` — next-themes ThemeProvider + Sonner Toaster 래핑    |
+| 2-1-2 | 네비게이션 상수 파일               | ✅   | `src/lib/constants/navigation.ts` — 메뉴 6개, SNS 3개, 연락처, 법적 링크 |
+| 2-1-3 | Logo 컴포넌트                      | ✅   | `src/components/atoms/Logo.tsx` — 서버 컴포넌트, 텍스트+아이콘 로고, 3 size (sm/md/lg), 홈 링크 |
+| 2-1-4 | WaveDivider 컴포넌트               | ✅   | `src/components/atoms/WaveDivider.tsx` — 서버 컴포넌트, SVG 물결 구분선, 3색(navy/cream/sky), flip, 다크모드 대응 |
+| 2-1-5 | MobileNav 컴포넌트                 | ✅   | `src/components/organisms/MobileNav.tsx` — 클라이언트, Sheet 기반, 메뉴 6개 + 연락처 + 후원 CTA |
+| 2-1-6 | Header 컴포넌트                    | ✅   | `src/components/organisms/Header.tsx` — 클라이언트, TopBar(연락처/SNS/다크모드/언어) + MainNav(로고/메뉴6/후원CTA), 스크롤 sticky+blur |
+| 2-1-7 | Footer 컴포넌트                    | ✅   | `src/components/organisms/Footer.tsx` — 서버 컴포넌트, 4열(단체정보/바로가기/연락처/정보) + 저작권, 반응형 1→2→4열 |
+| 2-1-8 | MainLayout 템플릿                  | ✅   | `src/components/templates/MainLayout.tsx` — Header + main + Footer + Skip Navigation 링크 |
+| 2-1-9 | (main) 라우트 그룹                 | ✅   | `src/app/(main)/layout.tsx` — MainLayout 적용, `src/app/(main)/page.tsx` — 플레이스홀더 홈 |
+| 2-1-10| 빌드 검증                          | ✅   | `tsc --noEmit` 에러 0 / `npm run lint` 에러 0 / `npm run build` Compiled 3.4s 성공 |
 
-- [ ] Header: 360px~1440px 반응형 정상
-- [ ] Hero: 이미지 전환 + 타이핑 애니메이션
-- [ ] Impact Counter: 뷰포트 진입 시 카운트업
-- [ ] 뉴스 카드: Sanity 데이터 3건 표시
-- [ ] 타임라인: 스크롤 시 fade-in
-- [ ] ISR: Cache-Control 헤더 확인
-- [ ] WaveDivider: 섹션 전환부 정상 렌더링
-- [ ] 다크모드: 전체 컬러 전환 정상
-- [ ] Lighthouse 접근성: 90+
-- [ ] 컴포넌트 단위 테스트: Header, Footer, NewsCard 통과
+#### 2-1 완료 체크포인트
+
+- [x] Header 데스크톱 (≥768px): TopBar(전화/이메일/SNS/다크모드/KO·EN) + MainNav(로고/메뉴6/후원CTA) 2단 표시
+- [x] Header 모바일 (<768px): TopBar 숨김, 로고 + 후원하기 + 햄버거 메뉴만 표시
+- [x] Header 스크롤 sticky: 스크롤 50px 이상 시 배경 반투명(95%) + backdrop-blur + shadow
+- [x] MobileNav: 햄버거 클릭 → Sheet 우측 슬라이드인, 메뉴 6개 + 연락처 + 후원 버튼 표시
+- [x] MobileNav: 메뉴 항목 클릭 시 Sheet 자동 닫힘
+- [x] Footer 데스크톱 (≥1024px): 4열 그리드 (단체정보 / 바로가기 / 연락처+SNS / 정보)
+- [x] Footer 태블릿 (640~1023px): 2열 그리드
+- [x] Footer 모바일 (<640px): 1열 스택
+- [x] WaveDivider: navy/cream/sky 3색 정상 렌더링
+- [x] WaveDivider: flip=true 시 상하 반전 동작
+- [x] WaveDivider: 반응형 높이 (40px → 60px → 80px)
+- [x] 다크모드: TopBar 해/달 아이콘 클릭으로 라이트/다크 전환
+- [x] 다크모드: Header, Footer, WaveDivider, 페이지 배경 색상 정상 전환
+- [x] Logo: 홈(/) 링크 동작, 3 size 정상 표시
+- [x] Skip Navigation: Tab 키로 "본문으로 건너뛰기" 링크 접근 가능
+- [x] 접근성: `<header>`, `<nav>`, `<main>`, `<footer>` 시맨틱 구조 적용
+- [x] 접근성: 외부 링크에 `target="_blank" rel="noopener noreferrer"` + aria-label 적용
+- [x] 접근성: WaveDivider에 `aria-hidden="true"` 적용 (장식 요소)
+
+#### 2-1 생성/수정 파일 목록
+
+| 구분 | 파일 경로                                      | 서버/클라이언트 |
+| ---- | ---------------------------------------------- | --------------- |
+| 수정 | `src/app/layout.tsx`                           | 서버            |
+| 신규 | `src/lib/constants/navigation.ts`              | 공유 데이터     |
+| 신규 | `src/components/atoms/Logo.tsx`                | 서버            |
+| 신규 | `src/components/atoms/WaveDivider.tsx`         | 서버            |
+| 신규 | `src/components/organisms/MobileNav.tsx`       | 클라이언트      |
+| 신규 | `src/components/organisms/Header.tsx`          | 클라이언트      |
+| 신규 | `src/components/organisms/Footer.tsx`          | 서버            |
+| 신규 | `src/components/templates/MainLayout.tsx`      | 서버            |
+| 신규 | `src/app/(main)/layout.tsx`                    | 서버            |
+| 신규 | `src/app/(main)/page.tsx`                      | 서버            |
+| 삭제 | `src/app/page.tsx`                             | (기존 기본 페이지 제거) |
+
+#### 2-1 기술 패턴 메모
+
+- `useSyncExternalStore` 패턴으로 mounted 상태 관리 (React 19 ESLint 규칙 호환, `useEffect`+`useState` 대신 사용)
+- 서버/클라이언트 분리: Header, MobileNav만 `"use client"`, 나머지 전부 서버 컴포넌트
+- 반응형 분기점: `md (768px)` — TopBar 표시/숨김, 데스크톱 메뉴/햄버거 전환
+- SNS_ICON_MAP 패턴: 상수 파일의 문자열 icon 이름을 실제 lucide-react 컴포넌트로 매핑
+
+---
+
+### 2-2. 메인 홈페이지
+
+| #     | 작업 항목                          | 상태 | 세부 내용                                                                 | 블로커/비고 |
+| ----- | ---------------------------------- | ---- | ------------------------------------------------------------------------- | ----------- |
+| 2-2-1 | HeroSection 컴포넌트               | ⬜   | 풀스크린 슬라이더 3~4장 + 반투명 네이비 오버레이 + 타이핑 애니메이션 (Framer Motion) | |
+| 2-2-2 | ImpactCounter 컴포넌트             | ⬜   | 4개 항목(2019/200+/50/15+), IntersectionObserver 뷰포트 진입 감지, 카운트업 2초 ease-out | |
+| 2-2-3 | LatestNews 컴포넌트                | ⬜   | Sanity GROQ 쿼리로 최신 3건 조회, NewsCard 그리드, Skeleton 로딩 | 1-5 (Sanity) |
+| 2-2-4 | NewsCard 컴포넌트                  | ⬜   | 카테고리 뱃지 + 썸네일 + 제목 + 날짜 + 발췌문 | |
+| 2-2-5 | DonationCTA 컴포넌트               | ⬜   | 달성률 프로그레스 바 + 후원 버튼 + 배경 peace-cream | |
+| 2-2-6 | NewsletterSection 컴포넌트         | ⬜   | 이메일 입력 폼 → Resend API 구독 처리 | |
+| 2-2-7 | 메인 페이지 조립                   | ⬜   | `src/app/(main)/page.tsx` — Hero → WaveDivider → Impact → WaveDivider → News → DonationCTA → Newsletter | |
+
+### 2-3. 단체 소개 + 타임라인 + 임원
+
+| #     | 작업 항목                          | 상태 | 세부 내용                                                                 | 블로커/비고 |
+| ----- | ---------------------------------- | ---- | ------------------------------------------------------------------------- | ----------- |
+| 2-3-1 | About 메인 페이지                  | ⬜   | `/about` — 비전·미션·핵심가치 3개 카드 레이아웃 | |
+| 2-3-2 | TimelineItem 컴포넌트              | ⬜   | 연도 뱃지 + 제목 + 설명 + (선택) 이미지, 좌우 교대 배치 | |
+| 2-3-3 | History 타임라인 페이지            | ⬜   | `/about/history` — 수직 중앙선 + 좌우 교대, Framer Motion whileInView fade-in | 1-5 (Sanity) |
+| 2-3-4 | MemberCard 컴포넌트                | ⬜   | 프로필 사진 + 이름 + 역할 + 소개 텍스트 | |
+| 2-3-5 | Team 임원진 페이지                 | ⬜   | `/about/team` — 프로필 카드 그리드 (Sanity teamMember 스키마) | 1-5 (Sanity) |
+
+### 2-4. 뉴스/활동 목록 + 상세 (ISR)
+
+| #     | 작업 항목                          | 상태 | 세부 내용                                                                 | 블로커/비고 |
+| ----- | ---------------------------------- | ---- | ------------------------------------------------------------------------- | ----------- |
+| 2-4-1 | 뉴스 목록 페이지                   | ⬜   | `/news` — ISR revalidate:3600, 카테고리 필터(한반도평화/국제활동/교육/공지), 12건씩 페이지네이션 | 1-5 (Sanity) |
+| 2-4-2 | 뉴스 상세 페이지                   | ⬜   | `/news/[slug]` — Sanity Portable Text 렌더링, 관련 뉴스 3건 | 1-5 (Sanity) |
+| 2-4-3 | 활동 목록 페이지                   | ⬜   | `/activities` — 활동 카테고리별 필터 + 그리드 | 1-5 (Sanity) |
+| 2-4-4 | 활동 상세 페이지                   | ⬜   | `/activities/[slug]` — Portable Text 렌더링 | 1-5 (Sanity) |
+| 2-4-5 | OG 이미지 API                      | ⬜   | `/api/og` — @vercel/og ImageResponse, 게시글 제목+카테고리+PCK 로고 | |
+
+### Phase 2 전체 체크포인트
+
+- [x] Header: 360px~1440px 반응형 정상 (2-1 완료)
+- [ ] Hero: 이미지 전환 + 타이핑 애니메이션 (2-2)
+- [ ] Impact Counter: 뷰포트 진입 시 카운트업 (2-2)
+- [ ] 뉴스 카드: Sanity 데이터 3건 표시 (2-2)
+- [ ] 타임라인: 스크롤 시 fade-in (2-3)
+- [ ] ISR: Cache-Control 헤더 확인 (2-4)
+- [x] WaveDivider: 섹션 전환부 정상 렌더링 (2-1 완료)
+- [x] 다크모드: 전체 컬러 전환 정상 (2-1 완료)
+- [ ] Lighthouse 접근성: 90+ (2-4 완료 후 측정)
+- [ ] 컴포넌트 단위 테스트: Header, Footer, NewsCard 통과 (2-4 완료 후)
 
 ---
 
@@ -155,11 +241,12 @@
 
 ## 전체 진행률 요약
 
-| Phase    | 전체 항목 | 완료   | 진행률  |
-| -------- | --------- | ------ | ------- |
-| Phase 0  | 7         | 7      | 100%    |
-| Phase 1  | 6         | 6      | 100%    |
-| Phase 2  | 4         | 0      | 0%      |
-| Phase 3  | 6         | 0      | 0%      |
-| Phase 4  | 5         | 0      | 0%      |
-| **전체** | **28**    | **13** | **46%** |
+| Phase       | 전체 항목 | 완료   | 진행률   |
+| ----------- | --------- | ------ | -------- |
+| Phase 0     | 7         | 7      | 100%     |
+| Phase 1     | 6         | 6      | 100%     |
+| Phase 2-1   | 10        | 10     | **100%** |
+| Phase 2-2~4 | 17        | 0      | 0%       |
+| Phase 3     | 6         | 0      | 0%       |
+| Phase 4     | 5         | 0      | 0%       |
+| **전체**    | **51**    | **23** | **45%**  |
