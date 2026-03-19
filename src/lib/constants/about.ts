@@ -1,49 +1,89 @@
-import { Eye, Target, Bird, Scale, HandHeart, Leaf } from 'lucide-react'
+import {
+  Eye,
+  Target,
+  Shield,
+  Building2,
+  GraduationCap,
+  Users,
+  Handshake,
+  Megaphone,
+  Link2,
+  CalendarHeart,
+} from 'lucide-react'
 
-// 비전·미션 데이터
+// 비전·목표 데이터
 export const VISION_MISSION = {
   vision: {
     title: '비전',
-    description: '그리스도의 평화를 통한 한반도와 세계의 화해와 일치',
+    description:
+      'Pax Christi International과 보조를 맞춰 한국 현실에 부합하는 평화 운동을 활발하게 전개하고, 모든 폭력에서 자유로운 세계, \'평화로운 세계 건설\'이라는 비전을 추구합니다.',
     icon: Eye,
   },
   mission: {
-    title: '미션',
+    title: '목표',
     description:
-      '복음적 비폭력과 정의·평화·창조질서 보전을 실천하는 국제 가톨릭 평화운동',
+      '가톨릭교회의 모든 신원이 동등하게 수평적으로 평화와 화해를 추구하는 활동에 참여하는 비공인 가톨릭 평화운동 단체로서, 복음과 가톨릭 신앙에 바탕을 두고 기도·공부(연구)·실천을 방법적 원리로 삼아 활동합니다.',
     icon: Target,
   },
 } as const
 
-// 핵심가치 카드 데이터
-export const CORE_VALUES = [
+// 주요 활동 영역 (8개)
+export const ACTIVITY_AREAS = [
   {
-    id: 'nonviolence',
-    title: '비폭력',
+    id: 'conflict-transformation',
+    title: '갈등 전환',
     description:
-      '복음적 비폭력 정신으로 모든 형태의 폭력에 맞서고, 대화와 화해를 통한 평화적 해결을 추구합니다.',
-    icon: Bird,
+      '폭력적 갈등을 사전에 예방하기 위해 노력하고, 갈등이 진행 중인 경우 대안적 해결책을 제시합니다. 민족갈등, 교파분열을 중재하고 갈등지역 방문, 평화 캠페인, 활동을 수행합니다.',
+    icon: Shield,
   },
   {
-    id: 'justice-peace',
-    title: '정의와 평화',
+    id: 'peace-building',
+    title: '평화 구축',
     description:
-      '사회 정의와 항구적 평화를 위해 불평등과 억압의 구조를 변혁하고, 모든 이의 존엄성을 옹호합니다.',
-    icon: Scale,
+      '진리와 정의에 입각하여 화해와 평화를 실현하도록 돕는 평화구축(peace building)을 추구합니다.',
+    icon: Building2,
   },
   {
-    id: 'solidarity',
-    title: '연대',
+    id: 'peace-education',
+    title: '평화 교육과 청년활동 지원',
     description:
-      '국제 팍스크리스티 네트워크와 연대하여 전 세계 평화운동에 함께하며, 한반도 평화를 위해 협력합니다.',
-    icon: HandHeart,
+      '젊은이들의 교류, 대안적 평화 봉사, 자발적 평화 활동, 평화 주간(Peace Work)과 같이 평화 교육과 청년 활동을 지원합니다.',
+    icon: GraduationCap,
   },
   {
-    id: 'creation',
-    title: '창조질서 보전',
+    id: 'nonviolent-organizing',
+    title: '비폭력 모임 조직',
     description:
-      '하느님의 창조물을 보전하고, 기후 위기와 환경 파괴에 맞서 생태적 회심과 지속 가능한 삶을 실천합니다.',
-    icon: Leaf,
+      '비폭력적 방법을 통한 사회변화를 추구하기 위해 다양한 회의와 토론 모임을 조직합니다.',
+    icon: Users,
+  },
+  {
+    id: 'interfaith-dialogue',
+    title: '종교간 대화와 협력',
+    description:
+      '평화를 위해 교파 분열을 중재하고 종교간 대화와 협력의 기회를 마련합니다.',
+    icon: Handshake,
+  },
+  {
+    id: 'advocacy',
+    title: '각국 옹호(Advocacy) 활동 참여',
+    description:
+      '각 나라에 고유하고 그 나라의 사회정치적 맥락에 어울리는 옹호(Advocacy) 활동에 참여합니다.',
+    icon: Megaphone,
+  },
+  {
+    id: 'partner-exchange',
+    title: '협력단체 교류',
+    description:
+      '협력단체들과 능력을 증진하고, 활동의 효과를 높이기 위해 협력단체들끼리의 교류를 주선하고, 자료도 제공합니다.',
+    icon: Link2,
+  },
+  {
+    id: 'peace-day',
+    title: '평화의 날 담화 실천',
+    description:
+      '교황님의 평화의 날 담화를 숙고하고 실천하며 교회 내 전파를 위해 노력합니다.',
+    icon: CalendarHeart,
   },
 ] as const
 
@@ -55,11 +95,15 @@ export const ABOUT_CONFIG = {
   },
   historyLink: { label: '연혁 보기', href: '/about/history' },
   teamLink: { label: '임원진 보기', href: '/about/team' },
+  activitiesTitle: '주요 활동 영역',
+  activitiesSubtitle:
+    'PCI와 보조를 맞춰 한국 현실에 부합하는 평화운동 영역을 개척하고 있습니다',
   introTitle: '팍스크리스티코리아란?',
   introTexts: [
-    '팍스크리스티코리아(Pax Christi Korea)는 가톨릭 국제 평화운동 단체인 팍스크리스티 인터내셔널(Pax Christi International)의 한국 지부입니다. 2019년에 창립되어 복음적 비폭력, 정의와 평화, 인권 보호, 창조질서 보전을 위해 활동하고 있습니다.',
-    '한반도의 평화와 화해, 동북아시아의 비핵화와 군축, 기후 정의와 생태적 회심 등 다양한 평화 의제에 대해 연구하고, 교육하며, 연대 활동을 펼치고 있습니다.',
-    '팍스크리스티 인터내셔널은 1945년 프랑스에서 시작되어 현재 전 세계 50여 개국에 지부를 두고 있으며, 유엔 경제사회이사회(ECOSOC) 특별 협의 지위를 보유한 국제 NGO입니다.',
+    '팍스크리스티코리아(Pax Christi Korea, PCK)는 1945년에 창립된 국제 가톨릭 평화운동 단체인 PCI(Pax Christi International)의 한국 지부로 2019년에 설립되었습니다.',
+    'PCI는 가톨릭교회의 모든 신원이 동등하게 수평적으로 평화와 화해를 추구하는 활동에 참여하는 비공인 가톨릭 평화운동 단체입니다. 현재 전 세계 50여개 나라에서 120여개 단체가 함께 하고 있습니다. PCI는 복음과 가톨릭신앙에 바탕을 두고 기도·공부(연구)·실천을 방법적 원리로 삼아 \'평화로운 세계, 모든 폭력에서 자유로운 세계 건설\'이라는 비전(Vision)을 추구합니다.',
+    'PCI는 세계, 대륙, 국가 단위에서 가맹단체들이 각자가 속한 지역 상황의 과제 또는 범지구적 과제들에 대응하여, 독자적으로 또는 가맹단체들끼리 연대하여 비폭력적 실천 증진, 인권 개선, 인간안보(human security) 증진, 비무장과 탈군사화 촉진, 정의로운 국제 질서 확립, 종교간 평화 실현 등의 활동에 앞장서고 있습니다. PCI는 UN, UNESCO, Africa Union, Europe Council 등과 같은 국제기구들에도 대표 자격으로 참여하고 있습니다.',
+    'PCK는 가톨릭 신자 여러분의 참여를 기다리고 있습니다. 참여 자격은 개인을 원칙으로 합니다. 평신도, 수도자, 주교, 사제 누구든 우리 모임에 동의하시면 개별적으로 회원 가입을 신청해 주십시오.',
   ],
 } as const
 
@@ -87,5 +131,5 @@ export const TEAM_CONFIG = {
   emptyDescription: 'Sanity CMS에서 임원진 데이터를 추가해주세요.',
 } as const
 
-export type CoreValue = (typeof CORE_VALUES)[number]
+export type ActivityArea = (typeof ACTIVITY_AREAS)[number]
 export type AboutNavItem = (typeof ABOUT_NAV)[number]

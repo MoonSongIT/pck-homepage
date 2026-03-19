@@ -651,15 +651,15 @@ npm install -D vitest @testing-library/react @testing-library/jest-dom jsdom
 
 ### 2-3. 단체 소개 페이지
 
-**목표**: 팍스크리스티코리아의 비전·미션·핵심가치, 연혁, 임원진 정보를 제공하는 3개 서브 페이지 구현
+**목표**: 팍스크리스티코리아의 비전·목표·주요 활동 영역, 연혁, 임원진 정보를 제공하는 3개 서브 페이지 구현
 
 **파일 구조**:
 
 | 파일                                                 | 설명                                    | 서버/클라이언트 |
 | ---------------------------------------------------- | --------------------------------------- | --------------- |
-| `src/lib/constants/about.ts`                         | About 섹션 상수 (비전/미션/가치/메타)   | 공유 데이터     |
+| `src/lib/constants/about.ts`                         | About 섹션 상수 (비전/목표/활동영역/메타) | 공유 데이터     |
 | `src/app/(main)/about/layout.tsx`                    | About 서브 네비게이션 레이아웃          | 서버            |
-| `src/app/(main)/about/page.tsx`                      | 비전·미션·핵심가치 카드 레이아웃        | 서버            |
+| `src/app/(main)/about/page.tsx`                      | 비전·목표·주요 활동 영역 카드 레이아웃  | 서버            |
 | `src/components/molecules/TimelineItem.tsx`          | 타임라인 개별 항목 (연도+제목+설명)     | 서버            |
 | `src/app/(main)/about/history/page.tsx`              | 수직 타임라인 (Sanity 연동)             | 서버 (async)    |
 | `src/components/molecules/MemberCard.tsx`            | 임원 프로필 카드 (사진+이름+직책+소개)  | 서버            |
@@ -681,33 +681,46 @@ npm install -D vitest @testing-library/react @testing-library/jest-dom jsdom
 **내용**:
 
 ```typescript
-// 비전·미션·핵심가치 데이터
+import {
+  Eye, Target, Shield, Building2, GraduationCap,
+  Users, Handshake, Megaphone, Link2, CalendarHeart,
+} from 'lucide-react'
+
+// 비전·목표 데이터
 export const VISION_MISSION = {
   vision: {
     title: '비전',
-    description: '그리스도의 평화를 통한 한반도와 세계의 화해와 일치',
-    icon: 'Eye',  // lucide-react
+    description: 'Pax Christi International과 보조를 맞춰 한국 현실에 부합하는 평화 운동을 활발하게 전개하고, 모든 폭력에서 자유로운 세계, \'평화로운 세계 건설\'이라는 비전을 추구합니다.',
+    icon: Eye,
   },
   mission: {
-    title: '미션',
-    description: '복음적 비폭력과 정의·평화·창조질서 보전을 실천하는 국제 가톨릭 평화운동',
-    icon: 'Target',
+    title: '목표',
+    description: '가톨릭교회의 모든 신원이 동등하게 수평적으로 평화와 화해를 추구하는 활동에 참여하는 비공인 가톨릭 평화운동 단체로서, 복음과 가톨릭 신앙에 바탕을 두고 기도·공부(연구)·실천을 방법적 원리로 삼아 활동합니다.',
+    icon: Target,
   },
-}
+} as const
 
-// 핵심가치 카드 데이터 (3~4개)
-export const CORE_VALUES = [
-  { title: '비폭력', description: '복음적 비폭력 정신으로...', icon: 'Dove' },
-  { title: '정의와 평화', description: '사회 정의와 항구적 평화를...', icon: 'Scale' },
-  { title: '연대', description: '국제 팍스크리스티 네트워크와...', icon: 'HandHeart' },
-  { title: '창조질서 보전', description: '하느님의 창조물을...', icon: 'Leaf' },
-]
+// 주요 활동 영역 (8개)
+export const ACTIVITY_AREAS = [
+  { id: 'conflict-transformation', title: '갈등 전환', icon: Shield },
+  { id: 'peace-building', title: '평화 구축', icon: Building2 },
+  { id: 'peace-education', title: '평화 교육과 청년활동 지원', icon: GraduationCap },
+  { id: 'nonviolent-organizing', title: '비폭력 모임 조직', icon: Users },
+  { id: 'interfaith-dialogue', title: '종교간 대화와 협력', icon: Handshake },
+  { id: 'advocacy', title: '각국 옹호(Advocacy) 활동 참여', icon: Megaphone },
+  { id: 'partner-exchange', title: '협력단체 교류', icon: Link2 },
+  { id: 'peace-day', title: '평화의 날 담화 실천', icon: CalendarHeart },
+] as const
 
 // About 페이지 메타데이터 + 섹션 설정
 export const ABOUT_CONFIG = {
   hero: { title: '단체 소개', subtitle: '팍스크리스티코리아를 소개합니다' },
   historyLink: { label: '연혁 보기', href: '/about/history' },
   teamLink: { label: '임원진 보기', href: '/about/team' },
+  activitiesTitle: '주요 활동 영역',
+  activitiesSubtitle: 'PCI와 보조를 맞춰 한국 현실에 부합하는 평화운동 영역을 개척하고 있습니다',
+  introTitle: '팍스크리스티코리아란?',
+  introTexts: [/* PCK/PCI 소개 4문단 */],
 } as const
 
 // About 서브 네비게이션
@@ -716,6 +729,9 @@ export const ABOUT_NAV = [
   { label: '연혁', href: '/about/history' },
   { label: '임원진', href: '/about/team' },
 ]
+
+export type ActivityArea = (typeof ACTIVITY_AREAS)[number]
+export type AboutNavItem = (typeof ABOUT_NAV)[number]
 ```
 
 **의존성**: 없음
@@ -744,19 +760,18 @@ export const ABOUT_NAV = [
 
 **상세**:
 
-- **비전·미션 섹션**: 2열 카드 레이아웃 (비전 / 미션)
-  - 아이콘 + 제목 + 설명 텍스트
-  - peace-navy 배경 또는 peace-cream 배경
-  - Framer Motion fadeIn 애니메이션
-- **핵심가치 섹션**: 3~4열 카드 그리드
-  - 아이콘 + 제목 + 설명
-  - 호버 시 elevation/shadow 변화
-  - stagger 순차 등장 애니메이션
-- **단체 소개 텍스트**: PCK 소개 설명 (정적 텍스트 또는 Sanity)
-- **서브 페이지 안내**: "연혁 보기" / "임원진 보기" CTA 링크
-- WaveDivider로 섹션 구분
+- **서버/클라이언트 분리**: `page.tsx` (서버, metadata) + `about-content.tsx` (클라이언트, Framer Motion)
+- **섹션 순서 (Intro → Vision → Activities)**:
+  1. **단체 소개 텍스트** (팍스크리스티코리아란?): PCK/PCI 소개 4문단 (ABOUT_CONFIG.introTexts)
+  2. WaveDivider(cream, flip)
+  3. **비전·목표 섹션**: 2열 카드 레이아웃 (비전 Eye / 목표 Target), peace-cream 배경
+  4. WaveDivider(cream)
+  5. **주요 활동 영역**: 4열×2행 카드 그리드 (8개 ACTIVITY_AREAS), 아이콘+제목+설명
+  6. **서브 페이지 CTA**: "연혁 보기" / "임원진 보기" 버튼 (justify-center)
+- 호버 시 shadow-md 전환
+- Framer Motion staggerChildren: 0.12 순차 등장 + useReducedMotion 접근성 대응
 - 다크모드 지원
-- `generateMetadata` SEO 메타데이터
+- `export const metadata` SEO 메타데이터
 
 **의존성**: 2-3-1, 2-3-2
 
@@ -885,14 +900,14 @@ type MemberCardProps = {
 
 | #     | 작업 항목                | 상태 | 설명                                                                       |
 | ----- | ------------------------ | ---- | -------------------------------------------------------------------------- |
-| 2-3-1 | About 상수 파일          | ⬜   | 비전/미션/핵심가치 데이터, 서브 네비 상수, 페이지 설정                     |
-| 2-3-2 | About 레이아웃           | ⬜   | 서브 네비게이션 (소개/연혁/임원진) + 공통 히어로 배너                      |
-| 2-3-3 | About 메인 페이지        | ⬜   | 비전·미션 카드 + 핵심가치 그리드 + 서브 페이지 CTA 링크                   |
-| 2-3-4 | TimelineItem 컴포넌트    | ⬜   | 연도 뱃지 + 제목/설명 카드 + 좌우 교대 배치 + 반응형                      |
-| 2-3-5 | History 타임라인 페이지  | ⬜   | Sanity TIMELINE_QUERY 페칭 + 수직 타임라인 + Framer Motion fade-in        |
-| 2-3-6 | MemberCard 컴포넌트      | ⬜   | 프로필 사진 + 이름/직책/소개 + 이니셜 폴백 + 호버 애니메이션              |
-| 2-3-7 | Team 임원진 페이지       | ⬜   | Sanity TEAM_MEMBERS_QUERY 페칭 + MemberCard 그리드 + stagger 애니메이션   |
-| 2-3-8 | 빌드 검증                | ⬜   | tsc + lint + build + 3개 라우트 접속 확인                                  |
+| 2-3-1 | About 상수 파일          | ✅   | 비전/목표 + 주요 활동 영역(8개) + 서브 네비 상수 + 페이지/타임라인/임원 설정 |
+| 2-3-2 | About 레이아웃           | ✅   | 서브 네비게이션 (소개/연혁/임원진) + 공통 히어로 배너                      |
+| 2-3-3 | About 메인 페이지        | ✅   | 소개텍스트 → 비전·목표 카드 → 주요 활동 영역 8개 그리드 + CTA 링크        |
+| 2-3-4 | TimelineItem 컴포넌트    | ✅   | 연도 뱃지 + 제목/설명 카드 + 좌우 교대 배치 + 반응형                      |
+| 2-3-5 | History 타임라인 페이지  | ✅   | Sanity TIMELINE_QUERY 페칭 + 수직 타임라인 + Framer Motion fade-in        |
+| 2-3-6 | MemberCard 컴포넌트      | ✅   | 프로필 사진 + 이름/직책/소개 + 이니셜 폴백 + 호버 애니메이션              |
+| 2-3-7 | Team 임원진 페이지       | ✅   | Sanity TEAM_MEMBERS_QUERY 페칭 + MemberCard 그리드 + stagger 애니메이션   |
+| 2-3-8 | 빌드 검증                | ✅   | tsc + lint + build + 3개 라우트 접속 확인                                  |
 
 **의존성**: 2-1 완료 후 (✅), 1-5 Sanity 연동 (✅ 코드 준비, Sanity 프로젝트 미생성)
 
