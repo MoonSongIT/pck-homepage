@@ -1,6 +1,6 @@
 # PCK 웹사이트 리뉴얼 — 진도 체크리스트
 
-> 최종 수정: 2026-03-19
+> 최종 수정: 2026-03-19 (Phase 2-3 상세화)
 > 상태 표시: ⬜ 미시작 | 🔄 진행 중 | ✅ 완료 | ❌ 블로커 | ⏭️ 건너뜀
 
 ---
@@ -335,13 +335,157 @@
 
 ### 2-3. 단체 소개 + 타임라인 + 임원
 
-| #     | 작업 항목                          | 상태 | 세부 내용                                                                 | 블로커/비고 |
-| ----- | ---------------------------------- | ---- | ------------------------------------------------------------------------- | ----------- |
-| 2-3-1 | About 메인 페이지                  | ⬜   | `/about` — 비전·미션·핵심가치 3개 카드 레이아웃 | |
-| 2-3-2 | TimelineItem 컴포넌트              | ⬜   | 연도 뱃지 + 제목 + 설명 + (선택) 이미지, 좌우 교대 배치 | |
-| 2-3-3 | History 타임라인 페이지            | ⬜   | `/about/history` — 수직 중앙선 + 좌우 교대, Framer Motion whileInView fade-in | 1-5 (Sanity) |
-| 2-3-4 | MemberCard 컴포넌트                | ⬜   | 프로필 사진 + 이름 + 역할 + 소개 텍스트 | |
-| 2-3-5 | Team 임원진 페이지                 | ⬜   | `/about/team` — 프로필 카드 그리드 (Sanity teamMember 스키마) | 1-5 (Sanity) |
+| #     | 작업 항목                | 상태 | 세부 내용                                                                                 | 블로커/비고                |
+| ----- | ------------------------ | ---- | ----------------------------------------------------------------------------------------- | -------------------------- |
+| 2-3-1 | About 상수 파일          | ⬜   | `src/lib/constants/about.ts` — 비전/미션/핵심가치 데이터, 서브 네비 상수, 페이지 설정      |                            |
+| 2-3-2 | About 레이아웃           | ⬜   | `src/app/(main)/about/layout.tsx` — 서브 네비게이션 (소개/연혁/임원진) + 공통 히어로 배너  | 2-3-1                      |
+| 2-3-3 | About 메인 페이지        | ⬜   | `src/app/(main)/about/page.tsx` — 비전·미션 카드 + 핵심가치 그리드 + 서브 페이지 CTA 링크 | 2-3-1, 2-3-2               |
+| 2-3-4 | TimelineItem 컴포넌트    | ⬜   | `src/components/molecules/TimelineItem.tsx` — 연도 뱃지 + 제목/설명 카드 + 좌우 교대 배치 + 모바일 왼쪽 정렬 |          |
+| 2-3-5 | History 타임라인 페이지  | ⬜   | `src/app/(main)/about/history/page.tsx` — Sanity TIMELINE_QUERY + 수직 중앙선 + 좌우 교대 + Framer Motion fade-in + Skeleton 폴백 | 2-3-2, 2-3-4, 1-5 (Sanity) |
+| 2-3-6 | MemberCard 컴포넌트      | ⬜   | `src/components/molecules/MemberCard.tsx` — 프로필 사진(Sanity Image) + 이름 + 직책 + 소개 + 이니셜 폴백 |             |
+| 2-3-7 | Team 임원진 페이지       | ⬜   | `src/app/(main)/about/team/page.tsx` — Sanity TEAM_MEMBERS_QUERY + MemberCard 그리드 + stagger 순차 등장 | 2-3-2, 2-3-6, 1-5 (Sanity) |
+| 2-3-8 | 빌드 검증                | ⬜   | `tsc --noEmit` 에러 0 + `npm run lint` 에러 0 + `npm run build` 성공 + 3개 라우트 접속 확인 | 2-3-1~7 완료               |
+
+#### 2-3-1 About 상수 파일 구현 상세
+
+- **구현 파일**: `src/lib/constants/about.ts`
+- **기능 체크**:
+  - [ ] `VISION_MISSION` 객체: 비전(제목+설명+아이콘) + 미션(제목+설명+아이콘) 정의
+  - [ ] `CORE_VALUES` 배열: 4개 핵심가치 (비폭력/정의와평화/연대/창조질서보전) — 제목+설명+아이콘
+  - [ ] `ABOUT_CONFIG` 객체: 히어로 타이틀/서브타이틀, 서브 페이지 링크 설정
+  - [ ] `ABOUT_NAV` 배열: 서브 네비게이션 (소개/연혁/임원진) href 3개
+  - [ ] `HISTORY_CONFIG` 객체: 타임라인 페이지 타이틀/설명, 빈 상태 메시지
+  - [ ] `TEAM_CONFIG` 객체: 임원진 페이지 타이틀/설명, 빈 상태 메시지
+  - [ ] `as const` assertion + 타입 export
+
+#### 2-3-2 About 레이아웃 구현 상세
+
+- **구현 파일**: `src/app/(main)/about/layout.tsx`
+- **기능 체크**:
+  - [ ] 공통 히어로 배너: peace-cream 배경 + "단체 소개" 타이틀
+  - [ ] 서브 네비게이션: ABOUT_NAV 3개 링크 탭 스타일
+  - [ ] 현재 경로 활성 표시 (활성 탭 peace-navy 하이라이트)
+  - [ ] 모바일: 수평 스크롤 탭 / 데스크톱: 인라인 가운데 정렬 링크
+  - [ ] `children` 렌더링 (서브 페이지 콘텐츠)
+  - [ ] 다크모드 지원
+  - [ ] 시맨틱: `<nav>` + `aria-label="단체 소개 메뉴"`
+
+#### 2-3-3 About 메인 페이지 구현 상세
+
+- **구현 파일**: `src/app/(main)/about/page.tsx`
+- **기능 체크**:
+  - [ ] **비전·미션 섹션**: 2열(md+) / 1열(모바일) 카드 레이아웃
+  - [ ] 비전/미션 카드: 아이콘(lucide) + 제목 + 설명 텍스트
+  - [ ] 카드 스타일: peace-navy/peace-sky 액센트, border + shadow
+  - [ ] **핵심가치 섹션**: 4열(lg) / 2열(sm) / 1열(모바일) 카드 그리드
+  - [ ] 핵심가치 카드: 아이콘 + 제목 + 설명, 호버 시 elevation 변화
+  - [ ] **단체 소개 텍스트**: PCK 소개 정적 텍스트 (2~3 문단)
+  - [ ] **서브 페이지 안내**: "연혁 보기" + "임원진 보기" CTA 링크 버튼
+  - [ ] WaveDivider 섹션 구분 (선택적)
+  - [ ] Framer Motion `useInView` + stagger 순차 등장 애니메이션
+  - [ ] `useReducedMotion` 접근성 대응
+  - [ ] 다크모드 지원
+  - [ ] `generateMetadata()` — 제목: "단체 소개 | 팍스크리스티코리아", description 설정
+
+#### 2-3-4 TimelineItem 컴포넌트 구현 상세
+
+- **구현 파일**: `src/components/molecules/TimelineItem.tsx`
+- **기능 체크**:
+  - [ ] Props: `year`, `title`, `description?`, `position: 'left' | 'right'`, `className?`
+  - [ ] 연도 뱃지: 원형/라운드, peace-navy 배경 + 흰색 텍스트, 중앙선 위에 절대 배치
+  - [ ] 카드 본체: border + rounded + shadow, 제목(볼드) + 설명(선택적 텍스트)
+  - [ ] 좌우 배치: `position='left'` → 카드 왼쪽, `position='right'` → 카드 오른쪽
+  - [ ] 연결 요소: 뱃지 ↔ 카드 간 수평 연결선 (before/after pseudo 또는 border)
+  - [ ] **반응형**: 데스크톱(md+) 좌우 교대 / 모바일 모두 오른쪽 정렬 (모바일에서 position 무시)
+  - [ ] 다크모드 지원 (배경색, 테두리 전환)
+  - [ ] `aria-label="year년"` 접근성
+
+#### 2-3-5 History 타임라인 페이지 구현 상세
+
+- **구현 파일**: `src/app/(main)/about/history/page.tsx`
+- **기능 체크**:
+  - [ ] Sanity `TIMELINE_QUERY` ISR fetch (`revalidate: 3600`)
+  - [ ] 에러 시 빈 배열 → 폴백 메시지 표시
+  - [ ] **수직 타임라인 레이아웃**: 중앙(데스크톱)/왼쪽(모바일) 수직선
+  - [ ] TimelineItem 좌우 교대: `index % 2 === 0 ? 'left' : 'right'`
+  - [ ] 수직선: absolute/relative, border 2px peace-navy, 전체 높이 연결
+  - [ ] **Framer Motion**: 컨테이너 `staggerChildren: 0.2`, 아이템 `whileInView` fadeIn + slideX
+  - [ ] 좌측 아이템: 오른쪽에서 왼쪽으로 슬라이드 / 우측 아이템: 왼쪽에서 오른쪽으로 슬라이드
+  - [ ] `useReducedMotion` 접근성 대응 (단순 fadeIn)
+  - [ ] 페이지 헤더: "팍스크리스티코리아 연혁" 타이틀 + 연도 범위
+  - [ ] 다크모드 지원 (수직선 색상 전환)
+  - [ ] 빈 상태 UI: 데이터 없을 때 "아직 등록된 연혁이 없습니다"
+  - [ ] `generateMetadata()` — 제목: "연혁 | 팍스크리스티코리아"
+
+#### 2-3-6 MemberCard 컴포넌트 구현 상세
+
+- **구현 파일**: `src/components/molecules/MemberCard.tsx`
+- **기능 체크**:
+  - [ ] Props: `member: TeamMember` (from `src/types/sanity.ts`), `className?`
+  - [ ] **프로필 사진**: Sanity `urlFor()` → `next/image`, 라운드 스퀘어 (rounded-xl)
+  - [ ] 사진 없을 때: 이니셜 아바타 (이름 첫 글자, peace-navy 배경 + 흰색 텍스트)
+  - [ ] Next/Image `sizes` 반응형 속성 설정
+  - [ ] **이름**: 볼드 텍스트 (text-lg font-semibold)
+  - [ ] **직책**: peace-sky 색상 텍스트 또는 Badge 컴포넌트
+  - [ ] **소개**: bio 텍스트 2~3줄 line-clamp (text-muted-foreground)
+  - [ ] 카드 스타일: border + rounded-lg + shadow-sm, 호버 시 shadow-md 전환
+  - [ ] 다크모드 지원 (배경, 테두리, 텍스트 색상)
+  - [ ] `aria-label="{이름} - {직책}"` 접근성
+
+#### 2-3-7 Team 임원진 페이지 구현 상세
+
+- **구현 파일**: `src/app/(main)/about/team/page.tsx`
+- **기능 체크**:
+  - [ ] Sanity `TEAM_MEMBERS_QUERY` ISR fetch (`revalidate: 3600`)
+  - [ ] `order(order asc)` 정렬 (Sanity 에서 지정한 순서대로)
+  - [ ] 에러 시 빈 배열 → 폴백 메시지 표시
+  - [ ] **MemberCard 그리드**: 1열(모바일) / 2열(sm) / 3열(md) / 4열(lg)
+  - [ ] Framer Motion `staggerChildren` 순차 등장 + `useInView` 트리거
+  - [ ] `useReducedMotion` 접근성 대응
+  - [ ] 페이지 헤더: "임원진 소개" 타이틀 + 설명
+  - [ ] 다크모드 지원
+  - [ ] 빈 상태 UI: "아직 등록된 임원진이 없습니다"
+  - [ ] `generateMetadata()` — 제목: "임원진 | 팍스크리스티코리아"
+
+#### 2-3-8 빌드 검증 상세
+
+- [ ] `npx tsc --noEmit` — TypeScript 에러 0건
+- [ ] `npm run lint` — ESLint 에러 0건
+- [ ] `npm run build` — 프로덕션 빌드 성공
+- [ ] `/about` 페이지 접속 — 비전/미션/핵심가치 표시
+- [ ] `/about/history` 페이지 접속 — 타임라인 또는 빈 상태 표시
+- [ ] `/about/team` 페이지 접속 — 임원진 그리드 또는 빈 상태 표시
+- [ ] 서브 네비게이션 탭 전환 정상 동작
+- [ ] 다크모드 전환 시 3개 페이지 모두 정상 렌더링
+- [ ] 모바일(360px) ~ 데스크톱(1440px) 반응형 확인
+
+#### 2-3 완료 체크포인트
+
+- [ ] About 메인: 비전·미션 2열 카드 + 핵심가치 4열 그리드 정상 표시
+- [ ] About 메인: Framer Motion 스크롤 애니메이션 + useReducedMotion 대응
+- [ ] 서브 네비: 소개/연혁/임원진 탭 전환 + 현재 경로 활성 표시
+- [ ] History: 수직 타임라인 중앙선 + 좌우 교대 배치 (데스크톱)
+- [ ] History: 모바일 왼쪽 정렬 타임라인 정상 표시
+- [ ] History: Framer Motion whileInView fade-in + slideX 애니메이션
+- [ ] Team: 임원진 카드 그리드 1/2/3/4열 반응형 전환
+- [ ] Team: 프로필 사진 Sanity Image + 이니셜 폴백 정상 동작
+- [ ] Team: Framer Motion stagger 순차 등장 애니메이션
+- [ ] 다크모드: 3개 페이지 모두 정상 전환
+- [ ] 접근성: 시맨틱 HTML + aria-label + 키보드 네비게이션
+- [ ] Sanity 미연결 상태에서 graceful fallback (빈 상태 UI)
+- [ ] 빌드: tsc + lint + build 에러 0건
+
+#### 2-3 생성 파일 목록 (예정)
+
+| 구분 | 파일 경로                                      | 서버/클라이언트 |
+| ---- | ---------------------------------------------- | --------------- |
+| 신규 | `src/lib/constants/about.ts`                   | 공유 데이터     |
+| 신규 | `src/app/(main)/about/layout.tsx`              | 클라이언트 (usePathname) |
+| 신규 | `src/app/(main)/about/page.tsx`                | 서버 (또는 클라이언트-모션) |
+| 신규 | `src/components/molecules/TimelineItem.tsx`    | 서버            |
+| 신규 | `src/app/(main)/about/history/page.tsx`        | 서버 (async) + 클라이언트 래퍼 |
+| 신규 | `src/components/molecules/MemberCard.tsx`      | 서버            |
+| 신규 | `src/app/(main)/about/team/page.tsx`           | 서버 (async) + 클라이언트 래퍼 |
 
 ### 2-4. 뉴스/활동 목록 + 상세 (ISR)
 
@@ -359,7 +503,9 @@
 - [x] Hero: 이미지 전환 + 타이핑 애니메이션 (2-2) — 4장 슬라이더 + 도트 인디케이터 + 키보드 접근성
 - [x] Impact Counter: 뷰포트 진입 시 카운트업 (2-2) — useInView + rAF 카운트업 + stagger 순차 등장
 - [x] 뉴스 카드: Sanity 데이터 3건 표시 (2-2) — LatestNews + NewsCard + Sanity Studio/스키마 완료
-- [ ] 타임라인: 스크롤 시 fade-in (2-3)
+- [ ] About: 비전·미션 카드 + 핵심가치 그리드 (2-3)
+- [ ] 타임라인: 수직 중앙선 + 좌우 교대 + 스크롤 fade-in (2-3)
+- [ ] 임원진: 프로필 카드 그리드 + Sanity 연동 (2-3)
 - [ ] ISR: Cache-Control 헤더 확인 (2-4)
 - [x] WaveDivider: 섹션 전환부 정상 렌더링 (2-1 완료)
 - [x] 다크모드: 전체 컬러 전환 정상 (2-1 완료)
@@ -440,7 +586,8 @@
 | Phase 1     | 6         | 6      | 100%     |
 | Phase 2-1   | 10        | 10     | **100%** |
 | Phase 2-2   | 8         | 8      | **100%** |
-| Phase 2-3~4 | 10        | 0      | 0%       |
+| Phase 2-3   | 8         | 0      | 0%       |
+| Phase 2-4   | 5         | 0      | 0%       |
 | Phase 3     | 6         | 0      | 0%       |
 | Phase 4     | 5         | 0      | 0%       |
-| **전체**    | **52**    | **31** | **60%**  |
+| **전체**    | **55**    | **31** | **56%**  |
