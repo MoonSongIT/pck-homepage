@@ -106,7 +106,7 @@ const HeroSection = ({ className }: { className?: string }) => {
     <section
       aria-roledescription="carousel"
       aria-label="메인 히어로 슬라이더"
-      className={cn('relative h-svh w-full overflow-hidden', className)}
+      className={cn('relative h-[90svh] w-full overflow-hidden', className)}
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
       onFocus={() => setIsPaused(true)}

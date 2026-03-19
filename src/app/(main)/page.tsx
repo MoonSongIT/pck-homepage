@@ -10,7 +10,7 @@ export default function Home() {
       <WaveDivider color="navy" />
 
       {/* Impact 영역 placeholder */}
-      <section className="py-16 md:py-20">
+      <section className="py-14 md:py-18">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-2xl font-bold text-foreground md:text-3xl">함께하는 평화</h2>
           <p className="mt-4 text-muted-foreground">
@@ -35,7 +35,7 @@ export default function Home() {
       <WaveDivider color="cream" flip />
 
       {/* 후원 CTA placeholder */}
-      <section className="bg-peace-cream py-16 text-center dark:bg-muted md:py-20">
+      <section className="bg-peace-cream py-14 text-center dark:bg-muted md:py-18">
         <div className="container mx-auto px-4">
           <h2 className="text-2xl font-bold text-foreground md:text-3xl">
             평화를 위한 한 걸음
@@ -55,7 +55,7 @@ export default function Home() {
       <WaveDivider color="cream" />
 
       {/* 뉴스 영역 placeholder */}
-      <section className="py-16 md:py-20">
+      <section className="py-14 md:py-18">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-2xl font-bold text-foreground md:text-3xl">최신 소식</h2>
           <p className="mt-4 text-muted-foreground">
