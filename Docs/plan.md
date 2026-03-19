@@ -1,6 +1,6 @@
 # PCK 웹사이트 리뉴얼 — 전체 구현 계획서
 
-> 최종 수정: 2026-03-17
+> 최종 수정: 2026-03-20
 > 프로젝트: 팍스크리스티코리아(Pax Christi Korea) 공식 웹사이트 리뉴얼
 > 기술 스택: Next.js 15 + TypeScript + Tailwind CSS v4 + Supabase + Sanity.io
 
@@ -597,27 +597,53 @@ npm install -D vitest @testing-library/react @testing-library/jest-dom jsdom
 | --- | --------- | ----------------------- | -------------------------------------------- |
 | 1   | Hero      | `HeroSection.tsx`       | 풀스크린 슬라이더 + 타이핑 애니메이션        |
 | 2   | 구분선    | WaveDivider(navy)       |                                              |
-| 3   | Impact    | `ImpactCounter.tsx`     | 4개 카운터 애니메이션 (IntersectionObserver) |
-| 4   | 구분선    | WaveDivider(cream)      |                                              |
-| 5   | 최신 뉴스 | `LatestNews.tsx`        | Sanity 연동 3건 카드 그리드                  |
-| 6   | 구분선    | WaveDivider(navy)       |                                              |
-| 7   | 후원 CTA  | `DonationCTA.tsx`       | 달성률 프로그레스 바 + 후원 버튼             |
-| 8   | 구분선    | WaveDivider(cream)      |                                              |
+| 3   | Impact    | `ImpactCounter.tsx`     | 4개 카운터 애니메이션 (useInView + rAF)      |
+| 4   | 구분선    | WaveDivider(cream,flip) |                                              |
+| 5   | 후원 CTA  | `DonationCTA.tsx`       | 후원 금액 카드 + CTA 버튼 + peace-cream 배경 |
+| 6   | 구분선    | WaveDivider(cream)      |                                              |
+| 7   | 최신 뉴스 | `LatestNews.tsx`        | Sanity 연동 3건 카드 그리드                  |
+| 8   | 구분선    | WaveDivider(navy)       |                                              |
 | 9   | 뉴스레터  | `NewsletterSection.tsx` | 이메일 구독 폼 → Resend API                  |
+
+**작업 항목 (check.md 동기화)**:
+
+| #     | 작업 항목                          | 상태 | 설명                                                                 |
+| ----- | ---------------------------------- | ---- | -------------------------------------------------------------------- |
+| 2-2-1 | HeroSection 컴포넌트               | ✅   | 풀스크린 슬라이더 4장 + 타이핑 애니메이션 + 도트 인디케이터          |
+| 2-2-2 | ImpactCounter 컴포넌트             | ✅   | 4개 카운터 useInView + rAF 카운트업 + stagger 순차 등장              |
+| 2-2-3 | LatestNews 컴포넌트                | ⬜   | Sanity GROQ 최신 3건 조회, NewsCard 그리드, Skeleton 로딩            |
+| 2-2-4 | NewsCard 컴포넌트                  | ⬜   | 카테고리 뱃지 + 썸네일 + 제목 + 날짜 + 발췌문                       |
+| 2-2-5 | DonationCTA 컴포넌트               | ⬜   | 후원 금액 카드 4종 + CTA 버튼 + peace-cream 배경                    |
+| 2-2-6 | NewsletterSection 컴포넌트         | ⬜   | 이메일 입력 폼 → Resend API 구독 처리                                |
+| 2-2-7 | 메인 페이지 조립                   | 🔄   | page.tsx — 전체 섹션 조립 (placeholder → 실제 컴포넌트 교체)         |
 
 **HeroSection 상세**:
 
-- 흑백/저채도 이미지 3~4장 슬라이더 (자동 전환 5초)
-- 반투명 네이비 오버레이 (opacity 0.5~0.6)
-- 타이핑 텍스트: "그리스도의 평화" → "Peace of Christ" (Framer Motion)
-- 하단 도트 인디케이터
+- 풀스크린(100svh) 슬라이더 4장 자동 전환 (5초 간격)
+- Framer Motion AnimatePresence 크로스페이드 + 줌 전환
+- 타이핑 텍스트: "그리스도의 평화" → "Peace of Christ" 순환
+- 반투명 네이비(50%) 오버레이
+- 도트 인디케이터 (탭리스트 role) + 스크롤 유도 ChevronDown
+- 키보드 좌우 화살표 + useReducedMotion 접근성 대응
+- 반응형 이미지 (모바일/데스크톱 별도 webp)
 
 **ImpactCounter 상세**:
 
 - 4개 항목: 창립 2019 / 회원 200+ / 활동 국가 50 / 캠페인 15+
-- useIntersection 훅으로 뷰포트 진입 감지
-- 숫자 0→목표값 카운트업 애니메이션 (2초, ease-out)
+- Framer Motion `useInView` 뷰포트 진입 감지 (`once: true`)
+- `requestAnimationFrame` 기반 카운트업 (2초, ease-out cubic)
+- 창립 연도: 현재 연도 → 2019 역방향 카운트 (`startFrom` 패턴)
+- `staggerChildren: 0.15` 순차 등장 + `useReducedMotion` 접근성 대응
+- 반응형 그리드 2열(모바일) / 4열(데스크톱), 다크모드 지원
 - 배경: peace-cream
+
+**DonationCTA 상세**:
+
+- 4개 후원 금액 카드 (1만원/3만원/5만원/10만원) + 아이콘 + 설명
+- "추천" 뱃지 (3만원 카드)
+- CTA 버튼: `bg-peace-orange`, `/donate` 링크
+- Framer Motion whileInView 스크롤 트리거 애니메이션
+- `useReducedMotion` 접근성 대응, 다크모드 지원
 
 **의존성**: 2-1 완료 후
 

@@ -1,6 +1,6 @@
 # PCK 웹사이트 리뉴얼 — 진도 체크리스트
 
-> 최종 수정: 2026-03-19
+> 최종 수정: 2026-03-20
 > 상태 표시: ⬜ 미시작 | 🔄 진행 중 | ✅ 완료 | ❌ 블로커 | ⏭️ 건너뜀
 
 ---
@@ -133,7 +133,7 @@
 | #     | 작업 항목                          | 상태 | 세부 내용                                                                 | 블로커/비고 |
 | ----- | ---------------------------------- | ---- | ------------------------------------------------------------------------- | ----------- |
 | 2-2-1 | HeroSection 컴포넌트               | ✅   | 풀스크린 슬라이더 4장 + 반투명 네이비 오버레이 + 타이핑 애니메이션 (Framer Motion) + 도트 인디케이터 + 스크롤 유도 화살표 | |
-| 2-2-2 | ImpactCounter 컴포넌트             | ⬜   | 4개 항목(2019/200+/50/15+), IntersectionObserver 뷰포트 진입 감지, 카운트업 2초 ease-out | |
+| 2-2-2 | ImpactCounter 컴포넌트             | ✅   | 4개 항목(2019/200+/50/15+), useInView 뷰포트 진입 감지, rAF 카운트업 2초 ease-out, useReducedMotion 접근성 대응, 다크모드 지원 | |
 | 2-2-3 | LatestNews 컴포넌트                | ⬜   | Sanity GROQ 쿼리로 최신 3건 조회, NewsCard 그리드, Skeleton 로딩 | 1-5 (Sanity) |
 | 2-2-4 | NewsCard 컴포넌트                  | ⬜   | 카테고리 뱃지 + 썸네일 + 제목 + 날짜 + 발췌문 | |
 | 2-2-5 | DonationCTA 컴포넌트               | ⬜   | 달성률 프로그레스 바 + 후원 버튼 + 배경 peace-cream | |
@@ -163,6 +163,30 @@
   - [x] aria-roledescription, aria-label, aria-live 접근성 적용
   - [x] `tsc --noEmit` 에러 0 / `npm run lint` 에러 0 / `npm run build` 성공
 
+#### 2-2-2 ImpactCounter 구현 상세
+
+- **구현 파일**:
+  - `src/components/organisms/ImpactCounter.tsx` — 클라이언트 컴포넌트
+  - `src/lib/constants/impact.ts` — 4개 통계 데이터 + 설정 상수
+
+- **기능 체크**:
+  - [x] 4개 통계 카운터 (창립 2019 / 회원 200+ / 활동 국가 50 / 캠페인 15+)
+  - [x] Framer Motion `useInView` 뷰포트 진입 감지 (`once: true`, `margin: -100px`)
+  - [x] `requestAnimationFrame` 기반 카운트업 애니메이션 (2초, ease-out cubic)
+  - [x] 창립 연도: 현재 연도 → 2019 역방향 카운트 (startFrom 패턴)
+  - [x] Framer Motion `containerVariants` + `staggerChildren: 0.15` 순차 등장
+  - [x] `useReducedMotion` 접근성 대응 (모션 감소 시 단순 페이드)
+  - [x] 반응형 그리드: 2열(모바일) / 4열(데스크톱 md:)
+  - [x] 다크모드 지원 (`dark:bg-muted`, `dark:text-peace-cream`, `dark:bg-peace-sky/20`)
+  - [x] 아이콘 + 숫자 + suffix + 레이블 레이아웃 (lucide-react: Calendar, Users, Globe, Megaphone)
+  - [x] `aria-label` 섹션 접근성 ("팍스크리스티코리아 주요 성과")
+  - [x] 숫자 `toLocaleString()` 천단위 구분 표시
+
+- **기술 패턴**:
+  - `CounterValue` 서브컴포넌트: `requestAnimationFrame` + `performance.now()` 정밀 타이밍
+  - `reducedItemVariants` / `itemVariants` 분기로 접근성 모드별 다른 애니메이션
+  - 상수 파일에서 `as const` assertion + `ImpactStat` 유니온 타입 export
+
 ---
 
 ### 2-3. 단체 소개 + 타임라인 + 임원
@@ -189,7 +213,7 @@
 
 - [x] Header: 360px~1440px 반응형 정상 (2-1 완료)
 - [x] Hero: 이미지 전환 + 타이핑 애니메이션 (2-2) — 4장 슬라이더 + 도트 인디케이터 + 키보드 접근성
-- [ ] Impact Counter: 뷰포트 진입 시 카운트업 (2-2)
+- [x] Impact Counter: 뷰포트 진입 시 카운트업 (2-2) — useInView + rAF 카운트업 + stagger 순차 등장
 - [ ] 뉴스 카드: Sanity 데이터 3건 표시 (2-2)
 - [ ] 타임라인: 스크롤 시 fade-in (2-3)
 - [ ] ISR: Cache-Control 헤더 확인 (2-4)
@@ -271,7 +295,7 @@
 | Phase 0     | 7         | 7      | 100%     |
 | Phase 1     | 6         | 6      | 100%     |
 | Phase 2-1   | 10        | 10     | **100%** |
-| Phase 2-2~4 | 17        | 1      | 6%       |
+| Phase 2-2~4 | 17        | 2      | 12%      |
 | Phase 3     | 6         | 0      | 0%       |
 | Phase 4     | 5         | 0      | 0%       |
-| **전체**    | **51**    | **24** | **47%**  |
+| **전체**    | **51**    | **25** | **49%**  |
