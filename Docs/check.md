@@ -1,6 +1,6 @@
 # PCK 웹사이트 리뉴얼 — 진도 체크리스트
 
-> 최종 수정: 2026-03-20
+> 최종 수정: 2026-03-19
 > 상태 표시: ⬜ 미시작 | 🔄 진행 중 | ✅ 완료 | ❌ 블로커 | ⏭️ 건너뜀
 
 ---
@@ -134,11 +134,12 @@
 | ----- | ---------------------------------- | ---- | ------------------------------------------------------------------------- | ----------- |
 | 2-2-1 | HeroSection 컴포넌트               | ✅   | 풀스크린 슬라이더 4장 + 반투명 네이비 오버레이 + 타이핑 애니메이션 (Framer Motion) + 도트 인디케이터 + 스크롤 유도 화살표 | |
 | 2-2-2 | ImpactCounter 컴포넌트             | ✅   | 4개 항목(2019/200+/50/15+), useInView 뷰포트 진입 감지, rAF 카운트업 2초 ease-out, useReducedMotion 접근성 대응, 다크모드 지원 | |
-| 2-2-3 | LatestNews 컴포넌트                | ⬜   | Sanity GROQ 쿼리로 최신 3건 조회, NewsCard 그리드, Skeleton 로딩 | 1-5 (Sanity) |
-| 2-2-4 | NewsCard 컴포넌트                  | ⬜   | 카테고리 뱃지 + 썸네일 + 제목 + 날짜 + 발췌문 | |
-| 2-2-5 | DonationCTA 컴포넌트               | ⬜   | 달성률 프로그레스 바 + 후원 버튼 + 배경 peace-cream | |
-| 2-2-6 | NewsletterSection 컴포넌트         | ⬜   | 이메일 입력 폼 → Resend API 구독 처리 | |
-| 2-2-7 | 메인 페이지 조립                   | 🔄   | `src/app/(main)/page.tsx` — Hero → WaveDivider → Impact(placeholder) → WaveDivider → DonationCTA(placeholder) → WaveDivider → News(placeholder) 조립 완료. 나머지 컴포넌트 실제 구현 후 교체 예정 | |
+| 2-2-3 | LatestNews 컴포넌트                | ✅   | Sanity GROQ 최신 3건 조회, NewsCard 그리드, Skeleton 로딩, Framer Motion stagger 애니메이션, ISR 1시간 | |
+| 2-2-4 | NewsCard 분자 컴포넌트             | ✅   | 카테고리 뱃지(색상 매핑) + Next/Image 썸네일 + 제목 + 날짜 + 발췌문, 호버 스케일 | |
+| 2-2-5 | Sanity Studio + 스키마             | ✅   | `/studio` 라우트 임베딩, 4개 스키마(post/education/teamMember/timeline) 정의, sanity+styled-components+@sanity/vision 설치 | |
+| 2-2-6 | DonationCTA 컴포넌트               | ✅   | 후원 금액 카드 4종(선택식) + "추천" 뱃지 + CTA 버튼(금액 연동 `/donate?amount=`) + peace-cream 배경, Framer Motion stagger, 다크모드/접근성 대응 | |
+| 2-2-7 | NewsletterSection 컴포넌트         | ⬜   | 이메일 입력 폼 → Resend API 구독 처리 | |
+| 2-2-8 | 메인 페이지 조립                   | 🔄   | `src/app/(main)/page.tsx` — Hero → Impact → DonationCTA → LatestNews 조립 완료. Newsletter 실제 구현 후 교체 예정 | |
 
 #### 2-2-1 HeroSection 구현 상세
 
@@ -187,6 +188,103 @@
   - `reducedItemVariants` / `itemVariants` 분기로 접근성 모드별 다른 애니메이션
   - 상수 파일에서 `as const` assertion + `ImpactStat` 유니온 타입 export
 
+#### 2-2-3 LatestNews 구현 상세
+
+- **구현 파일**:
+  - `src/components/organisms/LatestNews.tsx` — 클라이언트 컴포넌트
+  - `src/components/molecules/NewsCard.tsx` — 서버/클라이언트 분자 컴포넌트
+  - `src/lib/constants/news.ts` — 카테고리 라벨/색상 매핑 상수
+
+- **기능 체크**:
+  - [x] Sanity GROQ `LATEST_POSTS_QUERY`로 최신 3건 조회 (ISR revalidate:3600)
+  - [x] Sanity 연결 실패 시 빈 배열 → Skeleton 3개 표시 (graceful fallback)
+  - [x] `page.tsx`에서 `async` 서버 컴포넌트로 fetch → props 전달
+  - [x] NewsCard: 카테고리 뱃지 (news/activity/statement/press 색상 분류)
+  - [x] NewsCard: Next/Image 썸네일 + placeholder SVG 폴백
+  - [x] NewsCard: 제목 2줄 line-clamp + 발췌문 3줄 line-clamp
+  - [x] NewsCard: 날짜 한국어 포맷 (`ko-KR` locale)
+  - [x] NewsCard: 호버 시 scale + shadow 트랜지션
+  - [x] Framer Motion `useInView` + stagger 순차 등장 애니메이션
+  - [x] `useReducedMotion` 접근성 대응
+  - [x] "더 많은 소식 보기" 링크 → `/news`
+  - [x] 반응형 그리드: 1열(모바일) / 2열(sm) / 3열(lg)
+  - [x] 다크모드 지원
+
+#### 2-2-4 NewsCard 구현 상세
+
+- **구현 파일**: `src/components/molecules/NewsCard.tsx`
+- **Props**: `Post` 타입 (title, slug, category, excerpt, publishedAt, mainImage)
+- **이미지**: Sanity `urlFor()` → Next/Image 또는 placeholder SVG 폴백
+
+#### 2-2-5 Sanity Studio + 스키마 구현 상세
+
+- **구현 파일**:
+  - `sanity.config.ts` — Sanity 설정 (프로젝트 ID, 플러그인, 스키마)
+  - `src/app/studio/[[...tool]]/page.tsx` — Next Studio 임베딩
+  - `src/sanity/schemaTypes/index.ts` — 스키마 통합 export
+  - `src/sanity/schemaTypes/post.ts` — 뉴스/활동 게시글 (7필드, 카테고리 4종)
+  - `src/sanity/schemaTypes/education.ts` — 평화학교 교육 (9필드, 커리큘럼 배열)
+  - `src/sanity/schemaTypes/teamMember.ts` — 임원진 (5필드, 순서 정렬)
+  - `src/sanity/schemaTypes/timeline.ts` — 연혁 (3필드, 연도 범위 검증)
+  - `src/lib/sanity/queries.ts` — GROQ 쿼리 11개 (목록/상세/필터/카운트/SSG)
+  - `src/types/sanity.ts` — 4가지 문서 TypeScript 타입 정의
+
+- **설치 패키지**: `sanity`, `styled-components`, `@sanity/vision`
+- **next.config.ts**: `images.remotePatterns`에 `cdn.sanity.io` 추가
+
+- **기능 체크**:
+  - [x] `/studio` 라우트에서 Sanity Studio 접근 가능
+  - [x] 4개 스키마 타입 정의 (post, education, teamMember, timeline)
+  - [x] 11개 GROQ 쿼리 작성 (목록, 상세, 카테고리별, 카운트, SSG 슬러그, 최신 3건 등)
+  - [x] 이미지 URL 빌더 (`urlFor()` 헬퍼)
+  - [x] 클라이언트 분리: 공개(CDN)용 + 인증(프리뷰)용
+  - [x] TypeScript 타입 4종 + 공통 타입 (SanityImage, SanitySlug)
+
+#### 2-2-6 DonationCTA 구현 상세
+
+- **구현 파일**:
+  - `src/components/organisms/DonationCTA.tsx` — 클라이언트 컴포넌트
+  - `src/lib/constants/donation.ts` — 4개 후원 플랜 데이터 + 설정 상수 (기존 파일)
+
+- **기능 체크**:
+  - [x] 4개 후원 금액 카드 (1만/3만/5만/10만원) 그리드 표시
+  - [x] 카드 클릭 시 선택 상태 전환 (`useState` + `aria-pressed`)
+  - [x] 기본 선택: `popular: true` 카드 (3만원 "평화의 동반자")
+  - [x] 선택된 카드: 오렌지 ring + 오렌지 아이콘 / 비선택: 회색 ring + 블루 아이콘
+  - [x] "추천" 뱃지 (peace-gold) — `popular: true` 카드에 표시
+  - [x] 비선택 popular 카드: 골드 ring 구분
+  - [x] CTA 버튼에 선택 금액 연동 ("30,000원 후원 참여하기")
+  - [x] CTA 링크: `/donate?amount={선택금액}` 쿼리 파라미터 전달
+  - [x] Framer Motion `useInView` + stagger 순차 등장 애니메이션
+  - [x] `useReducedMotion` 접근성 대응
+  - [x] 반응형 그리드: 1열(모바일) / 2열(sm) / 4열(lg)
+  - [x] 다크모드 지원 (bg-background, ring-foreground 전환)
+  - [x] `aria-label="후원 안내"` 섹션 접근성
+
+- **기술 패턴**:
+  - `motion.button` + `aria-pressed` 토글 패턴
+  - `defaultPlan` 모듈 레벨 계산 (popular 카드 기본 선택)
+  - CTA 버튼 `asChild` + `Link` 조합으로 `/donate?amount=` 전달
+
+#### 2-2 생성/수정 파일 목록
+
+| 구분 | 파일 경로                                      | 서버/클라이언트 |
+| ---- | ---------------------------------------------- | --------------- |
+| 수정 | `next.config.ts`                               | 설정            |
+| 수정 | `package.json` / `package-lock.json`           | 설정            |
+| 수정 | `src/app/(main)/page.tsx`                      | 서버 (async)    |
+| 수정 | `src/components/organisms/ImpactCounter.tsx`   | 클라이언트      |
+| 신규 | `src/components/organisms/HeroSection.tsx`     | 클라이언트      |
+| 신규 | `src/components/organisms/LatestNews.tsx`      | 클라이언트      |
+| 신규 | `src/components/organisms/DonationCTA.tsx`     | 클라이언트      |
+| 신규 | `src/components/molecules/NewsCard.tsx`        | 서버            |
+| 신규 | `src/lib/constants/hero.ts`                    | 공유 데이터     |
+| 신규 | `src/lib/constants/news.ts`                    | 공유 데이터     |
+| 신규 | `sanity.config.ts`                             | 클라이언트      |
+| 신규 | `src/app/studio/[[...tool]]/page.tsx`          | 서버            |
+| 신규 | `src/sanity/schemaTypes/*.ts` (5파일)          | 공유 데이터     |
+| 신규 | `public/images/news/placeholder-{1~3}.svg`     | 정적 에셋       |
+
 ---
 
 ### 2-3. 단체 소개 + 타임라인 + 임원
@@ -214,7 +312,7 @@
 - [x] Header: 360px~1440px 반응형 정상 (2-1 완료)
 - [x] Hero: 이미지 전환 + 타이핑 애니메이션 (2-2) — 4장 슬라이더 + 도트 인디케이터 + 키보드 접근성
 - [x] Impact Counter: 뷰포트 진입 시 카운트업 (2-2) — useInView + rAF 카운트업 + stagger 순차 등장
-- [ ] 뉴스 카드: Sanity 데이터 3건 표시 (2-2)
+- [x] 뉴스 카드: Sanity 데이터 3건 표시 (2-2) — LatestNews + NewsCard + Sanity Studio/스키마 완료
 - [ ] 타임라인: 스크롤 시 fade-in (2-3)
 - [ ] ISR: Cache-Control 헤더 확인 (2-4)
 - [x] WaveDivider: 섹션 전환부 정상 렌더링 (2-1 완료)
@@ -295,7 +393,8 @@
 | Phase 0     | 7         | 7      | 100%     |
 | Phase 1     | 6         | 6      | 100%     |
 | Phase 2-1   | 10        | 10     | **100%** |
-| Phase 2-2~4 | 17        | 2      | 12%      |
+| Phase 2-2   | 8         | 6      | **75%**  |
+| Phase 2-3~4 | 10        | 0      | 0%       |
 | Phase 3     | 6         | 0      | 0%       |
 | Phase 4     | 5         | 0      | 0%       |
-| **전체**    | **51**    | **25** | **49%**  |
+| **전체**    | **52**    | **29** | **56%**  |

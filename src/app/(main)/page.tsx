@@ -1,8 +1,8 @@
 import { HeroSection } from '@/components/organisms/HeroSection'
 import { ImpactCounter } from '@/components/organisms/ImpactCounter'
+import { DonationCTA } from '@/components/organisms/DonationCTA'
 import { LatestNews } from '@/components/organisms/LatestNews'
 import { WaveDivider } from '@/components/atoms/WaveDivider'
-import { Button } from '@/components/ui/button'
 import { client } from '@/lib/sanity/client'
 import { LATEST_POSTS_QUERY } from '@/lib/sanity/queries'
 import type { Post } from '@/types/sanity'
@@ -28,23 +28,7 @@ export default async function Home() {
 
       <WaveDivider color="cream" flip />
 
-      {/* 후원 CTA placeholder */}
-      <section className="bg-peace-cream py-12 text-center dark:bg-muted md:py-16">
-        <div className="container mx-auto px-4">
-          <h2 className="text-2xl font-bold text-foreground md:text-3xl">
-            평화를 위한 한 걸음
-          </h2>
-          <p className="mx-auto mt-4 max-w-lg text-muted-foreground">
-            여러분의 후원이 한반도와 세계의 평화를 만듭니다
-          </p>
-          <Button
-            size="lg"
-            className="mt-8 bg-peace-orange text-white hover:bg-peace-orange/90"
-          >
-            후원 참여하기
-          </Button>
-        </div>
-      </section>
+      <DonationCTA />
 
       <WaveDivider color="cream" />
 

@@ -30,12 +30,14 @@ const reducedItemVariants = {
 const CounterValue = ({
   target,
   startFrom = 0,
+  useLocale = true,
   isInView,
   duration,
   shouldReduceMotion,
 }: {
   target: number
   startFrom?: number
+  useLocale?: boolean
   isInView: boolean
   duration: number
   shouldReduceMotion: boolean | null
@@ -67,7 +69,7 @@ const CounterValue = ({
     requestAnimationFrame(tick)
   }, [isInView, target, startFrom, duration, shouldReduceMotion])
 
-  return <>{current.toLocaleString()}</>
+  return <>{useLocale ? current.toLocaleString() : current}</>
 }
 
 const ImpactCounter = ({ className }: { className?: string }) => {
@@ -120,6 +122,7 @@ const ImpactCounter = ({ className }: { className?: string }) => {
                   <CounterValue
                     target={stat.value}
                     startFrom={'startFrom' in stat ? stat.startFrom : 0}
+                    useLocale={'useLocale' in stat ? stat.useLocale : true}
                     isInView={isInView}
                     duration={IMPACT_CONFIG.animationDuration}
                     shouldReduceMotion={shouldReduceMotion}

@@ -8,7 +8,8 @@ export const IMPACT_STATS = [
     label: '창립',
     value: 2019,
     startFrom: CURRENT_YEAR,
-    suffix: '',
+    suffix: '년',
+    useLocale: false,
     icon: Calendar,
   },
   {
