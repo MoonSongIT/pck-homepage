@@ -45,7 +45,7 @@ const CounterValue = ({
   useEffect(() => {
     if (!isInView) return
     if (shouldReduceMotion) {
-      setCurrent(target)
+      requestAnimationFrame(() => setCurrent(target))
       return
     }
 

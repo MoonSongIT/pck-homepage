@@ -1,9 +1,23 @@
 import { HeroSection } from '@/components/organisms/HeroSection'
 import { ImpactCounter } from '@/components/organisms/ImpactCounter'
+import { LatestNews } from '@/components/organisms/LatestNews'
 import { WaveDivider } from '@/components/atoms/WaveDivider'
 import { Button } from '@/components/ui/button'
+import { client } from '@/lib/sanity/client'
+import { LATEST_POSTS_QUERY } from '@/lib/sanity/queries'
+import type { Post } from '@/types/sanity'
 
-export default function Home() {
+export const revalidate = 3600 // ISR: 1시간마다 재검증
+
+export default async function Home() {
+  let posts: Post[] = []
+
+  try {
+    posts = await client.fetch<Post[]>(LATEST_POSTS_QUERY)
+  } catch {
+    // Sanity 연결 실패 시 빈 배열 → Skeleton 표시
+    console.error('[Home] Sanity fetch failed — showing skeleton')
+  }
   return (
     <>
       <HeroSection />
@@ -34,15 +48,7 @@ export default function Home() {
 
       <WaveDivider color="cream" />
 
-      {/* 뉴스 영역 placeholder */}
-      <section className="py-12 md:py-16">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-2xl font-bold text-foreground md:text-3xl">최신 소식</h2>
-          <p className="mt-4 text-muted-foreground">
-            Phase 2-2에서 LatestNews 구현 예정
-          </p>
-        </div>
-      </section>
+      <LatestNews posts={posts} />
     </>
   )
 }
