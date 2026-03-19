@@ -1,6 +1,6 @@
 # PCK 웹사이트 리뉴얼 — 진도 체크리스트
 
-> 최종 수정: 2026-03-18
+> 최종 수정: 2026-03-19
 > 상태 표시: ⬜ 미시작 | 🔄 진행 중 | ✅ 완료 | ❌ 블로커 | ⏭️ 건너뜀
 
 ---
@@ -132,13 +132,38 @@
 
 | #     | 작업 항목                          | 상태 | 세부 내용                                                                 | 블로커/비고 |
 | ----- | ---------------------------------- | ---- | ------------------------------------------------------------------------- | ----------- |
-| 2-2-1 | HeroSection 컴포넌트               | ⬜   | 풀스크린 슬라이더 3~4장 + 반투명 네이비 오버레이 + 타이핑 애니메이션 (Framer Motion) | |
+| 2-2-1 | HeroSection 컴포넌트               | ✅   | 풀스크린 슬라이더 4장 + 반투명 네이비 오버레이 + 타이핑 애니메이션 (Framer Motion) + 도트 인디케이터 + 스크롤 유도 화살표 | |
 | 2-2-2 | ImpactCounter 컴포넌트             | ⬜   | 4개 항목(2019/200+/50/15+), IntersectionObserver 뷰포트 진입 감지, 카운트업 2초 ease-out | |
 | 2-2-3 | LatestNews 컴포넌트                | ⬜   | Sanity GROQ 쿼리로 최신 3건 조회, NewsCard 그리드, Skeleton 로딩 | 1-5 (Sanity) |
 | 2-2-4 | NewsCard 컴포넌트                  | ⬜   | 카테고리 뱃지 + 썸네일 + 제목 + 날짜 + 발췌문 | |
 | 2-2-5 | DonationCTA 컴포넌트               | ⬜   | 달성률 프로그레스 바 + 후원 버튼 + 배경 peace-cream | |
 | 2-2-6 | NewsletterSection 컴포넌트         | ⬜   | 이메일 입력 폼 → Resend API 구독 처리 | |
-| 2-2-7 | 메인 페이지 조립                   | ⬜   | `src/app/(main)/page.tsx` — Hero → WaveDivider → Impact → WaveDivider → News → DonationCTA → Newsletter | |
+| 2-2-7 | 메인 페이지 조립                   | 🔄   | `src/app/(main)/page.tsx` — Hero → WaveDivider → Impact(placeholder) → WaveDivider → DonationCTA(placeholder) → WaveDivider → News(placeholder) 조립 완료. 나머지 컴포넌트 실제 구현 후 교체 예정 | |
+
+#### 2-2-1 HeroSection 구현 상세
+
+- **구현 파일**:
+  - `src/components/organisms/HeroSection.tsx` — 클라이언트 컴포넌트
+  - `src/lib/constants/hero.ts` — 슬라이드 4장 데이터 + 타이핑 텍스트 + 설정 상수
+  - `public/images/hero/` — slide-{1~4}-{desktop,mobile}.webp (8개 파일, ~40MB)
+  - `src/app/(main)/page.tsx` — HeroSection + placeholder 섹션 조립
+
+- **기능 체크**:
+  - [x] 풀스크린(100svh) 슬라이더 4장 자동 전환 (5초 간격)
+  - [x] Framer Motion AnimatePresence 크로스페이드 + 줌 전환
+  - [x] 타이핑 애니메이션 (한글 "그리스도의 평화" / 영문 "Peace of Christ" 순환)
+  - [x] 반투명 네이비(50%) 오버레이
+  - [x] PAX CHRISTI KOREA 서브타이틀 + 설명 텍스트 + CTA 버튼 2개 (후원/더 알아보기)
+  - [x] 도트 인디케이터 (탭리스트 role, 현재 슬라이드 강조)
+  - [x] 스크롤 유도 ChevronDown 바운스 애니메이션
+  - [x] 마우스 호버/포커스 시 자동 전환 일시정지
+  - [x] 키보드 좌우 화살표 슬라이드 전환
+  - [x] useReducedMotion 대응 (모션 감소 설정 시 단순 페이드)
+  - [x] 반응형 이미지 (모바일/데스크톱 별도)
+  - [x] aria-roledescription, aria-label, aria-live 접근성 적용
+  - [x] `tsc --noEmit` 에러 0 / `npm run lint` 에러 0 / `npm run build` 성공
+
+---
 
 ### 2-3. 단체 소개 + 타임라인 + 임원
 
@@ -163,7 +188,7 @@
 ### Phase 2 전체 체크포인트
 
 - [x] Header: 360px~1440px 반응형 정상 (2-1 완료)
-- [ ] Hero: 이미지 전환 + 타이핑 애니메이션 (2-2)
+- [x] Hero: 이미지 전환 + 타이핑 애니메이션 (2-2) — 4장 슬라이더 + 도트 인디케이터 + 키보드 접근성
 - [ ] Impact Counter: 뷰포트 진입 시 카운트업 (2-2)
 - [ ] 뉴스 카드: Sanity 데이터 3건 표시 (2-2)
 - [ ] 타임라인: 스크롤 시 fade-in (2-3)
@@ -246,7 +271,7 @@
 | Phase 0     | 7         | 7      | 100%     |
 | Phase 1     | 6         | 6      | 100%     |
 | Phase 2-1   | 10        | 10     | **100%** |
-| Phase 2-2~4 | 17        | 0      | 0%       |
+| Phase 2-2~4 | 17        | 1      | 6%       |
 | Phase 3     | 6         | 0      | 0%       |
 | Phase 4     | 5         | 0      | 0%       |
-| **전체**    | **51**    | **23** | **45%**  |
+| **전체**    | **51**    | **24** | **47%**  |
