@@ -1,6 +1,6 @@
 # PCK 웹사이트 리뉴얼 — 전체 구현 계획서
 
-> 최종 수정: 2026-03-17
+> 최종 수정: 2026-03-20
 > 프로젝트: 팍스크리스티코리아(Pax Christi Korea) 공식 웹사이트 리뉴얼
 > 기술 스택: Next.js 15 + TypeScript + Tailwind CSS v4 + Supabase + Sanity.io
 
@@ -597,27 +597,53 @@ npm install -D vitest @testing-library/react @testing-library/jest-dom jsdom
 | --- | --------- | ----------------------- | -------------------------------------------- |
 | 1   | Hero      | `HeroSection.tsx`       | 풀스크린 슬라이더 + 타이핑 애니메이션        |
 | 2   | 구분선    | WaveDivider(navy)       |                                              |
-| 3   | Impact    | `ImpactCounter.tsx`     | 4개 카운터 애니메이션 (IntersectionObserver) |
-| 4   | 구분선    | WaveDivider(cream)      |                                              |
-| 5   | 최신 뉴스 | `LatestNews.tsx`        | Sanity 연동 3건 카드 그리드                  |
-| 6   | 구분선    | WaveDivider(navy)       |                                              |
-| 7   | 후원 CTA  | `DonationCTA.tsx`       | 달성률 프로그레스 바 + 후원 버튼             |
-| 8   | 구분선    | WaveDivider(cream)      |                                              |
+| 3   | Impact    | `ImpactCounter.tsx`     | 4개 카운터 애니메이션 (useInView + rAF)      |
+| 4   | 구분선    | WaveDivider(cream,flip) |                                              |
+| 5   | 후원 CTA  | `DonationCTA.tsx`       | 후원 금액 카드 + CTA 버튼 + peace-cream 배경 |
+| 6   | 구분선    | WaveDivider(cream)      |                                              |
+| 7   | 최신 뉴스 | `LatestNews.tsx`        | Sanity 연동 3건 카드 그리드                  |
+| 8   | 구분선    | WaveDivider(navy)       |                                              |
 | 9   | 뉴스레터  | `NewsletterSection.tsx` | 이메일 구독 폼 → Resend API                  |
+
+**작업 항목 (check.md 동기화)**:
+
+| #     | 작업 항목                          | 상태 | 설명                                                                 |
+| ----- | ---------------------------------- | ---- | -------------------------------------------------------------------- |
+| 2-2-1 | HeroSection 컴포넌트               | ✅   | 풀스크린 슬라이더 4장 + 타이핑 애니메이션 + 도트 인디케이터          |
+| 2-2-2 | ImpactCounter 컴포넌트             | ✅   | 4개 카운터 useInView + rAF 카운트업 + stagger 순차 등장              |
+| 2-2-3 | LatestNews 컴포넌트                | ⬜   | Sanity GROQ 최신 3건 조회, NewsCard 그리드, Skeleton 로딩            |
+| 2-2-4 | NewsCard 컴포넌트                  | ⬜   | 카테고리 뱃지 + 썸네일 + 제목 + 날짜 + 발췌문                       |
+| 2-2-5 | DonationCTA 컴포넌트               | ⬜   | 후원 금액 카드 4종 + CTA 버튼 + peace-cream 배경                    |
+| 2-2-6 | NewsletterSection 컴포넌트         | ⬜   | 이메일 입력 폼 → Resend API 구독 처리                                |
+| 2-2-7 | 메인 페이지 조립                   | 🔄   | page.tsx — 전체 섹션 조립 (placeholder → 실제 컴포넌트 교체)         |
 
 **HeroSection 상세**:
 
-- 흑백/저채도 이미지 3~4장 슬라이더 (자동 전환 5초)
-- 반투명 네이비 오버레이 (opacity 0.5~0.6)
-- 타이핑 텍스트: "그리스도의 평화" → "Peace of Christ" (Framer Motion)
-- 하단 도트 인디케이터
+- 풀스크린(100svh) 슬라이더 4장 자동 전환 (5초 간격)
+- Framer Motion AnimatePresence 크로스페이드 + 줌 전환
+- 타이핑 텍스트: "그리스도의 평화" → "Peace of Christ" 순환
+- 반투명 네이비(50%) 오버레이
+- 도트 인디케이터 (탭리스트 role) + 스크롤 유도 ChevronDown
+- 키보드 좌우 화살표 + useReducedMotion 접근성 대응
+- 반응형 이미지 (모바일/데스크톱 별도 webp)
 
 **ImpactCounter 상세**:
 
 - 4개 항목: 창립 2019 / 회원 200+ / 활동 국가 50 / 캠페인 15+
-- useIntersection 훅으로 뷰포트 진입 감지
-- 숫자 0→목표값 카운트업 애니메이션 (2초, ease-out)
+- Framer Motion `useInView` 뷰포트 진입 감지 (`once: true`)
+- `requestAnimationFrame` 기반 카운트업 (2초, ease-out cubic)
+- 창립 연도: 현재 연도 → 2019 역방향 카운트 (`startFrom` 패턴)
+- `staggerChildren: 0.15` 순차 등장 + `useReducedMotion` 접근성 대응
+- 반응형 그리드 2열(모바일) / 4열(데스크톱), 다크모드 지원
 - 배경: peace-cream
+
+**DonationCTA 상세**:
+
+- 4개 후원 금액 카드 (1만원/3만원/5만원/10만원) + 아이콘 + 설명
+- "추천" 뱃지 (3만원 카드)
+- CTA 버튼: `bg-peace-orange`, `/donate` 링크
+- Framer Motion whileInView 스크롤 트리거 애니메이션
+- `useReducedMotion` 접근성 대응, 다크모드 지원
 
 **의존성**: 2-1 완료 후
 
@@ -625,24 +651,265 @@ npm install -D vitest @testing-library/react @testing-library/jest-dom jsdom
 
 ### 2-3. 단체 소개 페이지
 
-**파일**:
+**목표**: 팍스크리스티코리아의 비전·목표·주요 활동 영역, 연혁, 임원진 정보를 제공하는 3개 서브 페이지 구현
 
-| 파일                                        | 설명                             |
-| ------------------------------------------- | -------------------------------- |
-| `src/app/(main)/about/page.tsx`             | 비전·미션·핵심가치 카드 레이아웃 |
-| `src/app/(main)/about/history/page.tsx`     | 수직 타임라인 (2019~현재)        |
-| `src/app/(main)/about/team/page.tsx`        | 임원진 프로필 카드 그리드        |
-| `src/components/molecules/TimelineItem.tsx` | 타임라인 개별 항목               |
-| `src/components/molecules/MemberCard.tsx`   | 임원 프로필 카드                 |
+**파일 구조**:
 
-**타임라인 상세**:
+| 파일                                                 | 설명                                    | 서버/클라이언트 |
+| ---------------------------------------------------- | --------------------------------------- | --------------- |
+| `src/lib/constants/about.ts`                         | About 섹션 상수 (비전/목표/활동영역/메타) | 공유 데이터     |
+| `src/app/(main)/about/layout.tsx`                    | About 서브 네비게이션 레이아웃          | 서버            |
+| `src/app/(main)/about/page.tsx`                      | 비전·목표·주요 활동 영역 카드 레이아웃  | 서버            |
+| `src/components/molecules/TimelineItem.tsx`          | 타임라인 개별 항목 (연도+제목+설명)     | 서버            |
+| `src/app/(main)/about/history/page.tsx`              | 수직 타임라인 (Sanity 연동)             | 서버 (async)    |
+| `src/components/molecules/MemberCard.tsx`            | 임원 프로필 카드 (사진+이름+직책+소개)  | 서버            |
+| `src/app/(main)/about/team/page.tsx`                 | 임원진 프로필 카드 그리드 (Sanity 연동) | 서버 (async)    |
 
-- 수직 중앙선 + 좌우 교대 배치
-- 각 항목: 연도 뱃지 + 제목 + 설명 + (선택) 이미지
-- 스크롤 시 fade-in 애니메이션 (Framer Motion whileInView)
-- 데이터: Sanity timeline 스키마에서 조회
+**기존 인프라 (이미 완성)**:
 
-**의존성**: 2-1 완료 후
+- Sanity 스키마: `teamMember` (5필드), `timeline` (3필드) — `src/sanity/schemaTypes/`
+- GROQ 쿼리: `TEAM_MEMBERS_QUERY`, `TIMELINE_QUERY` — `src/lib/sanity/queries.ts`
+- 타입: `TeamMember`, `TimelineEvent` — `src/types/sanity.ts`
+- Sanity 이미지: `urlFor()`, `imagePresets` — `src/lib/sanity/image.ts`
+
+---
+
+#### 2-3-1. About 상수 파일
+
+**파일**: `src/lib/constants/about.ts`
+
+**내용**:
+
+```typescript
+import {
+  Eye, Target, Shield, Building2, GraduationCap,
+  Users, Handshake, Megaphone, Link2, CalendarHeart,
+} from 'lucide-react'
+
+// 비전·목표 데이터
+export const VISION_MISSION = {
+  vision: {
+    title: '비전',
+    description: 'Pax Christi International과 보조를 맞춰 한국 현실에 부합하는 평화 운동을 활발하게 전개하고, 모든 폭력에서 자유로운 세계, \'평화로운 세계 건설\'이라는 비전을 추구합니다.',
+    icon: Eye,
+  },
+  mission: {
+    title: '목표',
+    description: '가톨릭교회의 모든 신원이 동등하게 수평적으로 평화와 화해를 추구하는 활동에 참여하는 비공인 가톨릭 평화운동 단체로서, 복음과 가톨릭 신앙에 바탕을 두고 기도·공부(연구)·실천을 방법적 원리로 삼아 활동합니다.',
+    icon: Target,
+  },
+} as const
+
+// 주요 활동 영역 (8개)
+export const ACTIVITY_AREAS = [
+  { id: 'conflict-transformation', title: '갈등 전환', icon: Shield },
+  { id: 'peace-building', title: '평화 구축', icon: Building2 },
+  { id: 'peace-education', title: '평화 교육과 청년활동 지원', icon: GraduationCap },
+  { id: 'nonviolent-organizing', title: '비폭력 모임 조직', icon: Users },
+  { id: 'interfaith-dialogue', title: '종교간 대화와 협력', icon: Handshake },
+  { id: 'advocacy', title: '각국 옹호(Advocacy) 활동 참여', icon: Megaphone },
+  { id: 'partner-exchange', title: '협력단체 교류', icon: Link2 },
+  { id: 'peace-day', title: '평화의 날 담화 실천', icon: CalendarHeart },
+] as const
+
+// About 페이지 메타데이터 + 섹션 설정
+export const ABOUT_CONFIG = {
+  hero: { title: '단체 소개', subtitle: '팍스크리스티코리아를 소개합니다' },
+  historyLink: { label: '연혁 보기', href: '/about/history' },
+  teamLink: { label: '임원진 보기', href: '/about/team' },
+  activitiesTitle: '주요 활동 영역',
+  activitiesSubtitle: 'PCI와 보조를 맞춰 한국 현실에 부합하는 평화운동 영역을 개척하고 있습니다',
+  introTitle: '팍스크리스티코리아란?',
+  introTexts: [/* PCK/PCI 소개 4문단 */],
+} as const
+
+// About 서브 네비게이션
+export const ABOUT_NAV = [
+  { label: '소개', href: '/about' },
+  { label: '연혁', href: '/about/history' },
+  { label: '임원진', href: '/about/team' },
+]
+
+export type ActivityArea = (typeof ACTIVITY_AREAS)[number]
+export type AboutNavItem = (typeof ABOUT_NAV)[number]
+```
+
+**의존성**: 없음
+
+---
+
+#### 2-3-2. About 레이아웃 (서브 네비게이션)
+
+**파일**: `src/app/(main)/about/layout.tsx`
+
+**상세**:
+
+- 서브 네비게이션 탭/링크: 소개 | 연혁 | 임원진
+- 현재 경로 활성 표시 (`usePathname` 또는 서버 사이드 segment)
+- `children` 렌더링
+- 모바일: 수평 스크롤 탭 / 데스크톱: 인라인 링크
+- peace-cream 배경 히어로 배너 (공통 타이틀 영역)
+
+**의존성**: 2-3-1
+
+---
+
+#### 2-3-3. About 메인 페이지
+
+**파일**: `src/app/(main)/about/page.tsx`
+
+**상세**:
+
+- **서버/클라이언트 분리**: `page.tsx` (서버, metadata) + `about-content.tsx` (클라이언트, Framer Motion)
+- **섹션 순서 (Intro → Vision → Activities)**:
+  1. **단체 소개 텍스트** (팍스크리스티코리아란?): PCK/PCI 소개 4문단 (ABOUT_CONFIG.introTexts)
+  2. WaveDivider(cream, flip)
+  3. **비전·목표 섹션**: 2열 카드 레이아웃 (비전 Eye / 목표 Target), peace-cream 배경
+  4. WaveDivider(cream)
+  5. **주요 활동 영역**: 4열×2행 카드 그리드 (8개 ACTIVITY_AREAS), 아이콘+제목+설명
+  6. **서브 페이지 CTA**: "연혁 보기" / "임원진 보기" 버튼 (justify-center)
+- 호버 시 shadow-md 전환
+- Framer Motion staggerChildren: 0.12 순차 등장 + useReducedMotion 접근성 대응
+- 다크모드 지원
+- `export const metadata` SEO 메타데이터
+
+**의존성**: 2-3-1, 2-3-2
+
+---
+
+#### 2-3-4. TimelineItem 분자 컴포넌트
+
+**파일**: `src/components/molecules/TimelineItem.tsx`
+
+**Props**:
+
+```typescript
+type TimelineItemProps = {
+  year: number
+  title: string
+  description?: string
+  position: 'left' | 'right'  // 좌우 배치
+  className?: string
+}
+```
+
+**상세**:
+
+- **연도 뱃지**: peace-navy 배경 원형/라운드, 흰색 텍스트
+- **카드 본체**: 제목 + 설명, 화살표(꼬리표)로 중앙선과 연결
+- **좌우 배치**: `position` prop으로 좌/우 교대
+  - 데스크톱(md+): 좌우 교대 배치, 각각 50% 너비
+  - 모바일(<md): 모두 오른쪽 정렬 (왼쪽에 중앙선)
+- **연결선**: 뱃지에서 카드로 가는 수평 점선 또는 실선
+- 다크모드 지원
+- `aria-label` 접근성
+
+**의존성**: 없음
+
+---
+
+#### 2-3-5. History 타임라인 페이지
+
+**파일**: `src/app/(main)/about/history/page.tsx`
+
+**상세**:
+
+- **데이터 페칭**: Sanity `TIMELINE_QUERY` (ISR `revalidate: 3600`)
+  - 에러 시 빈 배열 → "연혁 데이터를 불러올 수 없습니다" 폴백
+- **수직 타임라인 레이아웃**:
+  - 중앙 수직선: absolute position, border-left 2px peace-navy
+  - TimelineItem 좌우 교대: `index % 2 === 0 ? 'left' : 'right'`
+  - 모바일: 왼쪽 수직선 + 모든 항목 오른쪽 배치
+- **Framer Motion 애니메이션**:
+  - 컨테이너 `staggerChildren: 0.2`
+  - 각 아이템 `whileInView` fadeIn + slideX (좌→우 or 우→좌)
+  - `useReducedMotion` 접근성 대응
+- **페이지 헤더**: "팍스크리스티코리아 연혁" 타이틀
+- 연도 범위 표시: 2019 ~ 현재
+- 다크모드 지원
+- `generateMetadata` SEO 메타데이터
+- 데이터 없을 때: "아직 등록된 연혁이 없습니다" 빈 상태 UI
+
+**의존성**: 2-3-2, 2-3-4, 1-5 (Sanity)
+
+---
+
+#### 2-3-6. MemberCard 분자 컴포넌트
+
+**파일**: `src/components/molecules/MemberCard.tsx`
+
+**Props**:
+
+```typescript
+type MemberCardProps = {
+  member: TeamMember  // from src/types/sanity.ts
+  className?: string
+}
+```
+
+**상세**:
+
+- **프로필 사진**: Sanity `urlFor()` → Next/Image, 원형 또는 라운드 스퀘어
+  - 사진 없을 때: 이니셜 아바타 (이름 첫 글자, peace-navy 배경)
+  - `sizes` 반응형 속성
+- **이름**: 볼드 텍스트
+- **직책(role)**: peace-sky 색상 또는 뱃지 스타일
+- **소개(bio)**: 2~3줄 line-clamp, 옵션
+- **카드 스타일**: border + shadow + 호버 시 elevation 변화
+- 다크모드 지원
+- `aria-label` 접근성
+
+**의존성**: 없음
+
+---
+
+#### 2-3-7. Team 임원진 페이지
+
+**파일**: `src/app/(main)/about/team/page.tsx`
+
+**상세**:
+
+- **데이터 페칭**: Sanity `TEAM_MEMBERS_QUERY` (ISR `revalidate: 3600`)
+  - `order(order asc)` 정렬 (Sanity에서 설정한 순서)
+  - 에러 시 빈 배열 → 폴백 UI
+- **MemberCard 그리드**:
+  - 반응형: 1열(모바일) / 2열(sm) / 3열(md) / 4열(lg)
+  - Framer Motion `staggerChildren` 순차 등장
+  - `useReducedMotion` 접근성 대응
+- **페이지 헤더**: "임원진 소개" 타이틀 + 설명 텍스트
+- 다크모드 지원
+- `generateMetadata` SEO 메타데이터
+- 데이터 없을 때: "아직 등록된 임원진이 없습니다" 빈 상태 UI
+
+**의존성**: 2-3-2, 2-3-6, 1-5 (Sanity)
+
+---
+
+#### 2-3-8. 빌드 검증
+
+- `tsc --noEmit` — TypeScript 에러 0건
+- `npm run lint` — ESLint 에러 0건
+- `npm run build` — 프로덕션 빌드 성공
+- 개발 서버에서 `/about`, `/about/history`, `/about/team` 접속 확인
+
+**의존성**: 2-3-1 ~ 2-3-7 완료
+
+---
+
+#### 2-3 작업 항목 요약
+
+| #     | 작업 항목                | 상태 | 설명                                                                       |
+| ----- | ------------------------ | ---- | -------------------------------------------------------------------------- |
+| 2-3-1 | About 상수 파일          | ✅   | 비전/목표 + 주요 활동 영역(8개) + 서브 네비 상수 + 페이지/타임라인/임원 설정 |
+| 2-3-2 | About 레이아웃           | ✅   | 서브 네비게이션 (소개/연혁/임원진) + 공통 히어로 배너                      |
+| 2-3-3 | About 메인 페이지        | ✅   | 소개텍스트 → 비전·목표 카드 → 주요 활동 영역 8개 그리드 + CTA 링크        |
+| 2-3-4 | TimelineItem 컴포넌트    | ✅   | 연도 뱃지 + 제목/설명 카드 + 좌우 교대 배치 + 반응형                      |
+| 2-3-5 | History 타임라인 페이지  | ✅   | Sanity TIMELINE_QUERY 페칭 + 수직 타임라인 + Framer Motion fade-in        |
+| 2-3-6 | MemberCard 컴포넌트      | ✅   | 프로필 사진 + 이름/직책/소개 + 이니셜 폴백 + 호버 애니메이션              |
+| 2-3-7 | Team 임원진 페이지       | ✅   | Sanity TEAM_MEMBERS_QUERY 페칭 + MemberCard 그리드 + stagger 애니메이션   |
+| 2-3-8 | 빌드 검증                | ✅   | tsc + lint + build + 3개 라우트 접속 확인                                  |
+
+**의존성**: 2-1 완료 후 (✅), 1-5 Sanity 연동 (✅ 코드 준비, Sanity 프로젝트 미생성)
 
 ---
 

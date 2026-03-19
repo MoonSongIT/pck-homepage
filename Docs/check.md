@@ -1,6 +1,6 @@
 # PCK 웹사이트 리뉴얼 — 진도 체크리스트
 
-> 최종 수정: 2026-03-19
+> 최종 수정: 2026-03-19 (Phase 2-3 콘텐츠 오버홀 — CORE_VALUES→ACTIVITY_AREAS, 섹션 순서 변경)
 > 상태 표시: ⬜ 미시작 | 🔄 진행 중 | ✅ 완료 | ❌ 블로커 | ⏭️ 건너뜀
 
 ---
@@ -133,12 +133,13 @@
 | #     | 작업 항목                          | 상태 | 세부 내용                                                                 | 블로커/비고 |
 | ----- | ---------------------------------- | ---- | ------------------------------------------------------------------------- | ----------- |
 | 2-2-1 | HeroSection 컴포넌트               | ✅   | 풀스크린 슬라이더 4장 + 반투명 네이비 오버레이 + 타이핑 애니메이션 (Framer Motion) + 도트 인디케이터 + 스크롤 유도 화살표 | |
-| 2-2-2 | ImpactCounter 컴포넌트             | ⬜   | 4개 항목(2019/200+/50/15+), IntersectionObserver 뷰포트 진입 감지, 카운트업 2초 ease-out | |
-| 2-2-3 | LatestNews 컴포넌트                | ⬜   | Sanity GROQ 쿼리로 최신 3건 조회, NewsCard 그리드, Skeleton 로딩 | 1-5 (Sanity) |
-| 2-2-4 | NewsCard 컴포넌트                  | ⬜   | 카테고리 뱃지 + 썸네일 + 제목 + 날짜 + 발췌문 | |
-| 2-2-5 | DonationCTA 컴포넌트               | ⬜   | 달성률 프로그레스 바 + 후원 버튼 + 배경 peace-cream | |
-| 2-2-6 | NewsletterSection 컴포넌트         | ⬜   | 이메일 입력 폼 → Resend API 구독 처리 | |
-| 2-2-7 | 메인 페이지 조립                   | 🔄   | `src/app/(main)/page.tsx` — Hero → WaveDivider → Impact(placeholder) → WaveDivider → DonationCTA(placeholder) → WaveDivider → News(placeholder) 조립 완료. 나머지 컴포넌트 실제 구현 후 교체 예정 | |
+| 2-2-2 | ImpactCounter 컴포넌트             | ✅   | 4개 항목(2019/200+/50/15+), useInView 뷰포트 진입 감지, rAF 카운트업 2초 ease-out, useReducedMotion 접근성 대응, 다크모드 지원 | |
+| 2-2-3 | LatestNews 컴포넌트                | ✅   | Sanity GROQ 최신 3건 조회, NewsCard 그리드, Skeleton 로딩, Framer Motion stagger 애니메이션, ISR 1시간 | |
+| 2-2-4 | NewsCard 분자 컴포넌트             | ✅   | 카테고리 뱃지(색상 매핑) + Next/Image 썸네일 + 제목 + 날짜 + 발췌문, 호버 스케일 | |
+| 2-2-5 | Sanity Studio + 스키마             | ✅   | `/studio` 라우트 임베딩, 4개 스키마(post/education/teamMember/timeline) 정의, sanity+styled-components+@sanity/vision 설치 | |
+| 2-2-6 | DonationCTA 컴포넌트               | ✅   | 후원 금액 카드 4종(선택식) + "추천" 뱃지 + CTA 버튼(금액 연동 `/donate?amount=`) + peace-cream 배경, Framer Motion stagger, 다크모드/접근성 대응 | |
+| 2-2-7 | NewsletterSection 컴포넌트         | ✅   | 네이비 배경 이메일 구독 폼, Server Action(Zod+Prisma+Resend), useActionState 폼 상태 관리, 성공/에러/중복 처리, Framer Motion 스크롤 애니메이션 | |
+| 2-2-8 | 메인 페이지 조립                   | ✅   | `src/app/(main)/page.tsx` — Hero → WaveDivider → ImpactCounter → WaveDivider → DonationCTA → WaveDivider → LatestNews → WaveDivider → NewsletterSection 전체 조립 완료 | |
 
 #### 2-2-1 HeroSection 구현 상세
 
@@ -163,17 +164,337 @@
   - [x] aria-roledescription, aria-label, aria-live 접근성 적용
   - [x] `tsc --noEmit` 에러 0 / `npm run lint` 에러 0 / `npm run build` 성공
 
+#### 2-2-2 ImpactCounter 구현 상세
+
+- **구현 파일**:
+  - `src/components/organisms/ImpactCounter.tsx` — 클라이언트 컴포넌트
+  - `src/lib/constants/impact.ts` — 4개 통계 데이터 + 설정 상수
+
+- **기능 체크**:
+  - [x] 4개 통계 카운터 (창립 2019 / 회원 200+ / 활동 국가 50 / 캠페인 15+)
+  - [x] Framer Motion `useInView` 뷰포트 진입 감지 (`once: true`, `margin: -100px`)
+  - [x] `requestAnimationFrame` 기반 카운트업 애니메이션 (2초, ease-out cubic)
+  - [x] 창립 연도: 현재 연도 → 2019 역방향 카운트 (startFrom 패턴)
+  - [x] Framer Motion `containerVariants` + `staggerChildren: 0.15` 순차 등장
+  - [x] `useReducedMotion` 접근성 대응 (모션 감소 시 단순 페이드)
+  - [x] 반응형 그리드: 2열(모바일) / 4열(데스크톱 md:)
+  - [x] 다크모드 지원 (`dark:bg-muted`, `dark:text-peace-cream`, `dark:bg-peace-sky/20`)
+  - [x] 아이콘 + 숫자 + suffix + 레이블 레이아웃 (lucide-react: Calendar, Users, Globe, Megaphone)
+  - [x] `aria-label` 섹션 접근성 ("팍스크리스티코리아 주요 성과")
+  - [x] 숫자 `toLocaleString()` 천단위 구분 표시
+
+- **기술 패턴**:
+  - `CounterValue` 서브컴포넌트: `requestAnimationFrame` + `performance.now()` 정밀 타이밍
+  - `reducedItemVariants` / `itemVariants` 분기로 접근성 모드별 다른 애니메이션
+  - 상수 파일에서 `as const` assertion + `ImpactStat` 유니온 타입 export
+
+#### 2-2-3 LatestNews 구현 상세
+
+- **구현 파일**:
+  - `src/components/organisms/LatestNews.tsx` — 클라이언트 컴포넌트
+  - `src/components/molecules/NewsCard.tsx` — 서버/클라이언트 분자 컴포넌트
+  - `src/lib/constants/news.ts` — 카테고리 라벨/색상 매핑 상수
+
+- **기능 체크**:
+  - [x] Sanity GROQ `LATEST_POSTS_QUERY`로 최신 3건 조회 (ISR revalidate:3600)
+  - [x] Sanity 연결 실패 시 빈 배열 → Skeleton 3개 표시 (graceful fallback)
+  - [x] `page.tsx`에서 `async` 서버 컴포넌트로 fetch → props 전달
+  - [x] NewsCard: 카테고리 뱃지 (news/activity/statement/press 색상 분류)
+  - [x] NewsCard: Next/Image 썸네일 + placeholder SVG 폴백
+  - [x] NewsCard: 제목 2줄 line-clamp + 발췌문 3줄 line-clamp
+  - [x] NewsCard: 날짜 한국어 포맷 (`ko-KR` locale)
+  - [x] NewsCard: 호버 시 scale + shadow 트랜지션
+  - [x] Framer Motion `useInView` + stagger 순차 등장 애니메이션
+  - [x] `useReducedMotion` 접근성 대응
+  - [x] "더 많은 소식 보기" 링크 → `/news`
+  - [x] 반응형 그리드: 1열(모바일) / 2열(sm) / 3열(lg)
+  - [x] 다크모드 지원
+
+#### 2-2-4 NewsCard 구현 상세
+
+- **구현 파일**: `src/components/molecules/NewsCard.tsx`
+- **Props**: `Post` 타입 (title, slug, category, excerpt, publishedAt, mainImage)
+- **이미지**: Sanity `urlFor()` → Next/Image 또는 placeholder SVG 폴백
+
+#### 2-2-5 Sanity Studio + 스키마 구현 상세
+
+- **구현 파일**:
+  - `sanity.config.ts` — Sanity 설정 (프로젝트 ID, 플러그인, 스키마)
+  - `src/app/studio/[[...tool]]/page.tsx` — Next Studio 임베딩
+  - `src/sanity/schemaTypes/index.ts` — 스키마 통합 export
+  - `src/sanity/schemaTypes/post.ts` — 뉴스/활동 게시글 (7필드, 카테고리 4종)
+  - `src/sanity/schemaTypes/education.ts` — 평화학교 교육 (9필드, 커리큘럼 배열)
+  - `src/sanity/schemaTypes/teamMember.ts` — 임원진 (5필드, 순서 정렬)
+  - `src/sanity/schemaTypes/timeline.ts` — 연혁 (3필드, 연도 범위 검증)
+  - `src/lib/sanity/queries.ts` — GROQ 쿼리 11개 (목록/상세/필터/카운트/SSG)
+  - `src/types/sanity.ts` — 4가지 문서 TypeScript 타입 정의
+
+- **설치 패키지**: `sanity`, `styled-components`, `@sanity/vision`
+- **next.config.ts**: `images.remotePatterns`에 `cdn.sanity.io` 추가
+
+- **기능 체크**:
+  - [x] `/studio` 라우트에서 Sanity Studio 접근 가능
+  - [x] 4개 스키마 타입 정의 (post, education, teamMember, timeline)
+  - [x] 11개 GROQ 쿼리 작성 (목록, 상세, 카테고리별, 카운트, SSG 슬러그, 최신 3건 등)
+  - [x] 이미지 URL 빌더 (`urlFor()` 헬퍼)
+  - [x] 클라이언트 분리: 공개(CDN)용 + 인증(프리뷰)용
+  - [x] TypeScript 타입 4종 + 공통 타입 (SanityImage, SanitySlug)
+
+#### 2-2-6 DonationCTA 구현 상세
+
+- **구현 파일**:
+  - `src/components/organisms/DonationCTA.tsx` — 클라이언트 컴포넌트
+  - `src/lib/constants/donation.ts` — 4개 후원 플랜 데이터 + 설정 상수 (기존 파일)
+
+- **기능 체크**:
+  - [x] 4개 후원 금액 카드 (1만/3만/5만/10만원) 그리드 표시
+  - [x] 카드 클릭 시 선택 상태 전환 (`useState` + `aria-pressed`)
+  - [x] 기본 선택: `popular: true` 카드 (3만원 "평화의 동반자")
+  - [x] 선택된 카드: 오렌지 ring + 오렌지 아이콘 / 비선택: 회색 ring + 블루 아이콘
+  - [x] "추천" 뱃지 (peace-gold) — `popular: true` 카드에 표시
+  - [x] 비선택 popular 카드: 골드 ring 구분
+  - [x] CTA 버튼에 선택 금액 연동 ("30,000원 후원 참여하기")
+  - [x] CTA 링크: `/donate?amount={선택금액}` 쿼리 파라미터 전달
+  - [x] Framer Motion `useInView` + stagger 순차 등장 애니메이션
+  - [x] `useReducedMotion` 접근성 대응
+  - [x] 반응형 그리드: 1열(모바일) / 2열(sm) / 4열(lg)
+  - [x] 다크모드 지원 (bg-background, ring-foreground 전환)
+  - [x] `aria-label="후원 안내"` 섹션 접근성
+
+- **기술 패턴**:
+  - `motion.button` + `aria-pressed` 토글 패턴
+  - `defaultPlan` 모듈 레벨 계산 (popular 카드 기본 선택)
+  - CTA 버튼 `asChild` + `Link` 조합으로 `/donate?amount=` 전달
+
+#### 2-2-7 NewsletterSection 구현 상세
+
+- **구현 파일**:
+  - `src/components/organisms/NewsletterSection.tsx` — 클라이언트 컴포넌트
+  - `src/app/actions/newsletter.ts` — Server Action (`'use server'`)
+  - `src/lib/constants/newsletter.ts` — 설정 상수 (제목, 메시지, 아이콘)
+
+- **기능 체크**:
+  - [x] 네이비 배경(`bg-peace-navy`) + 크림색 텍스트 레이아웃
+  - [x] 좌측 제목+설명 / 우측 이메일 폼 (md+), 모바일은 세로 스택
+  - [x] `useActionState` + Server Action으로 폼 제출 처리
+  - [x] Zod `z.string().email()` 서버 사이드 이메일 검증
+  - [x] `prisma.newsletterSubscriber.create()` DB 저장
+  - [x] unique constraint 충돌 → "이미 구독 중인 이메일입니다" 에러 메시지
+  - [x] Resend API Key 존재 시 환영 이메일 발송, 미설정 시 skip (graceful)
+  - [x] 성공 시: CheckCircle 아이콘 + 성공 메시지, 폼 숨김
+  - [x] 에러 시: 빨간색 에러 메시지 (`role="alert"`)
+  - [x] 로딩 시: Loader2 스피너 + 입력 필드 비활성화
+  - [x] Framer Motion `useInView` + `useReducedMotion` 스크롤 애니메이션
+  - [x] 다크모드 지원 (`dark:bg-peace-navy/90`)
+  - [x] `aria-label="뉴스레터 구독"` 섹션 접근성
+
+- **기술 패턴**:
+  - React 19 `useActionState<NewsletterResult | null, FormData>` — Server Action 연동
+  - `zod/v4` import 패턴 (Zod v4 호환)
+  - Resend dynamic import (`await import('resend')`) — API Key 없을 때 번들 절약
+  - `from: 'Pax Christi Korea <noreply@paxchristikorea.or.kr>'` 발신 주소
+
+#### 2-2-8 메인 페이지 조립 상세
+
+- **구현 파일**: `src/app/(main)/page.tsx` — 서버 컴포넌트 (async)
+- **섹션 순서**:
+  1. `<HeroSection />` — 풀스크린 슬라이더
+  2. `<WaveDivider color="navy" />` — 네이비 물결
+  3. `<ImpactCounter />` — 통계 카운터
+  4. `<WaveDivider color="cream" flip />` — 크림 물결 (반전)
+  5. `<DonationCTA />` — 후원 카드 선택
+  6. `<WaveDivider color="cream" />` — 크림 물결
+  7. `<LatestNews posts={posts} />` — 최신 뉴스 3건
+  8. `<WaveDivider color="navy" />` — 네이비 물결
+  9. `<NewsletterSection />` — 이메일 구독
+- **데이터**: Sanity `LATEST_POSTS_QUERY` ISR fetch (`revalidate: 3600`)
+
+#### 2-2 생성/수정 파일 목록
+
+| 구분 | 파일 경로                                      | 서버/클라이언트 |
+| ---- | ---------------------------------------------- | --------------- |
+| 수정 | `next.config.ts`                               | 설정            |
+| 수정 | `package.json` / `package-lock.json`           | 설정            |
+| 수정 | `src/app/(main)/page.tsx`                      | 서버 (async)    |
+| 수정 | `src/components/organisms/ImpactCounter.tsx`   | 클라이언트      |
+| 신규 | `src/components/organisms/HeroSection.tsx`     | 클라이언트      |
+| 신규 | `src/components/organisms/LatestNews.tsx`      | 클라이언트      |
+| 신규 | `src/components/organisms/DonationCTA.tsx`     | 클라이언트      |
+| 신규 | `src/components/molecules/NewsCard.tsx`        | 서버            |
+| 신규 | `src/lib/constants/hero.ts`                    | 공유 데이터     |
+| 신규 | `src/lib/constants/news.ts`                    | 공유 데이터     |
+| 신규 | `sanity.config.ts`                             | 클라이언트      |
+| 신규 | `src/app/studio/[[...tool]]/page.tsx`          | 서버            |
+| 신규 | `src/sanity/schemaTypes/*.ts` (5파일)          | 공유 데이터     |
+| 신규 | `src/components/organisms/NewsletterSection.tsx`| 클라이언트      |
+| 신규 | `src/app/actions/newsletter.ts`                | 서버 액션       |
+| 신규 | `src/lib/constants/newsletter.ts`              | 공유 데이터     |
+| 신규 | `public/images/news/placeholder-{1~3}.svg`     | 정적 에셋       |
+
 ---
 
 ### 2-3. 단체 소개 + 타임라인 + 임원
 
-| #     | 작업 항목                          | 상태 | 세부 내용                                                                 | 블로커/비고 |
-| ----- | ---------------------------------- | ---- | ------------------------------------------------------------------------- | ----------- |
-| 2-3-1 | About 메인 페이지                  | ⬜   | `/about` — 비전·미션·핵심가치 3개 카드 레이아웃 | |
-| 2-3-2 | TimelineItem 컴포넌트              | ⬜   | 연도 뱃지 + 제목 + 설명 + (선택) 이미지, 좌우 교대 배치 | |
-| 2-3-3 | History 타임라인 페이지            | ⬜   | `/about/history` — 수직 중앙선 + 좌우 교대, Framer Motion whileInView fade-in | 1-5 (Sanity) |
-| 2-3-4 | MemberCard 컴포넌트                | ⬜   | 프로필 사진 + 이름 + 역할 + 소개 텍스트 | |
-| 2-3-5 | Team 임원진 페이지                 | ⬜   | `/about/team` — 프로필 카드 그리드 (Sanity teamMember 스키마) | 1-5 (Sanity) |
+| #     | 작업 항목                | 상태 | 세부 내용                                                                                 | 블로커/비고                |
+| ----- | ------------------------ | ---- | ----------------------------------------------------------------------------------------- | -------------------------- |
+| 2-3-1 | About 상수 파일          | ✅   | `src/lib/constants/about.ts` — 비전/목표 + 주요 활동 영역(8개) + 서브 네비 상수 + 페이지/타임라인/임원 설정 |                            |
+| 2-3-2 | About 레이아웃           | ✅   | `src/app/(main)/about/layout.tsx` — 서브 네비게이션 (소개/연혁/임원진) + 공통 히어로 배너  |                            |
+| 2-3-3 | About 메인 페이지        | ✅   | `src/app/(main)/about/page.tsx` + `about-content.tsx` — 소개텍스트 → 비전·목표 카드 → 주요 활동 영역 8개 그리드 + CTA 링크 |           |
+| 2-3-4 | TimelineItem 컴포넌트    | ✅   | `src/components/molecules/TimelineItem.tsx` — 연도 뱃지 + 제목/설명 카드 + 좌우 교대 배치 + 모바일 왼쪽 정렬 |          |
+| 2-3-5 | History 타임라인 페이지  | ✅   | `src/app/(main)/about/history/page.tsx` + `history-timeline.tsx` — Sanity TIMELINE_QUERY + 수직 중앙선 + 좌우 교대 + Framer Motion fade-in + 빈 상태 폴백 | |
+| 2-3-6 | MemberCard 컴포넌트      | ✅   | `src/components/molecules/MemberCard.tsx` — 프로필 사진(Sanity imagePresets.avatar) + 이름 + 직책 + 소개 + 이니셜 폴백 |             |
+| 2-3-7 | Team 임원진 페이지       | ✅   | `src/app/(main)/about/team/page.tsx` + `team-grid.tsx` — Sanity TEAM_MEMBERS_QUERY + MemberCard 그리드 + stagger 순차 등장 | |
+| 2-3-8 | 빌드 검증                | ✅   | `tsc --noEmit` 에러 0 + `npm run lint` 에러 0 + `npm run build` 성공 (19.1s) + 3개 라우트 정적 생성 확인 |               |
+
+#### 2-3-1 About 상수 파일 구현 상세
+
+- **구현 파일**: `src/lib/constants/about.ts`
+- **기능 체크**:
+  - [x] `VISION_MISSION` 객체: 비전(Eye) + 목표(Target) — 실제 PCK 비전/목표 텍스트 반영
+  - [x] `ACTIVITY_AREAS` 배열: 8개 주요 활동 영역 (갈등전환/Shield, 평화구축/Building2, 평화교육/GraduationCap, 비폭력모임/Users, 종교간대화/Handshake, 옹호활동/Megaphone, 협력단체교류/Link2, 평화의날/CalendarHeart) — id+제목+설명+아이콘
+  - [x] `ABOUT_CONFIG` 객체: 히어로 타이틀/서브타이틀, 서브 페이지 링크, activitiesTitle/activitiesSubtitle, introTitle, PCK 소개 텍스트 4문단
+  - [x] `ABOUT_NAV` 배열: 서브 네비게이션 (소개/연혁/임원진) href 3개
+  - [x] `HISTORY_CONFIG` 객체: 타임라인 페이지 타이틀/설명/연도범위, 빈 상태 메시지
+  - [x] `TEAM_CONFIG` 객체: 임원진 페이지 타이틀/설명, 빈 상태 메시지
+  - [x] `as const` assertion + `ActivityArea`, `AboutNavItem` 타입 export
+
+#### 2-3-2 About 레이아웃 구현 상세
+
+- **구현 파일**: `src/app/(main)/about/layout.tsx` (클라이언트 — `usePathname`)
+- **기능 체크**:
+  - [x] 공통 히어로 배너: peace-cream 배경 + "단체 소개" 타이틀 + 서브타이틀
+  - [x] 서브 네비게이션: ABOUT_NAV 3개 링크, border-b 탭 스타일
+  - [x] 현재 경로 활성 표시 (활성 탭 peace-navy border-b-2 + 텍스트 강조, 다크모드 peace-sky)
+  - [x] 모바일: 수평 스크롤(`overflow-x-auto` + `shrink-0`) / 데스크톱: 인라인 링크
+  - [x] `children` 렌더링 (서브 페이지 콘텐츠)
+  - [x] 다크모드 지원 (`dark:bg-peace-navy/30`, `dark:text-peace-cream`)
+  - [x] 시맨틱: `<nav>` + `aria-label="단체 소개 메뉴"` + `aria-current="page"`
+
+#### 2-3-3 About 메인 페이지 구현 상세
+
+- **구현 파일**: `src/app/(main)/about/page.tsx` (서버, metadata) + `about-content.tsx` (클라이언트, Framer Motion)
+- **기능 체크**:
+  - [x] **섹션 순서**: ① 단체 소개 텍스트 → ② WaveDivider(cream flip) → ③ 비전·목표(cream 배경) → ④ WaveDivider(cream) → ⑤ 주요 활동 영역 + CTA
+  - [x] **단체 소개 텍스트** (맨 앞): "팍스크리스티코리아란?" 타이틀 + PCK/PCI 소개 4문단 (ABOUT_CONFIG.introTexts)
+  - [x] **비전·목표 섹션**: 2열(md+) / 1열(모바일) 카드, peace-cream 배경
+  - [x] 비전/목표 카드: lucide 아이콘(Eye/Target) + 제목 + 설명, peace-navy/peace-sky 배경 원형 아이콘
+  - [x] 카드 스타일: border + rounded-2xl + shadow-sm, 호버 shadow-md 전환
+  - [x] **주요 활동 영역 섹션**: 4열(lg) / 2열(sm) / 1열(모바일) 카드 그리드, max-w-6xl, 8개 ACTIVITY_AREAS
+  - [x] 활동 영역 카드: lucide 아이콘(8종) + 제목 + 설명, 호버 시 shadow-md 전환
+  - [x] **서브 페이지 안내**: "연혁 보기" + "임원진 보기" outline 버튼 + ArrowRight 아이콘 (justify-center)
+  - [x] WaveDivider 섹션 구분: cream flip / cream 2개 사용
+  - [x] Framer Motion `useInView` + `containerVariants` + `staggerChildren: 0.12` 순차 등장
+  - [x] `useReducedMotion` 접근성 대응 (reducedItemVariants: 단순 fadeIn)
+  - [x] 다크모드 지원 (`dark:bg-background`, `dark:bg-muted`, `dark:text-peace-cream`)
+  - [x] `export const metadata` — 제목: "단체 소개 | 팍스크리스티코리아", description 설정
+
+#### 2-3-4 TimelineItem 컴포넌트 구현 상세
+
+- **구현 파일**: `src/components/molecules/TimelineItem.tsx` (서버 컴포넌트)
+- **기능 체크**:
+  - [x] Props: `year`, `title`, `description?`, `position: 'left' | 'right'`, `className?`
+  - [x] 연도 뱃지: rounded-full, peace-navy 배경 + 흰색 텍스트 (다크: peace-sky), z-10
+  - [x] 카드 본체: border + rounded-xl + shadow-sm, 제목(font-semibold) + 설명(선택적)
+  - [x] 좌우 배치: `position='left'` → `md:flex-row-reverse` + `md:text-right`, `position='right'` → `md:flex-row`
+  - [x] **반응형**: 데스크톱(md+) 좌우 교대 / 모바일 항상 `flex-row` (오른쪽 정렬)
+  - [x] 다크모드 지원 (`dark:bg-background`, `dark:text-peace-cream`)
+  - [x] `aria-label="${year}년"` 접근성
+  - [x] `TimelineItemProps` 타입 export
+
+#### 2-3-5 History 타임라인 페이지 구현 상세
+
+- **구현 파일**: `src/app/(main)/about/history/page.tsx` (서버 async) + `history-timeline.tsx` (클라이언트)
+- **기능 체크**:
+  - [x] Sanity `TIMELINE_QUERY` ISR fetch (`revalidate: 3600`)
+  - [x] 에러 시 빈 배열 → HISTORY_CONFIG.emptyMessage + emptyDescription 폴백 표시
+  - [x] **수직 타임라인 레이아웃**: 중앙(`md:left-1/2`)/왼쪽(`left-5`) 수직선, w-0.5
+  - [x] TimelineItem 좌우 교대: `index % 2 === 0 ? 'left' : 'right'`
+  - [x] 수직선: absolute, peace-navy/20 (다크: peace-sky/30), 전체 높이
+  - [x] **Framer Motion**: 컨테이너 `staggerChildren: 0.2`, 아이템 fadeIn + slideX (좌: x:40→0, 우: x:-40→0)
+  - [x] `useReducedMotion` 접근성 대응 (단순 fadeIn)
+  - [x] 페이지 헤더: HISTORY_CONFIG.title + subtitle + yearRange
+  - [x] 다크모드 지원 (수직선 `dark:bg-peace-sky/30`)
+  - [x] 빈 상태 UI: "아직 등록된 연혁이 없습니다" + CMS 안내
+  - [x] `export const metadata` — 제목: "연혁 | 팍스크리스티코리아"
+
+#### 2-3-6 MemberCard 컴포넌트 구현 상세
+
+- **구현 파일**: `src/components/molecules/MemberCard.tsx` (서버 컴포넌트)
+- **기능 체크**:
+  - [x] Props: `member: TeamMember` (from `src/types/sanity.ts`), `className?`
+  - [x] **프로필 사진**: Sanity `imagePresets.avatar()` → `next/image` 120x120, rounded-xl
+  - [x] 사진 없을 때: 이니셜 아바타 (이름 첫 글자, peace-navy 배경 + 흰색 텍스트, 다크: peace-sky)
+  - [x] Next/Image `sizes="(max-width: 640px) 100px, 120px"` 반응형
+  - [x] **이름**: text-lg font-semibold, text-center
+  - [x] **직책**: peace-sky 색상 텍스트, text-sm font-medium
+  - [x] **소개**: bio 텍스트 3줄 line-clamp (`line-clamp-3`), text-muted-foreground
+  - [x] 카드 스타일: border + rounded-lg + shadow-sm, 호버 시 shadow-md 전환
+  - [x] 다크모드 지원 (`dark:bg-background`, `dark:text-peace-cream`)
+  - [x] `aria-label="{이름} - {직책}"` 접근성 (`<article>` 시맨틱)
+
+#### 2-3-7 Team 임원진 페이지 구현 상세
+
+- **구현 파일**: `src/app/(main)/about/team/page.tsx` (서버 async) + `team-grid.tsx` (클라이언트)
+- **기능 체크**:
+  - [x] Sanity `TEAM_MEMBERS_QUERY` ISR fetch (`revalidate: 3600`)
+  - [x] `order(order asc)` 정렬 (GROQ 쿼리에서 처리)
+  - [x] 에러 시 빈 배열 → TEAM_CONFIG.emptyMessage + emptyDescription 폴백 표시
+  - [x] **MemberCard 그리드**: 1열(모바일) / 2열(sm) / 3열(md) / 4열(lg) (`grid gap-6`)
+  - [x] Framer Motion `staggerChildren: 0.1` 순차 등장 + `useInView` 트리거 (`margin: -80px`)
+  - [x] `useReducedMotion` 접근성 대응 (reducedItemVariants)
+  - [x] 페이지 헤더: TEAM_CONFIG.title + subtitle
+  - [x] 다크모드 지원
+  - [x] 빈 상태 UI: "아직 등록된 임원진이 없습니다" + CMS 안내
+  - [x] `export const metadata` — 제목: "임원진 | 팍스크리스티코리아"
+
+#### 2-3-8 빌드 검증 상세
+
+- [x] `npx tsc --noEmit` — TypeScript 에러 0건
+- [x] `npm run lint` — ESLint 에러 0건 (`.claude/**` ignore 추가)
+- [x] `npm run build` — 프로덕션 빌드 성공 (Compiled 19.1s)
+- [x] `/about` 페이지 — 정적 생성 (○ Static)
+- [x] `/about/history` 페이지 — ISR 정적 생성 (Revalidate 1h)
+- [x] `/about/team` 페이지 — ISR 정적 생성 (Revalidate 1h)
+
+#### 2-3 완료 체크포인트
+
+- [x] About 메인: 소개텍스트 → 비전·목표 2열 카드 → 주요 활동 영역 4×2 그리드 정상 표시
+- [x] About 메인: Framer Motion 스크롤 애니메이션 (stagger 0.12) + useReducedMotion 대응
+- [x] 서브 네비: 소개/연혁/임원진 탭 전환 + 현재 경로 활성 표시
+- [x] History: 수직 타임라인 중앙선 + 좌우 교대 배치 (데스크톱)
+- [x] History: 모바일 왼쪽 정렬 타임라인 정상 표시
+- [x] History: Framer Motion staggerChildren + slideX 애니메이션
+- [x] Team: 임원진 카드 그리드 1/2/3/4열 반응형 전환
+- [x] Team: 프로필 사진 Sanity Image + 이니셜 폴백 정상 동작
+- [x] Team: Framer Motion stagger 순차 등장 애니메이션
+- [x] 다크모드: 3개 페이지 모두 정상 전환
+- [x] 접근성: 시맨틱 HTML + aria-label + aria-current 적용
+- [x] Sanity 미연결 상태에서 graceful fallback (빈 상태 UI)
+- [x] 빌드: tsc + lint + build 에러 0건
+
+#### 2-3 생성/수정 파일 목록
+
+| 구분 | 파일 경로                                           | 서버/클라이언트 |
+| ---- | --------------------------------------------------- | --------------- |
+| 신규 | `src/lib/constants/about.ts`                        | 공유 데이터     |
+| 신규 | `src/app/(main)/about/layout.tsx`                   | 클라이언트 (usePathname) |
+| 신규 | `src/app/(main)/about/page.tsx`                     | 서버 (metadata) |
+| 신규 | `src/app/(main)/about/about-content.tsx`            | 클라이언트 (Framer Motion) |
+| 신규 | `src/components/molecules/TimelineItem.tsx`         | 서버            |
+| 신규 | `src/app/(main)/about/history/page.tsx`             | 서버 (async, ISR) |
+| 신규 | `src/app/(main)/about/history/history-timeline.tsx` | 클라이언트 (Framer Motion) |
+| 신규 | `src/components/molecules/MemberCard.tsx`           | 서버            |
+| 신규 | `src/app/(main)/about/team/page.tsx`                | 서버 (async, ISR) |
+| 신규 | `src/app/(main)/about/team/team-grid.tsx`           | 클라이언트 (Framer Motion) |
+| 수정 | `eslint.config.mjs`                                 | `.claude/**` ignore 추가 |
+
+#### 2-3 기술 패턴 메모
+
+- 서버/클라이언트 분리: metadata export는 서버 page.tsx에서, Framer Motion 애니메이션은 별도 클라이언트 컴포넌트로 분리 (Next.js "use client" + metadata 충돌 방지)
+- History/Team 페이지: 서버 async page → Sanity fetch → 클라이언트 래퍼에 props 전달
+- TimelineItem/MemberCard: 서버 컴포넌트 (상태 불필요), 부모 클라이언트 래퍼에서 motion.div로 감싸서 애니메이션 적용
+- About 레이아웃: `usePathname()` 사용으로 "use client" 필수, 히어로 배너 + 탭 네비 공통화
+- lucide-react 아이콘: 실제 PCK 활동 내용에 맞게 8종 아이콘 선정 (Shield, Building2, GraduationCap, Users, Handshake, Megaphone, Link2, CalendarHeart)
 
 ### 2-4. 뉴스/활동 목록 + 상세 (ISR)
 
@@ -189,9 +510,11 @@
 
 - [x] Header: 360px~1440px 반응형 정상 (2-1 완료)
 - [x] Hero: 이미지 전환 + 타이핑 애니메이션 (2-2) — 4장 슬라이더 + 도트 인디케이터 + 키보드 접근성
-- [ ] Impact Counter: 뷰포트 진입 시 카운트업 (2-2)
-- [ ] 뉴스 카드: Sanity 데이터 3건 표시 (2-2)
-- [ ] 타임라인: 스크롤 시 fade-in (2-3)
+- [x] Impact Counter: 뷰포트 진입 시 카운트업 (2-2) — useInView + rAF 카운트업 + stagger 순차 등장
+- [x] 뉴스 카드: Sanity 데이터 3건 표시 (2-2) — LatestNews + NewsCard + Sanity Studio/스키마 완료
+- [x] About: 소개텍스트 + 비전·목표 2열 카드 + 주요 활동 영역 4×2 그리드 + CTA 링크 (2-3)
+- [x] 타임라인: 수직 중앙선 + 좌우 교대 + Framer Motion slideX fade-in (2-3)
+- [x] 임원진: MemberCard 프로필 그리드 + Sanity ISR + 이니셜 폴백 (2-3)
 - [ ] ISR: Cache-Control 헤더 확인 (2-4)
 - [x] WaveDivider: 섹션 전환부 정상 렌더링 (2-1 완료)
 - [x] 다크모드: 전체 컬러 전환 정상 (2-1 완료)
@@ -271,7 +594,9 @@
 | Phase 0     | 7         | 7      | 100%     |
 | Phase 1     | 6         | 6      | 100%     |
 | Phase 2-1   | 10        | 10     | **100%** |
-| Phase 2-2~4 | 17        | 1      | 6%       |
+| Phase 2-2   | 8         | 8      | **100%** |
+| Phase 2-3   | 8         | 8      | **100%** |
+| Phase 2-4   | 5         | 0      | 0%       |
 | Phase 3     | 6         | 0      | 0%       |
 | Phase 4     | 5         | 0      | 0%       |
-| **전체**    | **51**    | **24** | **47%**  |
+| **전체**    | **55**    | **39** | **71%**  |
