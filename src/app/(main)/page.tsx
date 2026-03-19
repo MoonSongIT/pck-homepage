@@ -2,6 +2,7 @@ import { HeroSection } from '@/components/organisms/HeroSection'
 import { ImpactCounter } from '@/components/organisms/ImpactCounter'
 import { DonationCTA } from '@/components/organisms/DonationCTA'
 import { LatestNews } from '@/components/organisms/LatestNews'
+import { NewsletterSection } from '@/components/organisms/NewsletterSection'
 import { WaveDivider } from '@/components/atoms/WaveDivider'
 import { client } from '@/lib/sanity/client'
 import { LATEST_POSTS_QUERY } from '@/lib/sanity/queries'
@@ -33,6 +34,10 @@ export default async function Home() {
       <WaveDivider color="cream" />
 
       <LatestNews posts={posts} />
+
+      <WaveDivider color="navy" />
+
+      <NewsletterSection />
     </>
   )
 }

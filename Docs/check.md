@@ -138,8 +138,8 @@
 | 2-2-4 | NewsCard 분자 컴포넌트             | ✅   | 카테고리 뱃지(색상 매핑) + Next/Image 썸네일 + 제목 + 날짜 + 발췌문, 호버 스케일 | |
 | 2-2-5 | Sanity Studio + 스키마             | ✅   | `/studio` 라우트 임베딩, 4개 스키마(post/education/teamMember/timeline) 정의, sanity+styled-components+@sanity/vision 설치 | |
 | 2-2-6 | DonationCTA 컴포넌트               | ✅   | 후원 금액 카드 4종(선택식) + "추천" 뱃지 + CTA 버튼(금액 연동 `/donate?amount=`) + peace-cream 배경, Framer Motion stagger, 다크모드/접근성 대응 | |
-| 2-2-7 | NewsletterSection 컴포넌트         | ⬜   | 이메일 입력 폼 → Resend API 구독 처리 | |
-| 2-2-8 | 메인 페이지 조립                   | 🔄   | `src/app/(main)/page.tsx` — Hero → Impact → DonationCTA → LatestNews 조립 완료. Newsletter 실제 구현 후 교체 예정 | |
+| 2-2-7 | NewsletterSection 컴포넌트         | ✅   | 네이비 배경 이메일 구독 폼, Server Action(Zod+Prisma+Resend), useActionState 폼 상태 관리, 성공/에러/중복 처리, Framer Motion 스크롤 애니메이션 | |
+| 2-2-8 | 메인 페이지 조립                   | ✅   | `src/app/(main)/page.tsx` — Hero → WaveDivider → ImpactCounter → WaveDivider → DonationCTA → WaveDivider → LatestNews → WaveDivider → NewsletterSection 전체 조립 완료 | |
 
 #### 2-2-1 HeroSection 구현 상세
 
@@ -266,6 +266,49 @@
   - `defaultPlan` 모듈 레벨 계산 (popular 카드 기본 선택)
   - CTA 버튼 `asChild` + `Link` 조합으로 `/donate?amount=` 전달
 
+#### 2-2-7 NewsletterSection 구현 상세
+
+- **구현 파일**:
+  - `src/components/organisms/NewsletterSection.tsx` — 클라이언트 컴포넌트
+  - `src/app/actions/newsletter.ts` — Server Action (`'use server'`)
+  - `src/lib/constants/newsletter.ts` — 설정 상수 (제목, 메시지, 아이콘)
+
+- **기능 체크**:
+  - [x] 네이비 배경(`bg-peace-navy`) + 크림색 텍스트 레이아웃
+  - [x] 좌측 제목+설명 / 우측 이메일 폼 (md+), 모바일은 세로 스택
+  - [x] `useActionState` + Server Action으로 폼 제출 처리
+  - [x] Zod `z.string().email()` 서버 사이드 이메일 검증
+  - [x] `prisma.newsletterSubscriber.create()` DB 저장
+  - [x] unique constraint 충돌 → "이미 구독 중인 이메일입니다" 에러 메시지
+  - [x] Resend API Key 존재 시 환영 이메일 발송, 미설정 시 skip (graceful)
+  - [x] 성공 시: CheckCircle 아이콘 + 성공 메시지, 폼 숨김
+  - [x] 에러 시: 빨간색 에러 메시지 (`role="alert"`)
+  - [x] 로딩 시: Loader2 스피너 + 입력 필드 비활성화
+  - [x] Framer Motion `useInView` + `useReducedMotion` 스크롤 애니메이션
+  - [x] 다크모드 지원 (`dark:bg-peace-navy/90`)
+  - [x] `aria-label="뉴스레터 구독"` 섹션 접근성
+
+- **기술 패턴**:
+  - React 19 `useActionState<NewsletterResult | null, FormData>` — Server Action 연동
+  - `zod/v4` import 패턴 (Zod v4 호환)
+  - Resend dynamic import (`await import('resend')`) — API Key 없을 때 번들 절약
+  - `from: 'Pax Christi Korea <noreply@paxchristikorea.or.kr>'` 발신 주소
+
+#### 2-2-8 메인 페이지 조립 상세
+
+- **구현 파일**: `src/app/(main)/page.tsx` — 서버 컴포넌트 (async)
+- **섹션 순서**:
+  1. `<HeroSection />` — 풀스크린 슬라이더
+  2. `<WaveDivider color="navy" />` — 네이비 물결
+  3. `<ImpactCounter />` — 통계 카운터
+  4. `<WaveDivider color="cream" flip />` — 크림 물결 (반전)
+  5. `<DonationCTA />` — 후원 카드 선택
+  6. `<WaveDivider color="cream" />` — 크림 물결
+  7. `<LatestNews posts={posts} />` — 최신 뉴스 3건
+  8. `<WaveDivider color="navy" />` — 네이비 물결
+  9. `<NewsletterSection />` — 이메일 구독
+- **데이터**: Sanity `LATEST_POSTS_QUERY` ISR fetch (`revalidate: 3600`)
+
 #### 2-2 생성/수정 파일 목록
 
 | 구분 | 파일 경로                                      | 서버/클라이언트 |
@@ -283,6 +326,9 @@
 | 신규 | `sanity.config.ts`                             | 클라이언트      |
 | 신규 | `src/app/studio/[[...tool]]/page.tsx`          | 서버            |
 | 신규 | `src/sanity/schemaTypes/*.ts` (5파일)          | 공유 데이터     |
+| 신규 | `src/components/organisms/NewsletterSection.tsx`| 클라이언트      |
+| 신규 | `src/app/actions/newsletter.ts`                | 서버 액션       |
+| 신규 | `src/lib/constants/newsletter.ts`              | 공유 데이터     |
 | 신규 | `public/images/news/placeholder-{1~3}.svg`     | 정적 에셋       |
 
 ---
@@ -393,8 +439,8 @@
 | Phase 0     | 7         | 7      | 100%     |
 | Phase 1     | 6         | 6      | 100%     |
 | Phase 2-1   | 10        | 10     | **100%** |
-| Phase 2-2   | 8         | 6      | **75%**  |
+| Phase 2-2   | 8         | 8      | **100%** |
 | Phase 2-3~4 | 10        | 0      | 0%       |
 | Phase 3     | 6         | 0      | 0%       |
 | Phase 4     | 5         | 0      | 0%       |
-| **전체**    | **52**    | **29** | **56%**  |
+| **전체**    | **52**    | **31** | **60%**  |
