@@ -2,7 +2,7 @@
 
 > 최종 수정: 2026-03-20
 > 프로젝트: 팍스크리스티코리아(Pax Christi Korea) 공식 웹사이트 리뉴얼
-> 기술 스택: Next.js 15 + TypeScript + Tailwind CSS v4 + Supabase + Sanity.io
+> 기술 스택: Next.js 16 + TypeScript + Tailwind CSS v4 + Supabase + Sanity.io
 
 ---
 
@@ -979,217 +979,910 @@ type MemberCardProps = {
 
 ## Phase 3 — 기능 구현
 
-### 3-1. 후원 시스템 (토스페이먼츠 연동)
-
-**파일**:
-
-| 파일                                  | 설명                                    |
-| ------------------------------------- | --------------------------------------- |
-| `src/app/(main)/donate/page.tsx`      | 후원 페이지 (정기/일시 탭, 금액 선택)   |
-| `src/app/api/donate/route.ts`         | 결제 승인 API                           |
-| `src/app/api/donate/confirm/route.ts` | 결제 확인 콜백                          |
-| `src/lib/payments/toss.ts`            | 토스페이먼츠 유틸 (API 호출, 서명 검증) |
-| `src/hooks/useDonation.ts`            | 후원 상태 관리 훅                       |
-
-**후원 페이지 상세**:
-
-- 탭: 정기 후원 / 일시 후원
-- 금액 선택: 1만원, 3만원, 5만원, 직접 입력
-- 개인정보 입력: 이름, 이메일, 전화번호
-- 개인정보처리방침 동의 체크박스 (필수)
-- "후원하기" 버튼 → 토스페이먼츠 결제창
-- 결제 완료 → 감사 페이지 + 이메일 (Resend)
-
-**API 플로우**:
-
-1. 클라이언트에서 토스페이먼츠 SDK로 결제 요청
-2. 결제 성공 → `/api/donate/confirm`으로 paymentKey 전달
-3. 서버에서 토스페이먼츠 결제 승인 API 호출
-4. 승인 성공 → Donation 레코드 DB 저장
-5. Resend로 감사 이메일 발송
-
-**보안**:
-
-- TOSS_SECRET_KEY는 서버 사이드에서만 사용
-- Rate Limiting: 10회/분 (Upstash Redis)
-
-**의존성**: 1-3 (DB), 1-4 (인증)
-
----
-
-### 3-2. 재정 투명성 시스템
-
-**관리자 페이지** (ADMIN 전용):
-
-| 파일                                            | 설명                              |
-| ----------------------------------------------- | --------------------------------- |
-| `src/app/(admin)/layout.tsx`                    | 관리자 레이아웃 (ADMIN 권한 체크) |
-| `src/app/(admin)/finance/page.tsx`              | 재정 관리 종합 현황 대시보드      |
-| `src/app/(admin)/finance/expenses/page.tsx`     | 제경비 목록/검색/필터             |
-| `src/app/(admin)/finance/expenses/new/page.tsx` | 제경비 입력 폼                    |
-| `src/app/(admin)/finance/budget/page.tsx`       | 예산 편성/집행 현황               |
-| `src/app/(admin)/finance/budget/new/page.tsx`   | 예산 항목 등록                    |
-| `src/app/(admin)/finance/donations/page.tsx`    | 후원금 입금 내역                  |
-| `src/app/(admin)/finance/reports/page.tsx`      | 결산 보고서 생성/관리             |
-
-**제경비 입력 폼**:
-
-- 필드: 날짜, 항목명, 카테고리(인건비/사무비/행사비/교통비/기타), 금액, 비고, 증빙파일
-- Zod 검증: 금액 > 0, 날짜 유효성, 필수 필드
-- 증빙파일: Supabase Storage 또는 Cloudflare Images 업로드
-
-**예산 관리**:
-
-- 연도별·카테고리별 예산 편성
-- 집행 금액 = 해당 카테고리 Expense 합계 (자동 계산)
-- 잔액 = 편성액 - 집행액 (자동)
-- 집행률 프로그레스 바 시각화
-
-**결산 보고서**:
-
-- 연도 선택 → 수입(후원금 총액) / 지출(Expense 총액) 자동 집계
-- 카테고리별 지출 비율 차트
-- PDF 생성 (선택적 — 서버 사이드 PDF 생성 또는 업로드)
-- isPublished 토글로 공개/비공개
-
-**공개 페이지** (로그인 불필요):
-
-| 파일                                          | 설명                  |
-| --------------------------------------------- | --------------------- |
-| `src/app/(main)/transparency/page.tsx`        | 연도별 재정 현황 요약 |
-| `src/app/(main)/transparency/[year]/page.tsx` | 연도별 상세 보고서    |
-
-**투명성 페이지 상세**:
-
-- 연도 선택 드롭다운
-- 수입·지출 총액 요약 카드
-- 카테고리별 지출 비율: 도넛 차트 (Recharts)
-- 결산 보고서 PDF 다운로드 링크
-- isPublished=true인 보고서만 표시
-
-**API**:
-
-- `POST /api/finance/expenses` — 제경비 생성 (ADMIN)
-- `GET /api/finance/expenses` — 제경비 목록 (ADMIN)
-- `PUT /api/finance/expenses/[id]` — 제경비 수정 (ADMIN)
-- `DELETE /api/finance/expenses/[id]` — 제경비 삭제 (ADMIN)
-- `POST /api/finance/budget` — 예산 항목 생성 (ADMIN)
-- `GET /api/finance/budget` — 예산 목록 (ADMIN)
-- `GET /api/finance/reports` — 결산 보고서 조회 (공개)
-- `POST /api/finance/reports` — 결산 보고서 생성 (ADMIN)
-
-**의존성**: 1-3 (DB), 1-4 (인증, ADMIN 권한)
-
----
-
-### 3-3. 평화학교 교육 신청
-
-**파일**:
-
-| 파일                                      | 설명                           |
-| ----------------------------------------- | ------------------------------ |
-| `src/app/(main)/education/page.tsx`       | 평화학교 소개 + 현재 기수 일정 |
-| `src/app/(main)/education/apply/page.tsx` | 교육 신청 폼                   |
-| `src/app/(admin)/education/page.tsx`      | 신청 목록 관리 (ADMIN)         |
-
-**신청 폼 필드**:
-
-- 이름 (필수, 2~50자)
-- 이메일 (필수, 이메일 형식)
-- 전화번호 (필수, 한국 전화번호 형식)
-- 소속 (선택)
-- 지원 동기 (필수, 10~500자)
-- 개인정보처리방침 동의 (필수)
-
-**플로우**:
-
-1. 폼 제출 → Zod 클라이언트 검증 → Server Action으로 서버 재검증
-2. DB 저장 (EducationApplication 모델)
-3. Resend로 신청 확인 이메일 발송 (신청자 + 관리자)
-4. 성공 페이지 표시
-
-**의존성**: 1-3 (DB), 1-5 (Sanity — 기수 정보)
-
----
-
-### 3-4. 회원 커뮤니티 (인증 + 게시판)
-
-**파일**:
-
-| 파일                                          | 설명                                |
-| --------------------------------------------- | ----------------------------------- |
-| `src/app/(main)/community/page.tsx`           | 게시판 목록 (자유게시판 / 평화나눔) |
-| `src/app/(main)/community/[id]/page.tsx`      | 게시글 상세 + 댓글                  |
-| `src/app/(main)/community/write/page.tsx`     | 글쓰기                              |
-| `src/app/(main)/community/[id]/edit/page.tsx` | 글수정 (본인만)                     |
-
-**게시판 구조**:
-
-- 2개 게시판: 자유게시판(FREE), 평화 나눔(PEACE_SHARING) — BoardType enum
-- 목록: 제목, 작성자, 날짜, 댓글 수 표시
-- 페이지네이션: 20건씩
-
-**권한**:
-
-- 비로그인 → `/login`으로 리다이렉트 (middleware)
-- 글쓰기: MEMBER 이상
-- 수정/삭제: 본인 글만 (userId 비교)
-- 댓글: 작성 MEMBER 이상, 삭제 본인만
-
-**의존성**: 1-3 (DB), 1-4 (인증)
+> **진행 순서**: 외부 의존성이 적은 것부터 → 3-5(네트워크 지도) → 3-3(교육 신청) → 3-4(커뮤니티) → 3-6(다국어) → 3-2(재정 투명성) → 3-1(후원 시스템)
+> **추가 설치 패키지**: `recharts` (3-2 차트), `@tosspayments/tosspayments-sdk` (3-1 결제)
 
 ---
 
 ### 3-5. 국제 네트워크 지도
 
-**파일**:
+> **우선순위 1** — 외부 의존 없음, react-simple-maps 설치 완료
 
-| 파일                                    | 설명                 |
-| --------------------------------------- | -------------------- |
-| `src/app/(main)/network/page.tsx`       | 네트워크 지도 페이지 |
-| `src/components/organisms/PeaceMap.tsx` | 세계 지도 컴포넌트   |
+#### 3-5-1. 네트워크 데이터 + 상수 파일
+
+**파일**: `src/lib/constants/network.ts`
+
+**내용**:
+
+```typescript
+export type PaxChristiMember = {
+  id: string
+  country: string
+  countryEn: string
+  iso3: string          // ISO 3166-1 alpha-3 (지도 매칭)
+  coordinates: [number, number] // [longitude, latitude]
+  name: string          // 지부명
+  nameEn: string
+  established?: number  // 설립 연도
+  website?: string
+  isHighlighted?: boolean // 한국(PCK) 강조
+}
+
+// PCI 회원국 50개 데이터 (좌표 + 지부 정보)
+export const MEMBER_COUNTRIES: PaxChristiMember[] = [
+  { id: 'kor', country: '한국', countryEn: 'South Korea', iso3: 'KOR',
+    coordinates: [127.0, 37.5], name: '팍스크리스티코리아', nameEn: 'Pax Christi Korea',
+    established: 2019, website: 'https://paxchristikorea.or.kr', isHighlighted: true },
+  // ... 49개 추가
+]
+
+export const NETWORK_CONFIG = {
+  hero: { title: '국제 평화 네트워크', subtitle: 'Pax Christi International 회원국' },
+  mapCenter: [15, 25] as [number, number],  // 유럽 중심 (PCI 본부)
+  mapScale: 150,
+  pinSize: { default: 6, highlighted: 10 },
+  emptyMessage: '네트워크 데이터를 불러올 수 없습니다',
+} as const
+```
+
+**의존성**: 없음
+
+---
+
+#### 3-5-2. PeaceMap 컴포넌트
+
+**파일**: `src/components/organisms/PeaceMap.tsx` (클라이언트)
 
 **상세**:
 
-- `react-simple-maps` + TopoJSON 세계 지도
-- 팍스크리스티 가입 50개국 핀 표시
-- 순차 등장 애니메이션 (Framer Motion staggerChildren)
-- 한국 핀: 다른 색상(peace-gold)으로 강조 + 맥동 애니메이션
-- 핀 클릭 → 지부 정보 패널 (국가명, 지부명, 설립 연도, 웹사이트 URL)
-- 반응형: 데스크톱 풀 지도, 모바일 줌 + 스와이프
+- `react-simple-maps`: `ComposableMap` + `Geographies` + `Geography` + `Marker`
+- TopoJSON: `https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json` (정적 import 또는 fetch)
+- 지도 투영: `geoMercator`, center/scale NETWORK_CONFIG에서 설정
+- **핀 렌더링**:
+  - 일반 핀: `peace-sky` 색상 원형 (`r=6`)
+  - 한국 핀: `peace-gold` 색상 + 크기 확대 (`r=10`) + 맥동 CSS `animate-ping` 링
+- **인터랙션**:
+  - 핀 호버/클릭 → 정보 패널 (국가명, 지부명, 설립 연도, 웹사이트)
+  - 정보 패널: absolute positioned 카드 (Card + CardContent shadcn/ui)
+  - ESC 키 또는 외부 클릭 시 패널 닫기
+- **Framer Motion**:
+  - 핀 순차 등장: `staggerChildren: 0.02` (50개국이므로 빠른 간격)
+  - 핀 등장: `scale: 0 → 1` + `opacity: 0 → 1`
+  - `useReducedMotion` 접근성 대응
+- **반응형**:
+  - 데스크톱(lg+): 풀폭 지도 + 우측 패널
+  - 모바일: 지도 zoom 축소 + 핀 크기 감소 + 하단 패널
+- **다크모드**: 지도 배경 (`dark:fill-peace-navy/20`), 국가 경계선 색상 전환
+- `aria-label="국제 평화 네트워크 세계 지도"` 접근성
 
-**데이터**: 정적 JSON (50개국 좌표 + 지부 정보)
+**의존성**: 3-5-1
 
-**의존성**: 2-1 (레이아웃)
+---
+
+#### 3-5-3. Network 페이지
+
+**파일**: `src/app/(main)/network/page.tsx` (서버) + `src/app/(main)/network/network-content.tsx` (클라이언트)
+
+**상세**:
+
+- **서버 page.tsx**: `export const metadata` SEO + PeaceMap dynamic import (SSR 비활성화)
+  ```typescript
+  const PeaceMap = dynamic(() => import('@/components/organisms/PeaceMap'), { ssr: false })
+  ```
+- **레이아웃**: 히어로 배너(peace-cream) + 지도 섹션 + 통계 요약 (회원국 수, 대륙별 분포)
+- **통계 섹션**: MEMBER_COUNTRIES 기반 카운터 (아시아/유럽/아메리카/아프리카/오세아니아)
+- **빌드 검증**: tsc + lint + build
+
+**의존성**: 3-5-1, 3-5-2
+
+---
+
+#### 3-5-4. 빌드 검증
+
+- `tsc --noEmit` 에러 0건
+- `npm run lint` 에러 0건
+- `npm run build` 성공
+- `/network` 라우트 등록 확인
+
+---
+
+### 3-3. 평화학교 교육 신청
+
+> **우선순위 2** — Server Action 패턴(Newsletter)과 동일, Sanity education 스키마 활용
+
+#### 3-3-1. 교육 상수 + Zod 스키마
+
+**파일**: `src/lib/constants/education.ts`
+
+**Zod 스키마**:
+
+```typescript
+import { z } from 'zod/v4'
+
+export const educationApplySchema = z.object({
+  name: z.string().min(2, '이름은 2자 이상이어야 합니다').max(50),
+  email: z.string().email('올바른 이메일 형식이 아닙니다'),
+  phone: z.string().regex(/^01[016789]-?\d{3,4}-?\d{4}$/, '올바른 전화번호 형식이 아닙니다'),
+  affiliation: z.string().max(100).optional(),
+  motivation: z.string().min(10, '지원 동기는 10자 이상이어야 합니다').max(500),
+  cohort: z.string().optional(),
+  privacyAgreed: z.literal(true, { message: '개인정보처리방침에 동의해야 합니다' }),
+})
+
+export type EducationApplyInput = z.infer<typeof educationApplySchema>
+
+export const EDUCATION_CONFIG = {
+  hero: { title: '평화학교', subtitle: '비폭력 평화를 배우고 실천합니다' },
+  applyTitle: '교육 신청',
+  applySubtitle: '아래 양식을 작성하여 교육에 신청해 주세요',
+  successMessage: '교육 신청이 완료되었습니다',
+  successDescription: '입력하신 이메일로 확인 메일이 발송됩니다',
+  fields: { /* 필드별 라벨, placeholder, 도움말 */ },
+  emptyMessage: '현재 모집 중인 교육이 없습니다',
+} as const
+```
+
+**의존성**: 없음
+
+---
+
+#### 3-3-2. Education 소개 페이지
+
+**파일**: `src/app/(main)/education/page.tsx` (서버 async) + `src/app/(main)/education/education-content.tsx` (클라이언트)
+
+**상세**:
+
+- **데이터 페칭**: Sanity `EDUCATION_LIST_QUERY` (ISR `revalidate: 3600`)
+  - education 스키마: 기수명, 일정(시작일~종료일), 커리큘럼, 모집 상태(recruiting/closed/upcoming)
+- **레이아웃**:
+  1. 히어로 배너: "평화학교" 타이틀 + 서브타이틀
+  2. 교육 소개 텍스트: PCK 평화학교 취지 설명 (상수)
+  3. 현재/예정 기수 카드 목록:
+     - 기수명, 기간, 모집 상태 뱃지 (recruiting: peace-olive / closed: muted / upcoming: peace-sky)
+     - 커리큘럼 아코디언(Accordion shadcn/ui) 또는 리스트
+     - 모집 중일 때 "신청하기" 버튼 → `/education/apply?cohort={기수ID}`
+  4. 지난 기수 히스토리 (접힌 상태, 클릭 확장)
+- `export const metadata` SEO
+- Framer Motion stagger 순차 등장
+- 빈 상태 UI (Sanity 데이터 없을 때)
+
+**의존성**: 3-3-1, 1-5 (Sanity education 스키마)
+
+---
+
+#### 3-3-3. Education 신청 폼 페이지
+
+**파일**: `src/app/(main)/education/apply/page.tsx` (서버) + `src/app/(main)/education/apply/apply-form.tsx` (클라이언트)
+
+**상세**:
+
+- **클라이언트 폼**: `react-hook-form` + `@hookform/resolvers/zod` + `educationApplySchema`
+- **필드 목록**:
+  | 필드 | 타입 | 필수 | 검증 |
+  |------|------|------|------|
+  | 이름 | Input | ✅ | 2~50자 |
+  | 이메일 | Input (email) | ✅ | 이메일 형식 |
+  | 전화번호 | Input (tel) | ✅ | 한국 전화번호 |
+  | 소속 | Input | ❌ | 최대 100자 |
+  | 지원 동기 | Textarea | ✅ | 10~500자 (글자수 카운터) |
+  | 개인정보처리방침 동의 | Checkbox | ✅ | true 필수 |
+- **URL 쿼리**: `?cohort={기수ID}` → 기수 자동 선택 (Sanity에서 현재 모집중인 기수)
+- **제출**: `useActionState` + Server Action (`src/app/actions/education.ts`)
+- **상태 표시**: 로딩 스피너, 성공 메시지 (CheckCircle), 에러 메시지 (AlertCircle)
+- **접근성**: `aria-describedby` 에러 메시지 연결, `aria-required` 필수 필드
+
+**의존성**: 3-3-1
+
+---
+
+#### 3-3-4. Education Server Action
+
+**파일**: `src/app/actions/education.ts`
+
+**플로우**:
+
+```
+1. FormData → educationApplySchema.safeParse (서버 재검증)
+2. 실패 → { success: false, error: fieldErrors }
+3. 성공 → prisma.educationApplication.create({ name, email, phone, affiliation, motivation, cohort })
+4. Resend 이메일 발송:
+   a. 신청자에게: "교육 신청 접수 확인" (이름, 기수명, 안내사항)
+   b. 관리자에게: "새로운 교육 신청" (신청자 정보 요약)
+5. { success: true, message: '교육 신청이 완료되었습니다' }
+```
+
+**패턴**: Newsletter Server Action과 동일 (Zod 재검증 + Prisma + Resend)
+
+**의존성**: 3-3-1, 1-3 (Prisma)
+
+---
+
+#### 3-3-5. 빌드 검증
+
+- `tsc --noEmit` + `npm run lint` + `npm run build`
+- `/education` + `/education/apply` 라우트 확인
+
+---
+
+### 3-4. 회원 커뮤니티 (인증 + 게시판)
+
+> **우선순위 3** — NextAuth 인증 + Prisma CommunityPost/Comment 모델 활용
+
+#### 3-4-1. 인증 페이지 (로그인/회원가입)
+
+**파일**:
+
+| 파일 | 설명 |
+|------|------|
+| `src/app/(auth)/layout.tsx` | 인증 레이아웃 (센터 정렬, 로고) |
+| `src/app/(auth)/login/page.tsx` | 로그인 페이지 |
+| `src/app/(auth)/login/login-form.tsx` | 로그인 폼 (클라이언트) |
+| `src/app/(auth)/register/page.tsx` | 회원가입 페이지 |
+| `src/app/(auth)/register/register-form.tsx` | 회원가입 폼 (클라이언트) |
+| `src/app/actions/auth.ts` | 회원가입 Server Action |
+| `src/lib/validations/auth.ts` | 로그인/회원가입 Zod 스키마 |
+
+**로그인 폼**:
+
+- 이메일 + 비밀번호 Credentials 로그인
+- 카카오 소셜 로그인 버튼 (아이콘 + "카카오로 로그인")
+- "비밀번호를 잊으셨나요?" 링크 (Phase 4)
+- `signIn('credentials', { email, password, redirectTo: callbackUrl || '/' })`
+- 에러 처리: "이메일 또는 비밀번호가 올바르지 않습니다"
+
+**회원가입 폼**:
+
+- 필드: 이름(2~50자), 이메일(unique), 비밀번호(8자이상), 비밀번호 확인
+- Zod `.refine()` 비밀번호 일치 검증
+- Server Action → `bcrypt.hash(password, 12)` → `prisma.user.create()`
+- 이메일 중복 시 "이미 등록된 이메일입니다" 에러
+- 성공 시 자동 로그인 후 리다이렉트
+
+**Zod 스키마** (`src/lib/validations/auth.ts`):
+
+```typescript
+export const loginSchema = z.object({
+  email: z.string().email('올바른 이메일 형식이 아닙니다'),
+  password: z.string().min(1, '비밀번호를 입력해 주세요'),
+})
+
+export const registerSchema = z.object({
+  name: z.string().min(2, '이름은 2자 이상이어야 합니다').max(50),
+  email: z.string().email('올바른 이메일 형식이 아닙니다'),
+  password: z.string().min(8, '비밀번호는 8자 이상이어야 합니다'),
+  confirmPassword: z.string(),
+}).refine(data => data.password === data.confirmPassword, {
+  message: '비밀번호가 일치하지 않습니다',
+  path: ['confirmPassword'],
+})
+```
+
+**의존성**: 1-4 (NextAuth)
+
+---
+
+#### 3-4-2. 커뮤니티 상수 + Zod 스키마
+
+**파일**: `src/lib/constants/community.ts`, `src/lib/validations/community.ts`
+
+**상수**:
+
+```typescript
+export const BOARD_TYPES = {
+  FREE: { label: '자유게시판', description: '자유로운 이야기를 나눕니다' },
+  PEACE_SHARING: { label: '평화 나눔', description: '평화 활동 경험을 공유합니다' },
+} as const
+
+export const COMMUNITY_CONFIG = {
+  postsPerPage: 20,
+  hero: { title: '커뮤니티', subtitle: '회원 여러분과 함께하는 공간' },
+  emptyMessage: '아직 작성된 글이 없습니다',
+  writeButton: '글쓰기',
+} as const
+```
+
+**Zod 스키마**:
+
+```typescript
+export const postSchema = z.object({
+  title: z.string().min(2, '제목은 2자 이상이어야 합니다').max(200),
+  content: z.string().min(10, '내용은 10자 이상이어야 합니다').max(10000),
+  boardType: z.enum(['FREE', 'PEACE_SHARING']),
+})
+
+export const commentSchema = z.object({
+  content: z.string().min(1, '댓글을 입력해 주세요').max(1000),
+})
+```
+
+**의존성**: 없음
+
+---
+
+#### 3-4-3. 커뮤니티 게시판 목록 페이지
+
+**파일**: `src/app/(main)/community/page.tsx` (서버) + `src/app/(main)/community/community-list.tsx` (클라이언트)
+
+**상세**:
+
+- **데이터 페칭**: Prisma `communityPost.findMany()` + 페이지네이션 (20건씩)
+  - `include: { author: { select: { name: true } }, _count: { select: { comments: true } } }`
+  - `orderBy: { createdAt: 'desc' }`
+- **게시판 탭**: 자유게시판 / 평화 나눔 (URL searchParams `?board=FREE`)
+- **목록 테이블/카드**: 제목 + 작성자 + 날짜 + 댓글 수
+  - 데스크톱: 테이블 레이아웃 (Table shadcn/ui)
+  - 모바일: 카드 레이아웃
+- **글쓰기 버튼**: 우측 상단 고정, peace-orange, `/community/write` 링크
+- **페이지네이션**: 2-4 뉴스 목록과 동일 패턴 (URL searchParams `?page=N`)
+- `export const metadata` SEO
+- 빈 상태 UI
+
+**의존성**: 3-4-2, 1-3 (Prisma), 1-4 (인증 — middleware 보호)
+
+---
+
+#### 3-4-4. 커뮤니티 글쓰기/수정 페이지
+
+**파일**:
+
+| 파일 | 설명 |
+|------|------|
+| `src/app/(main)/community/write/page.tsx` | 글쓰기 서버 래퍼 |
+| `src/app/(main)/community/write/write-form.tsx` | 글쓰기 폼 (클라이언트) |
+| `src/app/(main)/community/[id]/edit/page.tsx` | 글수정 서버 래퍼 (본인 확인) |
+| `src/app/actions/community.ts` | 게시글 CRUD Server Actions |
+
+**글쓰기 폼**:
+
+- 게시판 선택: Select (자유게시판/평화 나눔)
+- 제목: Input (2~200자)
+- 내용: Textarea (10~10000자)
+- `react-hook-form` + `postSchema` Zod 검증
+- Server Action: `createPost` → `prisma.communityPost.create()`
+
+**글수정**:
+
+- `page.tsx`에서 `auth()` 세션 확인 + `post.authorId === session.user.id` 본인 확인
+- 본인 아닌 경우 `notFound()` 또는 403 처리
+- 기존 데이터 프리필 → `updatePost` Server Action
+
+**삭제**:
+
+- `deletePost` Server Action — `post.authorId === session.user.id` 확인 후 삭제
+- 확인 Dialog (AlertDialog shadcn/ui) "정말 삭제하시겠습니까?"
+
+**의존성**: 3-4-2, 1-3, 1-4
+
+---
+
+#### 3-4-5. 커뮤니티 게시글 상세 + 댓글
+
+**파일**: `src/app/(main)/community/[id]/page.tsx` (서버) + `src/app/(main)/community/[id]/post-detail.tsx` (클라이언트)
+
+**상세**:
+
+- **게시글**: 제목 + 작성자 + 날짜 + 본문 (줄바꿈 유지 `whitespace-pre-wrap`)
+- **수정/삭제 버튼**: 본인 글일 때만 표시 (`session.user.id === post.authorId`)
+- **댓글 목록**: `post.comments` + `author.name` + 날짜
+- **댓글 입력 폼**: Textarea + 등록 버튼 (`commentSchema` Zod 검증)
+- **댓글 삭제**: 본인 댓글만 삭제 가능 (X 버튼)
+- **Server Actions**: `createComment`, `deleteComment`
+- `generateMetadata` 동적 제목
+- 존재하지 않는 ID → `notFound()`
+
+**의존성**: 3-4-2, 3-4-4, 1-3, 1-4
+
+---
+
+#### 3-4-6. 빌드 검증
+
+- `tsc --noEmit` + `npm run lint` + `npm run build`
+- `/login`, `/register`, `/community`, `/community/write`, `/community/[id]` 라우트 확인
+- middleware 보호: 비로그인 상태에서 `/community` 접근 → `/login` 리다이렉트 확인
 
 ---
 
 ### 3-6. 다국어(한/영) 적용
 
+> **우선순위 4** — next-intl 설치 완료, 기존 페이지 텍스트 i18n 키로 교체 필요
+
+#### 3-6-1. next-intl 설정 파일
+
 **파일**:
 
-| 파일                          | 설명                        |
-| ----------------------------- | --------------------------- |
-| `src/i18n/ko.json`            | 한국어 번역 파일            |
-| `src/i18n/en.json`            | 영어 번역 파일              |
-| `src/i18n/request.ts`         | next-intl 요청 설정         |
-| `src/i18n/routing.ts`         | 라우팅 설정 (locale prefix) |
-| `src/app/[locale]/layout.tsx` | 다국어 레이아웃             |
+| 파일 | 설명 |
+|------|------|
+| `src/i18n/routing.ts` | 로케일 정의 + 라우팅 설정 |
+| `src/i18n/request.ts` | 서버 요청별 메시지 로딩 |
+| `src/i18n/navigation.ts` | `createNavigation()` 유틸 (Link, redirect, usePathname) |
 
-**적용 범위**:
+**routing.ts**:
 
-- 메인 홈페이지
-- About (소개, 연혁, 임원)
-- Network (네트워크 지도)
-- Header/Footer 공통 텍스트
+```typescript
+import { defineRouting } from 'next-intl/routing'
 
-**라우팅**:
+export const routing = defineRouting({
+  locales: ['ko', 'en'],
+  defaultLocale: 'ko',
+  localePrefix: 'as-needed', // ko: prefix 없음, en: /en/...
+})
+```
 
-- 기본 언어(ko): `/about`, `/news` (prefix 없음)
-- 영어: `/en/about`, `/en/news`
-- 언어 전환: Header 우측 토글 버튼 (KO | EN)
+**request.ts**:
 
-**의존성**: 2-1 이후 (Header에 언어 전환 토글)
+```typescript
+import { getRequestConfig } from 'next-intl/server'
+import { routing } from './routing'
+
+export default getRequestConfig(async ({ requestLocale }) => {
+  let locale = await requestLocale
+  if (!locale || !routing.locales.includes(locale as 'ko' | 'en')) {
+    locale = routing.defaultLocale
+  }
+  return {
+    locale,
+    messages: (await import(`./messages/${locale}.json`)).default,
+  }
+})
+```
+
+**의존성**: 없음
+
+---
+
+#### 3-6-2. 번역 파일 (ko/en)
+
+**파일**: `src/i18n/messages/ko.json`, `src/i18n/messages/en.json`
+
+**구조** (네임스페이스 기반):
+
+```json
+{
+  "common": {
+    "donate": "후원하기",
+    "learnMore": "더 알아보기",
+    "readMore": "자세히 보기"
+  },
+  "header": {
+    "about": "단체 소개",
+    "activities": "활동",
+    "education": "교육",
+    "news": "뉴스",
+    "network": "네트워크",
+    "transparency": "재정 공개"
+  },
+  "footer": { ... },
+  "home": {
+    "hero": { "typing": "그리스도의 평화", "subtitle": "..." },
+    "impact": { ... },
+    "donation": { ... },
+    "newsletter": { ... }
+  },
+  "about": { ... },
+  "network": { ... }
+}
+```
+
+**적용 범위**: Header, Footer, 홈페이지, About, Network 공통 텍스트
+**제외**: 뉴스(Sanity CMS 관리), 커뮤니티(사용자 생성 콘텐츠), 관리자
+
+**의존성**: 없음
+
+---
+
+#### 3-6-3. 라우트 구조 마이그레이션
+
+**변경 사항**:
+
+- `src/app/(main)/layout.tsx` → `src/app/[locale]/(main)/layout.tsx`
+- `src/app/layout.tsx` → next-intl `NextIntlClientProvider` 래핑
+- `middleware.ts` 수정: next-intl `createMiddleware` + 기존 auth 미들웨어 조합
+- 기존 페이지 파일: `useTranslations()` 훅으로 하드코딩 텍스트 교체
+
+**Header 언어 전환**:
+
+- 기존 TopBar 내 "KO | EN" 링크 → 실제 `Link` (`usePathname` + locale 전환)
+- 현재 언어 강조 (bold + 밑줄)
+
+**의존성**: 3-6-1, 3-6-2, 모든 기존 페이지
+
+---
+
+#### 3-6-4. 빌드 검증
+
+- `tsc --noEmit` + `npm run lint` + `npm run build`
+- `/about` (한국어 기본) + `/en/about` (영어) 라우트 확인
+- Header 언어 토글 동작 확인
+
+---
+
+### 3-2. 재정 투명성 시스템
+
+> **우선순위 5** — Recharts 추가 설치 필요, 관리자 레이아웃 신규 구축
+
+#### 3-2-1. 패키지 설치 + 재정 상수 + Zod 스키마
+
+**추가 설치**: `npm install recharts`
+
+**파일**: `src/lib/constants/finance.ts`, `src/lib/validations/finance.ts`
+
+**Zod 스키마**:
+
+```typescript
+export const expenseSchema = z.object({
+  date: z.coerce.date(),
+  description: z.string().min(2, '항목명은 2자 이상이어야 합니다').max(200),
+  category: z.enum(['PERSONNEL', 'OFFICE', 'EVENT', 'TRANSPORT', 'OTHER']),
+  amount: z.number().int().positive('금액은 0보다 커야 합니다'),
+  note: z.string().max(500).optional(),
+})
+
+export const budgetSchema = z.object({
+  year: z.number().int().min(2019).max(2030),
+  category: z.enum(['PERSONNEL', 'OFFICE', 'EVENT', 'TRANSPORT', 'OTHER']),
+  amount: z.number().int().positive('금액은 0보다 커야 합니다'),
+})
+
+export const reportSchema = z.object({
+  year: z.number().int().min(2019).max(2030),
+  isPublished: z.boolean().default(false),
+})
+```
+
+**상수**:
+
+```typescript
+export const EXPENSE_CATEGORY_LABELS: Record<ExpenseCategory, string> = {
+  PERSONNEL: '인건비', OFFICE: '사무비', EVENT: '행사비', TRANSPORT: '교통비', OTHER: '기타',
+}
+
+export const EXPENSE_CATEGORY_COLORS: Record<ExpenseCategory, string> = {
+  PERSONNEL: '#4a90d9', OFFICE: '#6b8f47', EVENT: '#c9a84c', TRANSPORT: '#e8911a', OTHER: '#94a3b8',
+}
+
+export const FINANCE_CONFIG = {
+  admin: { title: '재정 관리', subtitle: '제경비·예산·결산 관리' },
+  transparency: { title: '재정 공개', subtitle: '투명한 재정 운용 현황' },
+  emptyMessage: '등록된 재정 데이터가 없습니다',
+} as const
+```
+
+**의존성**: 없음
+
+---
+
+#### 3-2-2. 관리자 레이아웃
+
+**파일**:
+
+| 파일 | 설명 |
+|------|------|
+| `src/app/(admin)/layout.tsx` | 관리자 레이아웃 (ADMIN 권한 체크 + 사이드바) |
+| `src/app/(admin)/page.tsx` | 관리자 대시보드 (간단 통계) |
+
+**layout.tsx 상세**:
+
+- `auth()` 세션 확인 → `user.role !== 'ADMIN'` → `redirect('/login')`
+- **사이드바 메뉴**: 재정 관리(제경비/예산/후원금/결산), 교육 관리, 회원 관리
+- **반응형**: 데스크톱 좌측 사이드바 240px / 모바일 상단 드롭다운
+- 관리자 전용 스타일 (peace-navy 사이드바)
+
+**대시보드**:
+
+- 요약 카드 4개: 총 후원금, 총 지출, 회원 수, 이번 달 교육 신청
+- Prisma `aggregate` / `count` 쿼리
+
+**의존성**: 1-4 (인증 ADMIN), 1-3 (Prisma)
+
+---
+
+#### 3-2-3. 제경비 관리 (CRUD)
+
+**파일**:
+
+| 파일 | 설명 |
+|------|------|
+| `src/app/(admin)/finance/expenses/page.tsx` | 제경비 목록 (테이블, 필터, 검색) |
+| `src/app/(admin)/finance/expenses/expense-list.tsx` | 목록 클라이언트 컴포넌트 |
+| `src/app/(admin)/finance/expenses/new/page.tsx` | 제경비 등록 폼 |
+| `src/app/(admin)/finance/expenses/[id]/edit/page.tsx` | 제경비 수정 폼 |
+| `src/app/actions/finance.ts` | 재정 Server Actions (createExpense, updateExpense, deleteExpense) |
+
+**목록 페이지**:
+
+- **테이블 컬럼**: 날짜, 항목명, 카테고리(뱃지), 금액(toLocaleString), 비고, 액션(수정/삭제)
+- **필터**: 카테고리 Select + 기간 DateRange (시작일~종료일)
+- **정렬**: 날짜 내림차순 기본, 금액/카테고리 정렬 토글
+- **페이지네이션**: 20건씩
+- **합계 표시**: 필터 적용 후 총 금액 합계
+
+**등록/수정 폼**:
+
+- `react-hook-form` + `expenseSchema`
+- 날짜: Input type="date"
+- 카테고리: Select (5종)
+- 금액: Input type="number" (`toLocaleString` 포맷 표시)
+- **증빙파일**: 향후 Supabase Storage 연동 (현재는 URL 텍스트 입력)
+
+**Server Actions**:
+
+- `createExpense(formData)` → Zod → `prisma.expense.create()`
+- `updateExpense(id, formData)` → Zod → `prisma.expense.update()`
+- `deleteExpense(id)` → `prisma.expense.delete()` + `revalidatePath`
+
+**의존성**: 3-2-1, 3-2-2
+
+---
+
+#### 3-2-4. 예산 관리
+
+**파일**:
+
+| 파일 | 설명 |
+|------|------|
+| `src/app/(admin)/finance/budget/page.tsx` | 예산 편성/집행 현황 |
+| `src/app/(admin)/finance/budget/budget-table.tsx` | 예산 테이블 (클라이언트) |
+| `src/app/(admin)/finance/budget/new/page.tsx` | 예산 항목 등록 |
+
+**예산 현황 페이지**:
+
+- **연도 선택**: Select (2019~현재)
+- **테이블**: 카테고리, 편성액, 집행액(Expense 합계 자동계산), 잔액, 집행률 프로그레스바
+- 집행 금액 = `prisma.expense.aggregate({ where: { category, date: { gte: yearStart, lte: yearEnd } }, _sum: { amount: true } })`
+- 잔액 = 편성액 - 집행액 (음수 시 빨간색 경고)
+- **프로그레스바**: shadcn/ui Progress, 100% 초과 시 `destructive` 색상
+
+**예산 등록**:
+
+- 연도 + 카테고리 + 편성 금액
+- `@@unique([year, category])` → 이미 존재 시 "이미 등록된 항목입니다" (upsert 제안)
+
+**의존성**: 3-2-1, 3-2-2
+
+---
+
+#### 3-2-5. 결산 보고서 관리
+
+**파일**:
+
+| 파일 | 설명 |
+|------|------|
+| `src/app/(admin)/finance/reports/page.tsx` | 결산 보고서 목록/생성 |
+| `src/app/(admin)/finance/reports/report-form.tsx` | 결산 보고서 생성 폼 (클라이언트) |
+
+**결산 보고서 생성**:
+
+- 연도 선택 → "보고서 생성" 버튼
+- Server Action: `generateReport(year)`:
+  1. `totalIncome = prisma.donation.aggregate({ where: { status: 'COMPLETED', createdAt: yearRange }, _sum: { amount: true } })`
+  2. `totalExpense = prisma.expense.aggregate({ where: { date: yearRange }, _sum: { amount: true } })`
+  3. `prisma.financeReport.upsert({ where: { year }, create: { year, totalIncome, totalExpense }, update: { totalIncome, totalExpense } })`
+- isPublished 토글 → 공개/비공개 전환
+- PDF URL: 현재는 수동 업로드 (URL 입력), 향후 서버 PDF 생성
+
+**의존성**: 3-2-1, 3-2-2
+
+---
+
+#### 3-2-6. 재정 투명성 공개 페이지
+
+**파일**:
+
+| 파일 | 설명 |
+|------|------|
+| `src/app/(main)/transparency/page.tsx` | 연도별 재정 현황 요약 (서버) |
+| `src/app/(main)/transparency/transparency-content.tsx` | 차트 + 카드 (클라이언트) |
+| `src/app/(main)/transparency/[year]/page.tsx` | 연도별 상세 보고서 (서버) |
+| `src/components/molecules/DonutChart.tsx` | Recharts 도넛 차트 래퍼 |
+
+**투명성 메인 페이지**:
+
+- **데이터**: `prisma.financeReport.findMany({ where: { isPublished: true }, orderBy: { year: 'desc' } })`
+- **연도별 요약 카드**: 수입(peace-olive) + 지출(peace-orange) + 잔액 표시
+- 카드 클릭 → `/transparency/[year]` 상세 이동
+
+**연도별 상세 보고서**:
+
+- **수입·지출 총액 카드**: 큰 숫자 (`toLocaleString`) + 전년 대비 증감
+- **카테고리별 지출 도넛 차트**: Recharts `PieChart` + `Cell` (5가지 EXPENSE_CATEGORY_COLORS)
+- **카테고리별 지출 테이블**: 카테고리명 + 금액 + 비율(%)
+- **결산 보고서 PDF 다운로드**: `pdfUrl` 존재 시 다운로드 링크
+- ISR `revalidate: 3600`
+- `generateMetadata` SEO
+
+**DonutChart 컴포넌트**:
+
+- Recharts `PieChart` + `Pie` + `Cell` + `Tooltip` + `Legend`
+- Props: `data: { name: string, value: number, color: string }[]`
+- 반응형 크기: 데스크톱 300×300, 모바일 250×250
+- 다크모드 대응 (배경/텍스트 색상)
+- `dynamic(() => import('./DonutChart'), { ssr: false })` SSR 비활성화 (Recharts)
+
+**의존성**: 3-2-1, 3-2-5
+
+---
+
+#### 3-2-7. 빌드 검증
+
+- `tsc --noEmit` + `npm run lint` + `npm run build`
+- `/admin/finance/*`, `/transparency`, `/transparency/[year]` 라우트 확인
+
+---
+
+### 3-1. 후원 시스템 (토스페이먼츠 연동)
+
+> **우선순위 6 (마지막)** — 토스페이먼츠 가맹점 등록 필요 (❗ 외부 블로커)
+> 가맹점 미등록 시에도 UI + 결제 플로우 코드는 구현하고, 테스트 키 확보 후 연동 검증
+
+#### 3-1-1. 토스페이먼츠 유틸 + 상수
+
+**추가 설치**: `npm install @tosspayments/tosspayments-sdk`
+
+**파일**:
+
+| 파일 | 설명 |
+|------|------|
+| `src/lib/payments/toss.ts` | 토스 결제 승인 API 서버 유틸 |
+| `src/lib/constants/donate.ts` | 후원 페이지 상수 (기존 donation.ts 확장) |
+| `src/lib/validations/donate.ts` | 후원 Zod 스키마 |
+
+**toss.ts 서버 유틸**:
+
+```typescript
+const TOSS_SECRET = process.env.TOSS_SECRET_KEY!
+const TOSS_API_URL = 'https://api.tosspayments.com/v1/payments'
+
+export async function confirmPayment(paymentKey: string, orderId: string, amount: number) {
+  const response = await fetch(`${TOSS_API_URL}/confirm`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Basic ${Buffer.from(`${TOSS_SECRET}:`).toString('base64')}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ paymentKey, orderId, amount }),
+  })
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(error.message || '결제 승인에 실패했습니다')
+  }
+  return response.json()
+}
+```
+
+**Zod 스키마**:
+
+```typescript
+export const donateSchema = z.object({
+  donorName: z.string().min(2).max(50),
+  donorEmail: z.string().email(),
+  phone: z.string().regex(/^01[016789]-?\d{3,4}-?\d{4}$/),
+  amount: z.number().int().min(1000, '최소 1,000원 이상이어야 합니다'),
+  type: z.enum(['REGULAR', 'ONE_TIME']),
+  isAnonymous: z.boolean().default(false),
+  privacyAgreed: z.literal(true, { message: '개인정보처리방침에 동의해야 합니다' }),
+})
+```
+
+**의존성**: 없음
+
+---
+
+#### 3-1-2. 후원 페이지
+
+**파일**: `src/app/(main)/donate/page.tsx` (서버) + `src/app/(main)/donate/donate-form.tsx` (클라이언트)
+
+**상세**:
+
+- **탭**: 정기 후원(REGULAR) / 일시 후원(ONE_TIME) — Tabs shadcn/ui
+- **금액 선택**: 4개 프리셋 (1만/3만/5만/10만) + 직접 입력 Input
+  - URL `?amount=30000` 쿼리 → DonationCTA에서 전달받은 금액 자동 선택
+- **개인정보 입력**:
+  | 필드 | 타입 | 필수 |
+  |------|------|------|
+  | 이름 | Input | ✅ |
+  | 이메일 | Input (email) | ✅ |
+  | 전화번호 | Input (tel) | ✅ |
+  | 익명 후원 | Checkbox | ❌ |
+  | 개인정보처리방침 동의 | Checkbox | ✅ |
+- **"후원하기" 버튼**:
+  1. `react-hook-form` + `donateSchema` 클라이언트 검증
+  2. `orderId` 생성: `PCK-{yyyyMMdd}-{nanoid(8)}`
+  3. Donation 레코드 PENDING 상태 DB 생성 (Server Action)
+  4. 토스페이먼츠 SDK `requestPayment()` 호출 → 결제창 이동
+- **반응형**: 2열(md+) — 좌측 금액선택 / 우측 개인정보 입력
+- 다크모드 + 접근성
+
+**의존성**: 3-1-1
+
+---
+
+#### 3-1-3. 결제 콜백 + 성공/실패 페이지
+
+**파일**:
+
+| 파일 | 설명 |
+|------|------|
+| `src/app/(main)/donate/success/page.tsx` | 결제 성공 페이지 (서버) |
+| `src/app/(main)/donate/fail/page.tsx` | 결제 실패 페이지 |
+| `src/app/api/donate/confirm/route.ts` | 결제 승인 API Route |
+
+**결제 성공 페이지 플로우**:
+
+```
+1. 토스 결제 완료 → /donate/success?paymentKey=&orderId=&amount= 리다이렉트
+2. success page.tsx (서버):
+   a. confirmPayment(paymentKey, orderId, amount) — 토스 API 승인
+   b. prisma.donation.update({ where: { orderId }, data: { paymentKey, status: 'COMPLETED', receiptUrl } })
+   c. Resend 감사 이메일 발송 (donorName, amount, orderId)
+3. 감사 화면 표시: "후원해 주셔서 감사합니다!" + 금액 + 영수증 링크
+```
+
+**결제 실패 페이지**:
+
+- `?code=&message=` 쿼리 파라미터 → 에러 메시지 표시
+- "다시 시도하기" → `/donate` 링크
+
+**의존성**: 3-1-1, 3-1-2
+
+---
+
+#### 3-1-4. Rate Limiting 설정
+
+**파일**: `src/lib/rate-limit.ts`
+
+**상세**:
+
+```typescript
+import { Ratelimit } from '@upstash/ratelimit'
+import { Redis } from '@upstash/redis'
+
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL!,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+})
+
+export const donateRateLimit = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(10, '1 m'), // 10회/분
+  prefix: 'donate',
+})
+
+export const loginRateLimit = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(5, '1 m'), // 5회/분
+  prefix: 'login',
+})
+```
+
+**적용 위치**:
+
+- `/api/donate/confirm` → `donateRateLimit` (IP 기반)
+- 로그인 Server Action → `loginRateLimit` (IP 기반)
+- Upstash Redis 미설정 시 graceful skip (rate limiting 비활성화)
+
+**의존성**: Upstash Redis 생성 필요 (❗ 외부 작업)
+
+---
+
+#### 3-1-5. 빌드 검증
+
+- `tsc --noEmit` + `npm run lint` + `npm run build`
+- `/donate`, `/donate/success`, `/donate/fail` 라우트 확인
+- Rate Limiting 단위 테스트
+
+---
+
+### Phase 3 구현 순서 요약
+
+| 순서 | 작업 | 소항목 수 | 외부 의존 | 핵심 패턴 |
+|------|------|-----------|-----------|-----------|
+| 1 | 3-5 네트워크 지도 | 4 | 없음 | react-simple-maps + dynamic import SSR off |
+| 2 | 3-3 교육 신청 | 5 | 없음 | react-hook-form + Server Action (Newsletter 패턴) |
+| 3 | 3-4 커뮤니티 | 6 | 없음 | NextAuth 인증 + Prisma CRUD + middleware |
+| 4 | 3-6 다국어 | 4 | 없음 | next-intl + [locale] 라우트 마이그레이션 |
+| 5 | 3-2 재정 투명성 | 7 | Recharts 설치 | 관리자 레이아웃 + Prisma aggregate + 도넛 차트 |
+| 6 | 3-1 후원 시스템 | 5 | ❗ 토스 가맹점 + Upstash | 토스 SDK + 결제 승인 API + Rate Limit |
+| **합계** | | **31** | | |
 
 ---
 
@@ -1197,18 +1890,22 @@ type MemberCardProps = {
 
 | 검증 항목     | 방법                  | 기대 결과          |
 | ------------- | --------------------- | ------------------ |
-| 후원 결제     | 토스 테스트 키로 결제 | 성공 → DB 저장     |
-| 감사 이메일   | 후원 완료 후          | Resend 발송 확인   |
-| ADMIN 권한    | 일반 회원 → /admin    | 접근 거부          |
-| 재정 CRUD     | 제경비 입력/수정/삭제 | DB 반영            |
-| 투명성 페이지 | /transparency         | 차트 + 보고서 표시 |
-| 교육 신청     | 폼 제출               | DB 저장 + 이메일   |
-| 커뮤니티 인증 | 비로그인 → /community | 리다이렉트         |
-| 게시글 권한   | 타인 글 수정 시도     | 거부               |
-| 네트워크 지도 | /network              | 50개국 핀 표시     |
-| 다국어        | 헤더 토글             | 한/영 전환         |
-| Rate Limiting | 로그인 6회 시도       | 429 응답           |
-| 통합 테스트   | `npm test`            | 주요 플로우 통과   |
+| 네트워크 지도 | /network              | 50개국 핀 + 한국 강조 + 클릭 패널 |
+| 교육 소개     | /education            | Sanity 기수 목록 + 모집 상태 |
+| 교육 신청     | /education/apply 폼 제출 | DB 저장 + 이메일 |
+| 로그인        | /login 이메일 인증    | 세션 생성 + 리다이렉트 |
+| 회원가입      | /register 폼 제출     | DB 저장 + 자동 로그인 |
+| 커뮤니티 인증 | 비로그인 → /community | /login 리다이렉트 |
+| 게시글 CRUD   | 글쓰기/수정/삭제      | DB 반영 + 권한 체크 |
+| 댓글 CRUD     | 댓글 작성/삭제        | DB 반영 + 본인만 삭제 |
+| 다국어        | 헤더 KO/EN 토글       | 한/영 전환 + URL prefix |
+| ADMIN 권한    | 일반 회원 → /admin    | 접근 거부 |
+| 재정 CRUD     | 제경비 입력/수정/삭제 | DB 반영 |
+| 예산 현황     | /admin/finance/budget | 집행률 프로그레스바 |
+| 투명성 페이지 | /transparency         | 도넛 차트 + 보고서 |
+| 후원 결제     | 토스 테스트 키 결제   | 성공 → DB + 이메일 |
+| Rate Limiting | 로그인 6회 시도       | 429 응답 |
+| 빌드          | `npm run build`       | 에러 0건 |
 
 ---
 

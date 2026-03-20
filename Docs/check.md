@@ -1,6 +1,6 @@
 # PCK 웹사이트 리뉴얼 — 진도 체크리스트
 
-> 최종 수정: 2026-03-20 (Phase 2-4 뉴스/활동 페이지 전체 완료 — 7/7 소항목 구현 + 빌드 검증)
+> 최종 수정: 2026-03-20 (Phase 3 상세 구현계획 수립 — 6개 작업 → 31개 소항목 분할)
 > 상태 표시: ⬜ 미시작 | 🔄 진행 중 | ✅ 완료 | ❌ 블로커 | ⏭️ 건너뜀
 
 ---
@@ -747,34 +747,94 @@
 
 ## Phase 3 — 기능 구현
 
-| #   | 작업 항목          | 상태 | 세부 내용                                               | 블로커/비고              |
-| --- | ------------------ | ---- | ------------------------------------------------------- | ------------------------ |
-| 3-1 | 후원 시스템        | ⬜   | 정기/일시 탭, 금액 선택, 토스페이먼츠 결제, 감사 이메일 | ❗ 토스 가맹점 등록 필요 |
-| 3-2 | 재정 투명성 시스템 | ⬜   | 관리자: 제경비/예산/결산 CRUD, 공개: 차트+보고서        | 1-3, 1-4 의존            |
-| 3-3 | 평화학교 교육 신청 | ⬜   | 신청 폼(Zod), DB 저장, 확인 이메일                      | 1-3, 1-5 의존            |
-| 3-4 | 회원 커뮤니티      | ⬜   | 자유게시판+평화나눔, 댓글, 본인만 수정/삭제, 인증 보호  | 1-3, 1-4 의존            |
-| 3-5 | 국제 네트워크 지도 | ⬜   | react-simple-maps, 50개국 핀, 순차 등장, 한국 강조      | 2-1 의존                 |
-| 3-6 | 다국어(한/영) 적용 | ⬜   | next-intl, ko.json/en.json, [locale] 라우트, 헤더 토글  | 2-1 의존                 |
+> **진행 순서**: 3-5 → 3-3 → 3-4 → 3-6 → 3-2 → 3-1 (외부 의존 적은 순서)
+
+### 3-5. 국제 네트워크 지도
+
+| #     | 작업 항목                | 상태 | 세부 내용                                                                 | 블로커/비고 |
+| ----- | ------------------------ | ---- | ------------------------------------------------------------------------- | ----------- |
+| 3-5-1 | 네트워크 데이터 + 상수   | ⬜   | `network.ts` — PCI 50개국 좌표/지부 데이터 + NETWORK_CONFIG 상수         |             |
+| 3-5-2 | PeaceMap 컴포넌트        | ⬜   | `PeaceMap.tsx` — react-simple-maps 세계지도 + 핀 50개 + 클릭 정보패널 + Framer Motion stagger + 한국 강조 |  |
+| 3-5-3 | Network 페이지           | ⬜   | `/network` — 서버 page.tsx(metadata) + dynamic import PeaceMap(ssr:false) + 통계 섹션 |  |
+| 3-5-4 | 빌드 검증                | ⬜   | tsc + lint + build + /network 라우트 확인                                |             |
+
+### 3-3. 평화학교 교육 신청
+
+| #     | 작업 항목                | 상태 | 세부 내용                                                                 | 블로커/비고 |
+| ----- | ------------------------ | ---- | ------------------------------------------------------------------------- | ----------- |
+| 3-3-1 | 교육 상수 + Zod 스키마   | ⬜   | `education.ts` — educationApplySchema + EDUCATION_CONFIG 상수            |             |
+| 3-3-2 | Education 소개 페이지    | ⬜   | `/education` — Sanity education 기수 목록(ISR) + 모집상태 뱃지 + 커리큘럼 아코디언 + 신청 CTA |  |
+| 3-3-3 | Education 신청 폼 페이지 | ⬜   | `/education/apply` — react-hook-form + Zod 6필드 + 글자수 카운터 + useActionState |  |
+| 3-3-4 | Education Server Action  | ⬜   | `actions/education.ts` — Zod 재검증 + Prisma create + Resend 이메일 (신청자+관리자) |  |
+| 3-3-5 | 빌드 검증                | ⬜   | tsc + lint + build + /education, /education/apply 라우트 확인            |             |
+
+### 3-4. 회원 커뮤니티 (인증 + 게시판)
+
+| #     | 작업 항목                | 상태 | 세부 내용                                                                 | 블로커/비고 |
+| ----- | ------------------------ | ---- | ------------------------------------------------------------------------- | ----------- |
+| 3-4-1 | 인증 페이지 (로그인/회원가입) | ⬜ | `(auth)/login` + `(auth)/register` — Credentials 로그인 + 카카오 + 회원가입 Server Action (bcrypt) | ⏳ 카카오 앱 등록 |
+| 3-4-2 | 커뮤니티 상수 + Zod 스키마 | ⬜ | `community.ts` — BOARD_TYPES + postSchema + commentSchema               |             |
+| 3-4-3 | 커뮤니티 게시판 목록     | ⬜   | `/community` — 게시판 탭(자유/평화나눔) + 테이블 + 페이지네이션 + 글쓰기 CTA | middleware 보호 |
+| 3-4-4 | 글쓰기/수정 페이지       | ⬜   | `/community/write` + `/community/[id]/edit` — react-hook-form + 본인확인 + CRUD Server Actions |  |
+| 3-4-5 | 게시글 상세 + 댓글       | ⬜   | `/community/[id]` — 본문 + 수정/삭제(본인) + 댓글 목록 + 댓글 입력/삭제 Server Actions |  |
+| 3-4-6 | 빌드 검증                | ⬜   | tsc + lint + build + 인증 + 커뮤니티 라우트 확인 + middleware 리다이렉트 테스트 |  |
+
+### 3-6. 다국어(한/영) 적용
+
+| #     | 작업 항목                | 상태 | 세부 내용                                                                 | 블로커/비고 |
+| ----- | ------------------------ | ---- | ------------------------------------------------------------------------- | ----------- |
+| 3-6-1 | next-intl 설정 파일      | ⬜   | `routing.ts` + `request.ts` + `navigation.ts` — locales(ko/en), defaultLocale(ko), localePrefix(as-needed) |  |
+| 3-6-2 | 번역 파일 (ko/en)        | ⬜   | `messages/ko.json` + `messages/en.json` — Header/Footer/Home/About/Network 네임스페이스 |  |
+| 3-6-3 | 라우트 마이그레이션      | ⬜   | `[locale]/(main)/layout.tsx` 구조 변경 + middleware 조합 + Header 언어 토글 실동작 + 기존 페이지 useTranslations 교체 |  |
+| 3-6-4 | 빌드 검증                | ⬜   | tsc + lint + build + /about(ko) + /en/about(en) 라우트 + 언어 토글 동작  |             |
+
+### 3-2. 재정 투명성 시스템
+
+| #     | 작업 항목                | 상태 | 세부 내용                                                                 | 블로커/비고 |
+| ----- | ------------------------ | ---- | ------------------------------------------------------------------------- | ----------- |
+| 3-2-1 | 패키지 + 상수 + Zod 스키마 | ⬜ | `npm install recharts` + `finance.ts` 상수 + expenseSchema/budgetSchema/reportSchema |  |
+| 3-2-2 | 관리자 레이아웃          | ⬜   | `(admin)/layout.tsx` — ADMIN 권한 체크 + 사이드바 + `(admin)/page.tsx` 대시보드 통계 |  |
+| 3-2-3 | 제경비 관리 (CRUD)       | ⬜   | `/admin/finance/expenses` — 목록(테이블+필터+합계) + 등록/수정 폼 + Server Actions |  |
+| 3-2-4 | 예산 관리                | ⬜   | `/admin/finance/budget` — 연도별 편성/집행/잔액 테이블 + 프로그레스바 + 등록 폼 |  |
+| 3-2-5 | 결산 보고서 관리         | ⬜   | `/admin/finance/reports` — 연도 수입/지출 자동 집계 + isPublished 토글 + PDF URL |  |
+| 3-2-6 | 재정 투명성 공개 페이지  | ⬜   | `/transparency` + `/transparency/[year]` — 연도별 요약 카드 + Recharts 도넛 차트 + PDF 다운로드 |  |
+| 3-2-7 | 빌드 검증                | ⬜   | tsc + lint + build + /admin/finance/* + /transparency 라우트 확인         |             |
+
+### 3-1. 후원 시스템 (토스페이먼츠 연동)
+
+| #     | 작업 항목                | 상태 | 세부 내용                                                                 | 블로커/비고 |
+| ----- | ------------------------ | ---- | ------------------------------------------------------------------------- | ----------- |
+| 3-1-1 | 토스 유틸 + 상수 + Zod   | ⬜   | `@tosspayments/tosspayments-sdk` 설치 + `toss.ts` 승인 유틸 + donateSchema | ❗ 토스 가맹점 |
+| 3-1-2 | 후원 페이지              | ⬜   | `/donate` — 정기/일시 탭 + 금액 프리셋+직접입력 + 개인정보 폼 + 토스 SDK requestPayment |  |
+| 3-1-3 | 결제 콜백 + 성공/실패    | ⬜   | `/donate/success` + `/donate/fail` + `/api/donate/confirm` — 승인 API + DB update + Resend 감사 이메일 |  |
+| 3-1-4 | Rate Limiting 설정       | ⬜   | `rate-limit.ts` — Upstash Redis slidingWindow (후원 10회/분, 로그인 5회/분) | ❗ Upstash Redis |
+| 3-1-5 | 빌드 검증                | ⬜   | tsc + lint + build + /donate, /donate/success, /donate/fail 라우트 확인  |             |
 
 ### Phase 3 완료 체크포인트
 
-- [ ] 후원: 토스 테스트 결제 성공 → DB 저장 → 이메일 발송
-- [ ] ADMIN 권한: 일반 회원 /admin 접근 거부
-- [ ] 재정 CRUD: 제경비 입력/수정/삭제 → DB 반영
-- [ ] 투명성 페이지: 도넛 차트 + 보고서 표시
-- [ ] 교육 신청: 폼 제출 → DB + 이메일
-- [ ] 커뮤니티 인증: 비로그인 → /login 리다이렉트
-- [ ] 게시글 권한: 타인 글 수정 시도 → 거부
-- [ ] 네트워크 지도: 50개국 핀 + 한국 강조
-- [ ] 다국어: 헤더 토글로 한/영 전환
+- [ ] 네트워크 지도: `/network` — 50개국 핀 + 한국 강조 + 클릭 정보 패널
+- [ ] 교육 소개: `/education` — Sanity 기수 목록 + 모집 상태 뱃지
+- [ ] 교육 신청: `/education/apply` 폼 제출 → DB 저장 + 확인 이메일
+- [ ] 로그인: `/login` — Credentials 인증 + 세션 생성
+- [ ] 회원가입: `/register` — DB 저장 + bcrypt + 자동 로그인
+- [ ] 커뮤니티 인증: 비로그인 → /community → /login 리다이렉트
+- [ ] 게시글 CRUD: 글쓰기/수정/삭제 → DB 반영 + 본인 권한
+- [ ] 댓글 CRUD: 댓글 작성/삭제 → DB 반영 + 본인만 삭제
+- [ ] 다국어: Header KO/EN 토글 → 한/영 전환 + /en/* URL prefix
+- [ ] ADMIN 권한: 일반 회원 /admin 접근 → 거부
+- [ ] 제경비 CRUD: 입력/수정/삭제 → DB 반영
+- [ ] 예산 현황: 집행률 프로그레스바 + 잔액 계산
+- [ ] 투명성 페이지: Recharts 도넛 차트 + PDF 다운로드
+- [ ] 후원 결제: 토스 테스트 결제 성공 → DB 저장 → 감사 이메일
 - [ ] Rate Limiting: 로그인 6회 시도 → 429 응답
-- [ ] 통합 테스트: 후원 + 로그인 플로우 통과
+- [ ] 빌드: `npm run build` 에러 0건
 
 ### Phase 3 외부 작업 체크리스트
 
 - [ ] 토스페이먼츠 가맹점 등록 → 테스트키/실제키 확보
 - [ ] Upstash Redis 생성 → REST_URL / TOKEN 확보
-- [ ] Resend 계정 생성 → API_KEY 확보
+- [ ] Resend 계정 확인 → API_KEY 확보 (이메일 발송 필수)
+- [ ] 카카오 개발자 앱 등록 → CLIENT_ID / SECRET 확보 (소셜 로그인)
 
 ---
 
@@ -819,6 +879,13 @@
 | Phase 2-2   | 8         | 8      | **100%** |
 | Phase 2-3   | 8         | 8      | **100%** |
 | Phase 2-4   | 7         | 7      | **100%** |
-| Phase 3     | 6         | 0      | 0%       |
+| Phase 3-5   | 4         | 0      | 0%       |
+| Phase 3-3   | 5         | 0      | 0%       |
+| Phase 3-4   | 6         | 0      | 0%       |
+| Phase 3-6   | 4         | 0      | 0%       |
+| Phase 3-2   | 7         | 0      | 0%       |
+| Phase 3-1   | 5         | 0      | 0%       |
 | Phase 4     | 5         | 0      | 0%       |
-| **전체**    | **57**    | **46** | **81%**  |
+| **전체**    | **82**    | **46** | **56%**  |
+
+> Phase 3 상세 분할: 기존 6개 → 31개 소항목으로 확장 (2026-03-20)
