@@ -71,6 +71,43 @@ export const POSTS_COUNT_QUERY = defineQuery(`
   count(*[_type == "post" && defined(slug.current)])
 `)
 
+// 페이지네이션 지원 게시글 목록
+export const POSTS_PAGINATED_QUERY = defineQuery(`
+  *[_type == "post" && defined(slug.current)] | order(publishedAt desc) [$start...$end] {
+    _id,
+    title,
+    slug,
+    category,
+    excerpt,
+    publishedAt,
+    mainImage {
+      asset->{_id, url},
+      alt
+    }
+  }
+`)
+
+// 카테고리별 페이지네이션 지원 게시글 목록
+export const POSTS_BY_CATEGORY_PAGINATED_QUERY = defineQuery(`
+  *[_type == "post" && category == $category && defined(slug.current)] | order(publishedAt desc) [$start...$end] {
+    _id,
+    title,
+    slug,
+    category,
+    excerpt,
+    publishedAt,
+    mainImage {
+      asset->{_id, url},
+      alt
+    }
+  }
+`)
+
+// 카테고리별 게시글 수
+export const POSTS_COUNT_BY_CATEGORY_QUERY = defineQuery(`
+  count(*[_type == "post" && category == $category && defined(slug.current)])
+`)
+
 // ─── 평화학교 교육 (education) ────────────────────────────────
 
 // 교육 프로그램 목록
