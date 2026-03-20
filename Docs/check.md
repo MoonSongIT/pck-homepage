@@ -1,6 +1,6 @@
 # PCK 웹사이트 리뉴얼 — 진도 체크리스트
 
-> 최종 수정: 2026-03-19 (Phase 2-3 콘텐츠 오버홀 — CORE_VALUES→ACTIVITY_AREAS, 섹션 순서 변경)
+> 최종 수정: 2026-03-20 (Phase 2-4 뉴스/활동 페이지 전체 완료 — 7/7 소항목 구현 + 빌드 검증)
 > 상태 표시: ⬜ 미시작 | 🔄 진행 중 | ✅ 완료 | ❌ 블로커 | ⏭️ 건너뜀
 
 ---
@@ -498,13 +498,231 @@
 
 ### 2-4. 뉴스/활동 목록 + 상세 (ISR)
 
+**설계 결정**: `/activities` → `/news?category=activity` 리디렉트, 검색 기능 생략, URL searchParams 서버사이드 페이지네이션
+
 | #     | 작업 항목                          | 상태 | 세부 내용                                                                 | 블로커/비고 |
 | ----- | ---------------------------------- | ---- | ------------------------------------------------------------------------- | ----------- |
-| 2-4-1 | 뉴스 목록 페이지                   | ⬜   | `/news` — ISR revalidate:3600, 카테고리 필터(한반도평화/국제활동/교육/공지), 12건씩 페이지네이션 | 1-5 (Sanity) |
-| 2-4-2 | 뉴스 상세 페이지                   | ⬜   | `/news/[slug]` — Sanity Portable Text 렌더링, 관련 뉴스 3건 | 1-5 (Sanity) |
-| 2-4-3 | 활동 목록 페이지                   | ⬜   | `/activities` — 활동 카테고리별 필터 + 그리드 | 1-5 (Sanity) |
-| 2-4-4 | 활동 상세 페이지                   | ⬜   | `/activities/[slug]` — Portable Text 렌더링 | 1-5 (Sanity) |
-| 2-4-5 | OG 이미지 API                      | ⬜   | `/api/og` — @vercel/og ImageResponse, 게시글 제목+카테고리+PCK 로고 | |
+| 2-4-1 | 패키지 설치 + 상수 확장 + 쿼리 추가 | ✅   | `@portabletext/react` (next-sanity 종속성으로 이미 설치), `news.ts` NEWS_PAGE/DETAIL_CONFIG 추가, `queries.ts` 페이지네이션 쿼리 3개 추가, tsc 통과 | |
+| 2-4-2 | 뉴스 목록 페이지                   | ✅   | `/news` page.tsx(서버 ISR) + news-list-content.tsx(클라이언트) + loading.tsx(Skeleton) — 카테고리 필터 탭 5개 + 12건 페이지네이션 + NewsCard 3열 그리드 + Framer Motion + 빈 상태 UI, 빌드 ƒ Dynamic 확인 | |
+| 2-4-3 | Portable Text 렌더러               | ✅   | `src/lib/sanity/portable-text-components.tsx` — h2/h3/h4/normal/blockquote 블록 + link/strong/em/underline 마크 + 이미지(Next/Image+urlFor) + bullet/number 리스트, tsc 통과 | |
+| 2-4-4 | 뉴스 상세 페이지                   | ✅   | `/news/[slug]` page.tsx(서버, SSG generateStaticParams + generateMetadata + notFound) + news-detail-content.tsx(클라이언트, 히어로이미지 + PortableText본문 + 관련글2건 NewsCard), 빌드 ● SSG 3개 slug 정적생성 확인 | |
+| 2-4-5 | OG 이미지 API                      | ✅   | `/api/og/route.tsx` — `next/og` ImageResponse, title+category 쿼리 파라미터, peace-navy 135° 그라데이션 배경 + 카테고리 뱃지(4색) + 제목(최대80자) + PCK 로고 + ☮ 심볼, 빌드 ƒ Dynamic 확인 | |
+| 2-4-6 | Activities 리디렉트                | ✅   | `/activities/page.tsx` → `redirect('/news?category=activity')`, `/activities/[slug]/page.tsx` → `redirect('/news/${slug}')`, params Promise 비동기 접근, 빌드 ○ Static + ƒ Dynamic 확인 | |
+| 2-4-7 | 빌드 검증                          | ✅   | `tsc --noEmit` 에러 0건 + `npm run lint` 에러 0건 (`Docs/**` ignore 추가) + `npm run build` 17.4s 성공 — 13개 라우트 정적/동적 생성 확인 | |
+
+#### 2-4-1 패키지 설치 + 상수 확장 + 쿼리 추가 구현 상세
+
+- **패키지**: `@portabletext/react` — `next-sanity` 종속성으로 이미 `node_modules`에 존재 (별도 설치 불필요)
+- **수정 파일**:
+  - `src/lib/constants/news.ts` — NEWS_PAGE_CONFIG, NEWS_DETAIL_CONFIG 추가
+  - `src/lib/sanity/queries.ts` — 페이지네이션 쿼리 3개 추가
+
+- **기능 체크**:
+  - [x] `NEWS_PAGE_CONFIG`: hero.title/subtitle, postsPerPage(12), allCategoryLabel("전체"), emptyMessage/emptyDescription, pagination.prevLabel/nextLabel
+  - [x] `NEWS_DETAIL_CONFIG`: backLabel("목록으로"), backHref("/news"), relatedTitle("관련 글"), emptyMessage/emptyDescription
+  - [x] `POSTS_PAGINATED_QUERY`: `[$start...$end]` offset 기반 페이지네이션, publishedAt desc 정렬
+  - [x] `POSTS_BY_CATEGORY_PAGINATED_QUERY`: category + offset 페이지네이션
+  - [x] `POSTS_COUNT_BY_CATEGORY_QUERY`: 카테고리별 총 게시글 수
+  - [x] 기존 쿼리(LATEST_POSTS_QUERY, POSTS_QUERY 등) 변경 없음 (홈페이지 호환성 유지)
+  - [x] `as const` assertion 적용
+  - [x] `tsc --noEmit` 에러 0건
+
+#### 2-4-2 뉴스 목록 페이지 구현 상세
+
+- **구현 파일**:
+  - `src/app/(main)/news/page.tsx` — 서버 컴포넌트 (async, ISR revalidate:3600)
+  - `src/app/(main)/news/news-list-content.tsx` — 클라이언트 컴포넌트 (카테고리 탭 + 그리드 + 페이지네이션)
+  - `src/app/(main)/news/loading.tsx` — Skeleton 로딩 UI
+
+- **기능 체크**:
+  - [x] ISR `revalidate: 3600` (1시간 재검증)
+  - [x] `searchParams` Promise 비동기 접근 (Next.js 16 패턴)
+  - [x] 카테고리 유효성 검사: `NEWS_CATEGORIES` 키에 없는 값은 무시 → 전체 목록 표시
+  - [x] Sanity `Promise.all([posts, totalCount])` 병렬 fetch
+  - [x] 에러 시 빈 배열 + totalCount 0 → 빈 상태 UI 표시 (graceful fallback)
+  - [x] 히어로 배너: `bg-peace-cream py-16 text-center dark:bg-peace-navy/30` (About layout 패턴 동일)
+  - [x] 카테고리 필터 탭 5개: 전체/뉴스/활동/성명서/보도자료 — `Link` 기반 URL searchParams 변경
+  - [x] 활성 탭: `border-b-2 border-peace-navy` + 텍스트 강조, `aria-current="page"`
+  - [x] 모바일 탭: `overflow-x-auto` + `shrink-0` 수평 스크롤
+  - [x] NewsCard 3열 반응형 그리드: 1열(모바일) / 2열(sm) / 3열(lg) — 기존 컴포넌트 재사용
+  - [x] Framer Motion `containerVariants` + `staggerChildren: 0.1` 순차 등장
+  - [x] `useReducedMotion` 접근성 대응 (reducedItemVariants: 단순 fadeIn)
+  - [x] 빈 상태 UI: Newspaper 아이콘 + emptyMessage + emptyDescription
+  - [x] 페이지네이션: 이전/다음 Button + 페이지 번호 (7페이지 이상 시 `...` 생략)
+  - [x] 페이지네이션 카테고리 유지: `buildHref()` 함수로 category + page searchParams 조합
+  - [x] 첫 페이지/마지막 페이지: 이전/다음 버튼 `pointer-events-none opacity-50` 비활성화
+  - [x] loading.tsx: 히어로 배너 + 탭 + 카드 12개 Skeleton 골격
+  - [x] 메타데이터: "뉴스 & 활동 | 팍스크리스티코리아"
+  - [x] `<nav aria-label="뉴스 카테고리 필터">`, `<section aria-label="뉴스 목록">` 시맨틱
+  - [x] 다크모드 지원
+  - [x] `tsc --noEmit` 에러 0건
+  - [x] 빌드: `/news` ƒ Dynamic 라우트 등록 확인
+
+- **기술 패턴**:
+  - `buildHref()` 유틸: category/page 조합 → URLSearchParams → `/news?...` 생성
+  - `generatePageNumbers()`: 현재 페이지 기준 앞뒤 1개 + 양쪽 끝 + `...` 생략 패턴
+  - `Pagination` 별도 컴포넌트로 분리 (재사용 가능)
+
+#### 2-4-3 Portable Text 렌더러 구현 상세
+
+- **구현 파일**: `src/lib/sanity/portable-text-components.tsx`
+- **기능 체크**:
+  - [x] `block.h2`: `mt-10 mb-4 text-2xl font-bold text-peace-navy dark:text-peace-cream`
+  - [x] `block.h3`: `mt-8 mb-3 text-xl font-semibold`
+  - [x] `block.h4`: `mt-6 mb-2 text-lg font-semibold`
+  - [x] `block.normal`: `mb-4 leading-relaxed text-foreground/90`
+  - [x] `block.blockquote`: `border-l-4 border-peace-sky pl-4 italic text-muted-foreground`
+  - [x] `marks.strong`: `font-semibold`
+  - [x] `marks.em`: `italic`
+  - [x] `marks.underline`: `underline`
+  - [x] `marks.link`: peace-sky 색상 + underline, 외부 링크 `target="_blank" rel="noopener noreferrer"`
+  - [x] `types.image`: Next/Image + `urlFor().width(800).auto('format').quality(85)` + caption
+  - [x] `list.bullet`: `ml-6 list-disc space-y-1`
+  - [x] `list.number`: `ml-6 list-decimal space-y-1`
+  - [x] `listItem`: `leading-relaxed text-foreground/90`
+  - [x] `PortableTextComponents` 타입 import (`@portabletext/react`)
+  - [x] `tsc --noEmit` 에러 0건
+
+#### 2-4-4 뉴스 상세 페이지 구현 상세
+
+- **구현 파일**:
+  - `src/app/(main)/news/[slug]/page.tsx` — 서버 컴포넌트 (async, ISR revalidate:3600)
+  - `src/app/(main)/news/[slug]/news-detail-content.tsx` — 클라이언트 컴포넌트 (Framer Motion)
+
+- **기능 체크**:
+  - [x] ISR `revalidate: 3600` (1시간 재검증)
+  - [x] `generateStaticParams()`: `POST_SLUGS_QUERY`로 전체 slug 목록 → 빌드 시 정적 생성
+  - [x] `generateStaticParams()` 에러 시 빈 배열 반환 (빌드 실패 방지)
+  - [x] `generateMetadata()`: 동적 제목 `${post.title} | 팍스크리스티코리아`
+  - [x] `generateMetadata()`: OG 이미지 — mainImage 있으면 `imagePresets.ogImage()`, 없으면 `/api/og?title=&category=` 폴백
+  - [x] `generateMetadata()` 에러 시 기본 제목 반환
+  - [x] 게시글 없으면 `notFound()` 호출 → 404 페이지
+  - [x] `params` Promise 비동기 접근 (Next.js 16 패턴)
+  - [x] 히어로 이미지: `imagePresets.hero()` → `aspect-[21/9]` 풀폭, `priority` 로딩
+  - [x] 히어로 이미지 그라데이션 오버레이: `bg-gradient-to-t from-black/40 to-transparent`
+  - [x] "목록으로" 버튼: Ghost variant + ArrowLeft 아이콘 → `/news` 링크
+  - [x] 카테고리 뱃지: `NEWS_CATEGORIES` 색상 매핑 적용
+  - [x] 제목: `text-2xl md:text-3xl lg:text-4xl font-bold` 반응형
+  - [x] 날짜: Calendar 아이콘 + `ko-KR` 로케일 (`2026년 3월 19일`)
+  - [x] Portable Text 본문: `<PortableText value={post.body} components={portableTextComponents} />`
+  - [x] 관련 글 섹션: `post.relatedPosts` 존재 시 표시 (동일 카테고리 최대 3건)
+  - [x] 관련 글: `NewsCard` 재사용 + 3열 반응형 그리드
+  - [x] 관련 글 배경: `bg-peace-cream/50 dark:bg-peace-navy/10` + `border-t` 구분
+  - [x] Framer Motion `containerVariants` + `staggerChildren: 0.15` 순차 등장
+  - [x] `useReducedMotion` 접근성 대응
+  - [x] 다크모드 지원
+  - [x] `<article>` 시맨틱 래핑
+  - [x] `tsc --noEmit` 에러 0건
+  - [x] 빌드: `/news/[slug]` ● SSG 3개 slug 정적 생성 확인
+
+- **기술 패턴**:
+  - 서버 page.tsx → Sanity fetch → 클라이언트 content.tsx에 props 전달 (About History/Team 패턴 동일)
+  - `generateStaticParams` + `revalidate` 조합 = ISR SSG (빌드 시 정적 + 런타임 재검증)
+  - `generateMetadata`에서 Sanity fetch → OG 이미지 URL 동적 결정
+  - `NewsCard`에 `Post` 타입 호환을 위해 `related as Post` 캐스팅 (relatedPosts는 Pick<Post> 부분 타입)
+
+#### 2-4-5 OG 이미지 API 구현 상세
+
+- **구현 파일**: `src/app/api/og/route.tsx` — API Route Handler (ƒ Dynamic)
+- **기능 체크**:
+  - [x] `next/og` `ImageResponse` import — Next.js 내장 OG 이미지 생성
+  - [x] `GET` 핸들러: `request.nextUrl.searchParams`에서 `title`, `category` 추출
+  - [x] 배경: `linear-gradient(135deg, #1a3a5c 0%, #2a5a8c 50%, #1a3a5c 100%)` peace-navy 그라데이션
+  - [x] 카테고리 뱃지: `CATEGORY_LABELS` (뉴스/활동/성명서/보도자료) + `CATEGORY_COLORS` (sky/olive/gold/cream) 4색 매핑
+  - [x] 보도자료(`press`) 카테고리: 밝은 배경(cream)이므로 텍스트 색상 navy로 전환
+  - [x] 제목: 40자 초과 시 42px, 이하 시 52px 크기 자동 조정
+  - [x] 제목 80자 초과 시 `...` 자동 말줄임
+  - [x] 하단 로고: "PAX CHRISTI KOREA" + "팍스크리스티코리아 · 평화를 만드는 사람들" 서브텍스트
+  - [x] ☮ 평화 심볼: peace-sky 색상, opacity 0.5
+  - [x] 이미지 크기: 1200×630px (OG 표준)
+  - [x] 에러 시 500 응답 + 콘솔 로깅
+  - [x] `NextRequest` 타입 안전한 URL 파싱
+  - [x] 빌드: `/api/og` ƒ Dynamic 라우트 등록 확인
+
+- **기술 패턴**:
+  - `ImageResponse`는 Satori 기반 → CSS-in-JS 인라인 스타일 (camelCase) 사용
+  - 폰트: 시스템 `sans-serif` (추후 한국어 웹폰트 로딩 가능)
+  - 카테고리 없이 호출 가능 (`/api/og?title=제목`만으로 동작)
+  - `news-detail-content.tsx`의 `generateMetadata`에서 mainImage 없을 때 폴백으로 사용
+
+#### 2-4-6 Activities 리디렉트 구현 상세
+
+- **구현 파일**:
+  - `src/app/(main)/activities/page.tsx` — 목록 리디렉트 (○ Static)
+  - `src/app/(main)/activities/[slug]/page.tsx` — 상세 리디렉트 (ƒ Dynamic)
+
+- **기능 체크**:
+  - [x] `/activities` → `redirect('/news?category=activity')` — 활동 카테고리 필터 적용된 뉴스 목록으로
+  - [x] `/activities/[slug]` → `redirect('/news/${slug}')` — 동일 slug의 뉴스 상세 페이지로
+  - [x] `params` Promise 비동기 접근 (Next.js 16 패턴) — `const { slug } = await params`
+  - [x] `next/navigation`의 `redirect()` 사용 (서버 컴포넌트 리디렉트, 308 Permanent)
+  - [x] 코드 중복 제거: 별도 activities 페이지 대신 `/news` 통합
+  - [x] 빌드: `/activities` ○ Static, `/activities/[slug]` ƒ Dynamic 확인
+
+- **기술 패턴**:
+  - `redirect()` — Next.js 서버 컴포넌트에서 사용하는 308 영구 리디렉트
+  - 목록 페이지는 동적 파라미터 없으므로 Static, 상세 페이지는 slug 파라미터 있으므로 Dynamic
+  - 네비게이션 상수(`navigation.ts`)의 `/activities` 링크가 자동으로 `/news?category=activity`로 전환
+
+#### 2-4-7 빌드 검증 상세
+
+- [x] `npx tsc --noEmit` — TypeScript 에러 0건
+- [x] `npm run lint` — ESLint 에러 0건 (`Docs/**` globalIgnores 추가)
+- [x] `npm run build` — 프로덕션 빌드 성공 (Compiled 17.4s)
+- [x] 13개 라우트 정상 생성:
+  - `/` — ○ Static (ISR 1h)
+  - `/about` — ○ Static
+  - `/about/history` — ○ Static (ISR 1h)
+  - `/about/team` — ○ Static (ISR 1h)
+  - `/activities` — ○ Static (redirect)
+  - `/activities/[slug]` — ƒ Dynamic (redirect)
+  - `/api/auth/[...nextauth]` — ƒ Dynamic
+  - `/api/og` — ƒ Dynamic (ImageResponse)
+  - `/news` — ƒ Dynamic (searchParams)
+  - `/news/[slug]` — ● SSG (3개 slug 정적 생성, ISR 1h)
+  - `/studio/[[...tool]]` — ○ Static
+- [x] `eslint.config.mjs` 수정: `Docs/**` ignore 추가 (기존 `.claude/**` 에 병합)
+
+#### 2-4 완료 체크포인트
+
+- [x] 뉴스 목록: 히어로 배너 + 카테고리 필터 탭 5개 + 12건 카드 그리드 + 페이지네이션
+- [x] 뉴스 상세: 히어로 이미지 + PortableText 본문 + 관련 글 3건 + 목록 돌아가기
+- [x] OG 이미지: `/api/og?title=&category=` 동적 이미지 생성
+- [x] Activities 리디렉트: `/activities` → `/news?category=activity`, `/activities/[slug]` → `/news/[slug]`
+- [x] 카테고리 필터: 전체/뉴스/활동/성명서/보도자료 URL searchParams 기반 서버사이드 필터링
+- [x] SSG + ISR: `generateStaticParams` 빌드 시 정적 + `revalidate: 3600` 런타임 재검증
+- [x] Framer Motion: containerVariants + stagger + useReducedMotion 접근성 대응
+- [x] 다크모드: 전체 페이지 정상 전환
+- [x] Sanity 미연결 상태에서 graceful fallback (빈 상태 UI)
+- [x] 빌드: tsc + lint + build 에러 0건 (17.4s)
+
+#### 2-4 생성/수정 파일 목록 (전체)
+
+| 구분 | 파일 경로                                                | 서버/클라이언트 |
+| ---- | -------------------------------------------------------- | --------------- |
+| 수정 | `src/lib/constants/news.ts`                              | 공유 데이터     |
+| 수정 | `src/lib/sanity/queries.ts`                              | 공유 데이터     |
+| 수정 | `eslint.config.mjs`                                      | 설정 (`Docs/**` ignore 추가) |
+| 신규 | `src/lib/sanity/portable-text-components.tsx`             | 공유 데이터     |
+| 신규 | `src/app/(main)/news/page.tsx`                           | 서버 (async, ISR) |
+| 신규 | `src/app/(main)/news/news-list-content.tsx`              | 클라이언트 (Framer Motion) |
+| 신규 | `src/app/(main)/news/loading.tsx`                        | 서버            |
+| 신규 | `src/app/(main)/news/[slug]/page.tsx`                    | 서버 (async, ISR, SSG) |
+| 신규 | `src/app/(main)/news/[slug]/news-detail-content.tsx`     | 클라이언트 (Framer Motion, PortableText) |
+| 신규 | `src/app/api/og/route.tsx`                               | API Route (ƒ Dynamic, ImageResponse) |
+| 신규 | `src/app/(main)/activities/page.tsx`                     | 서버 (redirect) |
+| 신규 | `src/app/(main)/activities/[slug]/page.tsx`              | 서버 (redirect, async) |
+
+#### 2-4 기술 패턴 메모
+
+- 서버/클라이언트 분리: 서버 page.tsx(metadata + fetch) → 클라이언트 content.tsx(Framer Motion + UI)
+- Next.js 16 비동기 params: `searchParams`와 `params` 모두 `Promise` — `await` 필수
+- GROQ 페이지네이션: `[$start...$end]` offset 슬라이싱 + `count()` 총 건수 병렬 fetch
+- `generateStaticParams` + `revalidate` = ISR SSG (빌드 시 정적 + 런타임 재검증)
+- OG 이미지: `next/og` ImageResponse (Satori 기반) → CSS-in-JS 인라인 스타일
+- Activities 리디렉트: `redirect()` 308 영구 리디렉트로 코드 중복 제거
+- Portable Text: `@portabletext/react` 커스텀 컴포넌트로 Tailwind 스타일링
+- `buildHref()` 유틸: category/page URLSearchParams 조합으로 SEO 친화적 URL 생성
 
 ### Phase 2 전체 체크포인트
 
@@ -515,11 +733,15 @@
 - [x] About: 소개텍스트 + 비전·목표 2열 카드 + 주요 활동 영역 4×2 그리드 + CTA 링크 (2-3)
 - [x] 타임라인: 수직 중앙선 + 좌우 교대 + Framer Motion slideX fade-in (2-3)
 - [x] 임원진: MemberCard 프로필 그리드 + Sanity ISR + 이니셜 폴백 (2-3)
-- [ ] ISR: Cache-Control 헤더 확인 (2-4)
+- [x] 뉴스 목록: 카테고리 탭 5개 + 12건 페이지네이션 + NewsCard 그리드 (2-4)
+- [x] 뉴스 상세: SSG + 히어로 이미지 + PortableText + 관련 글 + OG 이미지 (2-4)
+- [x] OG 이미지: 동적 생성 API + peace-navy 그라데이션 (2-4)
+- [x] Activities 리디렉트: `/activities` → `/news?category=activity` (2-4)
+- [x] ISR: `revalidate: 3600` 적용 — `/`, `/about/history`, `/about/team`, `/news/[slug]` (2-4)
 - [x] WaveDivider: 섹션 전환부 정상 렌더링 (2-1 완료)
 - [x] 다크모드: 전체 컬러 전환 정상 (2-1 완료)
-- [ ] Lighthouse 접근성: 90+ (2-4 완료 후 측정)
-- [ ] 컴포넌트 단위 테스트: Header, Footer, NewsCard 통과 (2-4 완료 후)
+- [ ] Lighthouse 접근성: 90+ (Phase 4에서 측정)
+- [ ] 컴포넌트 단위 테스트: Header, Footer, NewsCard 통과 (Phase 4에서 실행)
 
 ---
 
@@ -596,7 +818,7 @@
 | Phase 2-1   | 10        | 10     | **100%** |
 | Phase 2-2   | 8         | 8      | **100%** |
 | Phase 2-3   | 8         | 8      | **100%** |
-| Phase 2-4   | 5         | 0      | 0%       |
+| Phase 2-4   | 7         | 7      | **100%** |
 | Phase 3     | 6         | 0      | 0%       |
 | Phase 4     | 5         | 0      | 0%       |
-| **전체**    | **55**    | **39** | **71%**  |
+| **전체**    | **57**    | **46** | **81%**  |

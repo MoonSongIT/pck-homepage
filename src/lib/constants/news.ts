@@ -17,3 +17,26 @@ export const LATEST_NEWS_CONFIG = {
   viewAllHref: '/news',
   displayCount: 3,
 } as const
+
+export const NEWS_PAGE_CONFIG = {
+  hero: {
+    title: '뉴스 & 활동',
+    subtitle: '팍스크리스티코리아의 소식과 활동을 전합니다',
+  },
+  postsPerPage: 12,
+  allCategoryLabel: '전체',
+  emptyMessage: '아직 등록된 게시글이 없습니다.',
+  emptyDescription: 'Sanity CMS에서 게시글을 추가해주세요.',
+  pagination: {
+    prevLabel: '이전',
+    nextLabel: '다음',
+  },
+} as const
+
+export const NEWS_DETAIL_CONFIG = {
+  backLabel: '목록으로',
+  backHref: '/news',
+  relatedTitle: '관련 글',
+  emptyMessage: '게시글을 찾을 수 없습니다.',
+  emptyDescription: '요청하신 게시글이 존재하지 않거나 삭제되었습니다.',
+} as const

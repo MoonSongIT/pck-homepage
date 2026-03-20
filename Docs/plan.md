@@ -915,29 +915,48 @@ type MemberCardProps = {
 
 ### 2-4. 뉴스/활동 페이지 (ISR)
 
+**설계 결정**:
+- `/activities` → `/news?category=activity` 리디렉트 (코드 중복 방지)
+- 검색 기능 생략 (추후 Sanity 서버사이드 검색으로 별도 추가)
+- 페이지네이션: URL searchParams 기반 서버사이드 (?page=2, SEO 친화적)
+
 **파일**:
 
-| 파일                                        | 설명                                     |
-| ------------------------------------------- | ---------------------------------------- |
-| `src/app/(main)/news/page.tsx`              | 뉴스 목록 (카테고리 필터 + 페이지네이션) |
-| `src/app/(main)/news/[slug]/page.tsx`       | 뉴스 상세 (Portable Text)                |
-| `src/app/(main)/activities/page.tsx`        | 활동 목록                                |
-| `src/app/(main)/activities/[slug]/page.tsx` | 활동 상세                                |
-| `src/components/molecules/NewsCard.tsx`     | 뉴스 카드 컴포넌트                       |
-| `src/app/api/og/route.tsx`                  | 동적 OG 이미지 생성                      |
+| 파일                                               | 설명                                     |
+| -------------------------------------------------- | ---------------------------------------- |
+| `src/lib/constants/news.ts`                        | NEWS_PAGE_CONFIG, NEWS_DETAIL_CONFIG 추가 |
+| `src/lib/sanity/queries.ts`                        | 페이지네이션 쿼리 3개 추가               |
+| `src/lib/sanity/portable-text-components.tsx`      | PortableText 커스텀 렌더링 컴포넌트      |
+| `src/app/(main)/news/page.tsx`                     | 뉴스 목록 서버 컴포넌트 (ISR)            |
+| `src/app/(main)/news/news-list-content.tsx`        | 뉴스 목록 클라이언트 (카테고리 탭+그리드+페이지네이션) |
+| `src/app/(main)/news/loading.tsx`                  | Skeleton 로딩 UI                         |
+| `src/app/(main)/news/[slug]/page.tsx`              | 뉴스 상세 서버 컴포넌트 (SSG+동적 메타)  |
+| `src/app/(main)/news/[slug]/news-detail-content.tsx` | 뉴스 상세 클라이언트 (Portable Text+관련글) |
+| `src/app/api/og/route.tsx`                         | 동적 OG 이미지 생성 (Edge Runtime)       |
+| `src/app/(main)/activities/page.tsx`               | → /news?category=activity 리디렉트      |
+| `src/app/(main)/activities/[slug]/page.tsx`        | → /news/[slug] 리디렉트                 |
 
 **뉴스 목록 상세**:
 
 - ISR: `revalidate: 3600` (1시간)
-- 카테고리 필터: 한반도평화, 국제활동, 교육, 공지 (URL searchParams)
-- 페이지네이션: 12건씩, 이전/다음 버튼
-- 검색: 클라이언트 사이드 필터링 (제목 + 본문)
-- Skeleton UI: 로딩 상태
+- 카테고리 필터: 전체/뉴스/활동/성명서/보도자료 (URL searchParams, Link 기반 서버사이드)
+- 페이지네이션: 12건씩, URL ?page=N, 이전/다음 + 페이지 번호
+- Skeleton UI: loading.tsx (카드 12개 골격)
+- 기존 NewsCard 컴포넌트 재사용
+
+**뉴스 상세 상세**:
+
+- `generateStaticParams()` — 빌드 시 전체 slug 정적 생성
+- `generateMetadata()` — 동적 제목 + OG 이미지
+- `@portabletext/react` PortableText 본문 렌더링
+- 관련 글 3건 (동일 카테고리, GROQ relatedPosts)
+- 없는 slug → `notFound()`
 
 **OG 이미지 생성**:
 
-- `@vercel/og` ImageResponse
-- 게시글 제목 + 카테고리 + PCK 로고
+- `next/og` ImageResponse (Next.js 16 내장, @vercel/og 불필요)
+- Edge Runtime, 쿼리 파라미터: title + category
+- peace-navy 그라데이션 배경 + 제목 + 카테고리 라벨 + PCK 로고 텍스트
 
 **의존성**: 1-5 (Sanity 연동) 완료 후
 
