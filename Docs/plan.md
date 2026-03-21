@@ -1,6 +1,6 @@
 # PCK 웹사이트 리뉴얼 — 전체 구현 계획서
 
-> 최종 수정: 2026-03-20
+> 최종 수정: 2026-03-21
 > 프로젝트: 팍스크리스티코리아(Pax Christi Korea) 공식 웹사이트 리뉴얼
 > 기술 스택: Next.js 16 + TypeScript + Tailwind CSS v4 + Supabase + Sanity.io
 
@@ -1379,6 +1379,22 @@ export const commentSchema = z.object({
 - `tsc --noEmit` + `npm run lint` + `npm run build`
 - `/login`, `/register`, `/community`, `/community/write`, `/community/[id]` 라우트 확인
 - middleware 보호: 비로그인 상태에서 `/community` 접근 → `/login` 리다이렉트 확인
+
+---
+
+#### 3-4-7. Header/MobileNav 로그인 상태 표시
+
+**수정 파일**: `src/components/organisms/Header.tsx`, `src/components/organisms/MobileNav.tsx`
+
+**상세**:
+
+- **비로그인 상태**: "로그인" 버튼 표시 → `/login` 이동
+- **로그인 상태**: 사용자 이름 + "로그아웃" 버튼 표시 → `signOut()` 호출
+- **커뮤니티 메뉴**: Header 메뉴에 이미 포함 (middleware가 보호), 로그인 시 정상 접근
+- `useSession()` (next-auth/react) 사용하여 클라이언트에서 세션 확인
+- `SessionProvider` 래핑 필요 (루트 레이아웃 또는 MainLayout)
+
+**의존성**: 3-4-1 (NextAuth 설정 완료)
 
 ---
 

@@ -4,7 +4,8 @@ import { useState, useEffect, useSyncExternalStore } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTheme } from 'next-themes'
-import { Phone, Mail, Sun, Moon, Instagram, Youtube, Facebook } from 'lucide-react'
+import { useSession, signOut } from 'next-auth/react'
+import { Phone, Mail, Sun, Moon, Instagram, Youtube, Facebook, LogIn, User } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Logo } from '@/components/atoms/Logo'
@@ -29,6 +30,8 @@ const Header = () => {
   )
   const pathname = usePathname()
   const { theme, setTheme } = useTheme()
+  const { data: session, status } = useSession()
+  const isAuthenticated = status === 'authenticated'
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50)
@@ -109,6 +112,34 @@ const Header = () => {
                 EN
               </button>
             </div>
+
+            <div className="mx-1.5 h-3.5 w-px bg-border" />
+
+            {/* 로그인/사용자 정보 */}
+            {mounted && (
+              isAuthenticated ? (
+                <div className="flex items-center gap-2">
+                  <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <User className="size-3" />
+                    {session.user?.name || '회원'}
+                  </span>
+                  <button
+                    onClick={() => signOut({ callbackUrl: '/' })}
+                    className="rounded px-1.5 py-0.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    로그아웃
+                  </button>
+                </div>
+              ) : (
+                <Link
+                  href="/login"
+                  className="flex items-center gap-1 rounded px-1.5 py-0.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <LogIn className="size-3" />
+                  로그인
+                </Link>
+              )
+            )}
           </div>
         </div>
       </div>
@@ -137,10 +168,36 @@ const Header = () => {
               </Link>
             </li>
           ))}
+          {isAuthenticated && (
+            <li role="none">
+              <Link
+                href="/community"
+                role="menuitem"
+                className={cn(
+                  'rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-foreground',
+                  pathname.startsWith('/community')
+                    ? 'text-peace-sky'
+                    : 'text-foreground/80'
+                )}
+                {...(pathname.startsWith('/community') ? { 'aria-current': 'page' as const } : {})}
+              >
+                커뮤니티
+              </Link>
+            </li>
+          )}
         </ul>
 
-        {/* 우측: 후원 CTA + 모바일 햄버거 */}
+        {/* 우측: 로그인 + 후원 CTA + 모바일 햄버거 */}
         <div className="flex items-center gap-2">
+          {/* 데스크톱: 미로그인 시 로그인 버튼 */}
+          {mounted && !isAuthenticated && (
+            <Button asChild variant="outline" size="sm" className="hidden md:inline-flex">
+              <Link href="/login">
+                <LogIn className="mr-1.5 size-3.5" />
+                로그인
+              </Link>
+            </Button>
+          )}
           <Button asChild className="bg-peace-orange text-white hover:bg-peace-orange/90">
             <Link href="/donate">후원하기</Link>
           </Button>

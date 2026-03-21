@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Menu, Phone, Mail } from 'lucide-react'
+import { useSession, signOut } from 'next-auth/react'
+import { Menu, Phone, Mail, LogIn, LogOut, User } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -22,6 +23,8 @@ import { cn } from '@/lib/utils'
 const MobileNav = () => {
   const [open, setOpen] = useState(false)
   const pathname = usePathname()
+  const { data: session, status } = useSession()
+  const isAuthenticated = status === 'authenticated'
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -55,7 +58,55 @@ const MobileNav = () => {
               {item.label}
             </Link>
           ))}
+          {isAuthenticated && (
+            <Link
+              href="/community"
+              onClick={() => setOpen(false)}
+              className={cn(
+                'border-b border-border/50 py-3.5 text-base font-medium transition-colors hover:text-peace-sky',
+                pathname.startsWith('/community')
+                  ? 'text-peace-sky'
+                  : 'text-foreground'
+              )}
+              {...(pathname.startsWith('/community') ? { 'aria-current': 'page' as const } : {})}
+            >
+              커뮤니티
+            </Link>
+          )}
         </nav>
+
+        <Separator className="mx-4 my-4" />
+
+        {/* 로그인 상태 */}
+        <div className="px-4">
+          {isAuthenticated ? (
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-2 text-sm text-foreground">
+                <User className="size-4 text-peace-sky" />
+                {session.user?.name || '회원'}
+              </span>
+              <button
+                onClick={() => {
+                  setOpen(false)
+                  signOut({ callbackUrl: '/' })
+                }}
+                className="flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+              >
+                <LogOut className="size-4" />
+                로그아웃
+              </button>
+            </div>
+          ) : (
+            <Link
+              href="/login"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2 text-sm font-medium text-peace-sky transition-colors hover:text-peace-navy"
+            >
+              <LogIn className="size-4" />
+              로그인 / 회원가입
+            </Link>
+          )}
+        </div>
 
         <Separator className="mx-4 my-4" />
 

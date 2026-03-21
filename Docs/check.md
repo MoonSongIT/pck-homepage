@@ -1,6 +1,6 @@
 # PCK 웹사이트 리뉴얼 — 진도 체크리스트
 
-> 최종 수정: 2026-03-20 (Phase 3 상세 구현계획 수립 — 6개 작업 → 31개 소항목 분할)
+> 최종 수정: 2026-03-21 (Phase 3-4-7 Header/MobileNav 로그인 상태 구현 완료)
 > 상태 표시: ⬜ 미시작 | 🔄 진행 중 | ✅ 완료 | ❌ 블로커 | ⏭️ 건너뜀
 
 ---
@@ -753,31 +753,167 @@
 
 | #     | 작업 항목                | 상태 | 세부 내용                                                                 | 블로커/비고 |
 | ----- | ------------------------ | ---- | ------------------------------------------------------------------------- | ----------- |
-| 3-5-1 | 네트워크 데이터 + 상수   | ⬜   | `network.ts` — PCI 50개국 좌표/지부 데이터 + NETWORK_CONFIG 상수         |             |
-| 3-5-2 | PeaceMap 컴포넌트        | ⬜   | `PeaceMap.tsx` — react-simple-maps 세계지도 + 핀 50개 + 클릭 정보패널 + Framer Motion stagger + 한국 강조 |  |
-| 3-5-3 | Network 페이지           | ⬜   | `/network` — 서버 page.tsx(metadata) + dynamic import PeaceMap(ssr:false) + 통계 섹션 |  |
-| 3-5-4 | 빌드 검증                | ⬜   | tsc + lint + build + /network 라우트 확인                                |             |
+| 3-5-1 | 네트워크 데이터 + 상수   | ✅   | `network.ts` — PCI 50개국 좌표/지부 데이터 + NETWORK_CONFIG 상수 + 대륙별 통계 유틸 |             |
+| 3-5-2 | PeaceMap 컴포넌트        | ✅   | `PeaceMap.tsx` — react-simple-maps 세계지도 + 핀 50개 + 클릭 정보패널 + Framer Motion stagger + 한국 강조(ping) |  |
+| 3-5-3 | Network 페이지           | ✅   | `/network` — 서버 page.tsx(metadata) + 클라이언트 dynamic import PeaceMap(ssr:false) + 대륙별 통계 + PCI 소개 섹션 |  |
+| 3-5-4 | 빌드 검증                | ✅   | tsc 0에러 + lint 0에러 + build 성공(18.2s) + /network ○ Static 라우트 확인 |             |
+
+#### 3-5 빌드 검증 결과
+
+- [x] `npx tsc --noEmit` — TypeScript 에러 0건
+- [x] `npm run lint` — ESLint 에러 0건
+- [x] `npm run build` — 프로덕션 빌드 성공 (Compiled 18.2s)
+- [x] `/network` 페이지 — 정적 생성 (○ Static)
+- [x] 총 15개 라우트 정상 생성
+
+#### 3-5 수동 테스트 결과
+
+- [x] 히어로 배너: "국제 평화 네트워크" 제목 + Globe 아이콘 + 서브타이틀 정상 표시
+- [x] 지도 로딩: 스피너 스켈레톤 → world-atlas CDN 로드 → 50개국 핀 표시
+- [x] 한국 핀: peace-gold 색상 + 크기 확대 + animate-ping 맥동 링
+- [x] 일반 핀: peace-sky 색상 원형 마커
+- [x] 핀 클릭: 국가명(한/영) + 지부명(한/영) + 설립연도 + 웹사이트 링크 정보 패널 표시
+- [x] 같은 핀 재클릭: 패널 닫힘 (토글 동작)
+- [x] 다른 핀 클릭: 해당 국가 정보로 전환
+- [x] ESC 키: 패널 닫힘
+- [x] 대륙별 통계: 아시아·태평양(8) / 유럽(21) / 아메리카(10) / 아프리카(8) / 오세아니아(2) = 50개국
+- [x] PCI 소개: 설명 텍스트 + "PCI 공식 사이트" 외부 링크 + "PCK 소개 보기" 내부 링크
+- [x] Header 메뉴: "네트워크" 클릭 → `/network` 이동
+- [x] 반응형: 모바일(360px) 2열 통계 + 하단 패널 / 데스크톱 5열 통계 + 우측 패널
+- [x] 다크모드: 지도 배경 + 카드 + 텍스트 정상 전환
+- [x] Framer Motion: 스크롤 시 섹션 순차 등장 + 핀 stagger 애니메이션
+- [x] 접근성: Tab 키 핀 포커스 + Enter/Space 선택 + aria-label 적용
+
+#### 3-5 생성/수정 파일 목록
+
+| 구분 | 파일 경로                                                | 서버/클라이언트 |
+| ---- | -------------------------------------------------------- | --------------- |
+| 신규 | `src/lib/constants/network.ts`                           | 공유 데이터     |
+| 신규 | `src/components/organisms/PeaceMap.tsx`                   | 클라이언트 (react-simple-maps, Framer Motion) |
+| 신규 | `src/app/(main)/network/page.tsx`                        | 서버 (metadata) |
+| 신규 | `src/app/(main)/network/network-content.tsx`             | 클라이언트 (dynamic import, Framer Motion) |
+
+#### 3-5 기술 패턴 메모
+
+- Next.js 16에서 `dynamic(..., { ssr: false })`는 Server Component에서 사용 불가 → 클라이언트 컴포넌트에서 dynamic import
+- react-simple-maps: `geoEqualEarth` 투영 + world-atlas CDN topojson
+- 핀 토글 로직: `setState(prev => prev?.id === id ? null : member)` — 외부 클릭 핸들러와 경쟁 조건 주의
+- 한국 핀 강조: `animate-ping` CSS 애니메이션 + peace-gold 색상 + 크기 확대
 
 ### 3-3. 평화학교 교육 신청
 
 | #     | 작업 항목                | 상태 | 세부 내용                                                                 | 블로커/비고 |
 | ----- | ------------------------ | ---- | ------------------------------------------------------------------------- | ----------- |
-| 3-3-1 | 교육 상수 + Zod 스키마   | ⬜   | `education.ts` — educationApplySchema + EDUCATION_CONFIG 상수            |             |
-| 3-3-2 | Education 소개 페이지    | ⬜   | `/education` — Sanity education 기수 목록(ISR) + 모집상태 뱃지 + 커리큘럼 아코디언 + 신청 CTA |  |
-| 3-3-3 | Education 신청 폼 페이지 | ⬜   | `/education/apply` — react-hook-form + Zod 6필드 + 글자수 카운터 + useActionState |  |
-| 3-3-4 | Education Server Action  | ⬜   | `actions/education.ts` — Zod 재검증 + Prisma create + Resend 이메일 (신청자+관리자) |  |
-| 3-3-5 | 빌드 검증                | ⬜   | tsc + lint + build + /education, /education/apply 라우트 확인            |             |
+| 3-3-1 | 교육 상수 + Zod 스키마   | ✅   | `education.ts` — educationApplySchema + EDUCATION_CONFIG + EDUCATION_STATUS 상수 |             |
+| 3-3-2 | Education 소개 페이지    | ✅   | `/education` — Sanity education 기수 목록(ISR) + 모집상태 뱃지 + 커리큘럼 Accordion + 신청 CTA |  |
+| 3-3-3 | Education 신청 폼 페이지 | ✅   | `/education/apply` — useActionState + Zod 6필드 + 글자수 카운터 + Suspense boundary |  |
+| 3-3-4 | Education Server Action  | ✅   | `actions/education.ts` — Zod 재검증 + Prisma create + Resend 이메일 (신청자+관리자) |  |
+| 3-3-5 | 빌드 검증                | ✅   | tsc 0에러 + lint 0에러 + build 성공(17.7s) + /education(ISR) + /education/apply(Static) 라우트 확인 |  |
+
+#### 3-3 빌드 검증 결과
+
+- [x] `npx tsc --noEmit` — TypeScript 에러 0건
+- [x] `npm run lint` — ESLint 에러 0건
+- [x] `npm run build` — 프로덕션 빌드 성공 (Compiled 17.7s)
+- [x] `/education` 페이지 — ISR 정적 생성 (revalidate 1h)
+- [x] `/education/apply` 페이지 — 정적 생성 (○ Static)
+- [x] 총 16개 라우트 정상 생성
+
+#### 3-3 수동 테스트 결과
+
+- [x] 히어로 배너: "평화학교" 제목 + GraduationCap 아이콘 + 서브타이틀
+- [x] 소개 섹션: "팍스크리스티 평화학교란?" + 2개 문단
+- [x] Sanity 미연결 시: "현재 모집 중인 교육이 없습니다" 빈 상태 UI
+- [x] Sanity 연결 시: 교육 카드 목록 + 모집 상태 뱃지(모집 중/마감/예정)
+- [x] 모집 중 교육: "신청하기" 버튼 → `/education/apply?cohort={ID}`
+- [x] 커리큘럼 아코디언: 강의 목록 번호 순서대로 표시
+- [x] 지난 교육: 아코디언 클릭 → 마감된 교육 목록 펼쳐짐
+- [x] 신청 폼: 이름/이메일/전화번호/소속/지원동기/개인정보동의 6필드
+- [x] 글자수 카운터: 지원 동기 입력 시 N/500 실시간 업데이트
+- [x] 폼 검증: 필수 필드 누락/잘못된 형식 → 에러 메시지 표시
+- [x] 폼 제출: "신청 중..." 로딩 → 성공 화면 (CheckCircle + 완료 메시지)
+- [x] DB 저장: Prisma Studio에서 education_applications 테이블 확인
+- [x] 반응형: 모바일 풀폭 / 데스크톱 max-w-xl 중앙 정렬
+- [x] 다크모드: 히어로 + 폼 카드 + 성공/에러 메시지 정상 전환
+- [x] 접근성: Tab 키 폼 필드 순차 이동 + aria-required + role="alert"
+
+#### 3-3 생성/수정 파일 목록
+
+| 구분 | 파일 경로                                                | 서버/클라이언트 |
+| ---- | -------------------------------------------------------- | --------------- |
+| 신규 | `src/lib/constants/education.ts`                         | 공유 데이터 (Zod + 상수) |
+| 신규 | `src/app/(main)/education/page.tsx`                      | 서버 (async, ISR) |
+| 신규 | `src/app/(main)/education/education-content.tsx`         | 클라이언트 (Framer Motion, Accordion) |
+| 신규 | `src/app/(main)/education/apply/page.tsx`                | 서버 (Suspense) |
+| 신규 | `src/app/(main)/education/apply/apply-form.tsx`          | 클라이언트 (useActionState, Framer Motion) |
+| 신규 | `src/app/actions/education.ts`                           | 서버 액션 (Prisma + Resend) |
+| 신규 | `src/components/ui/{label,textarea,checkbox,accordion}.tsx` | shadcn/ui 컴포넌트 4개 |
+| 수정 | `prisma/schema.prisma`                                   | EducationApplication에 affiliation 필드 추가 |
+
+#### 3-3 기술 패턴 메모
+
+- `useSearchParams()`는 Suspense boundary 필수 (Next.js 16 빌드 에러 방지)
+- Server Action: `useActionState` 패턴 (Newsletter과 동일) — FormData → Zod safeParse → Prisma → Resend
+- Prisma 스키마 변경 후 `prisma db push` + `prisma generate` 필수
+- 교육 상태 판별: `isRecruiting` → recruiting, 미래 startDate → upcoming, 나머지 → closed
 
 ### 3-4. 회원 커뮤니티 (인증 + 게시판)
 
 | #     | 작업 항목                | 상태 | 세부 내용                                                                 | 블로커/비고 |
 | ----- | ------------------------ | ---- | ------------------------------------------------------------------------- | ----------- |
-| 3-4-1 | 인증 페이지 (로그인/회원가입) | ⬜ | `(auth)/login` + `(auth)/register` — Credentials 로그인 + 카카오 + 회원가입 Server Action (bcrypt) | ⏳ 카카오 앱 등록 |
-| 3-4-2 | 커뮤니티 상수 + Zod 스키마 | ⬜ | `community.ts` — BOARD_TYPES + postSchema + commentSchema               |             |
-| 3-4-3 | 커뮤니티 게시판 목록     | ⬜   | `/community` — 게시판 탭(자유/평화나눔) + 테이블 + 페이지네이션 + 글쓰기 CTA | middleware 보호 |
-| 3-4-4 | 글쓰기/수정 페이지       | ⬜   | `/community/write` + `/community/[id]/edit` — react-hook-form + 본인확인 + CRUD Server Actions |  |
-| 3-4-5 | 게시글 상세 + 댓글       | ⬜   | `/community/[id]` — 본문 + 수정/삭제(본인) + 댓글 목록 + 댓글 입력/삭제 Server Actions |  |
-| 3-4-6 | 빌드 검증                | ⬜   | tsc + lint + build + 인증 + 커뮤니티 라우트 확인 + middleware 리다이렉트 테스트 |  |
+| 3-4-1 | 인증 페이지 (로그인/회원가입) | ✅ | `(auth)/layout` + `login/page+form` + `register/page+form` — Credentials + 카카오 + 회원가입 Server Action (bcrypt) + auth Zod 스키마 | ⏳ 카카오 앱 등록 |
+| 3-4-2 | 커뮤니티 상수 + Zod 스키마 | ✅ | `constants/community.ts` + `validations/community.ts` — BOARD_TYPES + COMMUNITY_CONFIG + postSchema + commentSchema |  |
+| 3-4-3 | 커뮤니티 게시판 목록     | ✅   | `/community` page.tsx(서버) + community-list.tsx(클라이언트) — 게시판 탭(자유/평화나눔) + Table/Card + 페이지네이션 + 글쓰기 CTA | middleware 보호 |
+| 3-4-4 | 글쓰기/수정 + Server Actions | ✅ | `/community/write` + `/community/[id]/edit` — useActionState + Select/Input/Textarea + `actions/community.ts` CRUD (create/update/delete Post) + 게시판 선택 유지 |  |
+| 3-4-5 | 게시글 상세 + 댓글       | ✅   | `/community/[id]` page.tsx(서버) + post-detail.tsx(클라이언트) — 본문 + 수정/삭제(본인, AlertDialog) + 댓글 CRUD Server Actions |  |
+| 3-4-6 | 빌드 검증                | ✅   | tsc 0에러 + lint 0에러 + build 성공(19.2s) + 20개 라우트 정상 생성 |  |
+| 3-4-7 | Header/MobileNav 로그인 상태 | ✅ | SessionProvider 추가, Header 로그인/로그아웃+커뮤니티메뉴, MobileNav 로그인상태+커뮤니티메뉴 |  |
+
+#### 3-4 빌드 검증 결과
+
+- [x] `npx tsc --noEmit` — TypeScript 에러 0건
+- [x] `npm run lint` — ESLint 에러 0건
+- [x] `npm run build` — 프로덕션 빌드 성공 (Compiled 19.2s)
+- [x] `/login` 페이지 — 정적 생성 (○ Static)
+- [x] `/register` 페이지 — 정적 생성 (○ Static)
+- [x] `/community` 페이지 — 동적 생성 (ƒ Dynamic)
+- [x] `/community/[id]` 페이지 — 동적 생성 (ƒ Dynamic)
+- [x] `/community/[id]/edit` 페이지 — 동적 생성 (ƒ Dynamic)
+- [x] `/community/write` 페이지 — 동적 생성 (ƒ Dynamic)
+- [x] 총 20개 라우트 정상 생성
+
+#### 3-4 생성/수정 파일 목록
+
+| 구분 | 파일 경로                                                | 서버/클라이언트 |
+| ---- | -------------------------------------------------------- | --------------- |
+| 신규 | `src/lib/validations/auth.ts`                            | 공유 (loginSchema, registerSchema) |
+| 신규 | `src/lib/constants/community.ts`                         | 공유 (BOARD_TYPES, COMMUNITY_CONFIG) |
+| 신규 | `src/lib/validations/community.ts`                       | 공유 (postSchema, commentSchema) |
+| 신규 | `src/app/(auth)/layout.tsx`                              | 서버 (센터 정렬 + 로고) |
+| 신규 | `src/app/(auth)/login/page.tsx`                          | 서버 (metadata + Suspense) |
+| 신규 | `src/app/(auth)/login/login-form.tsx`                    | 클라이언트 (Credentials + 카카오 + callbackUrl) |
+| 신규 | `src/app/(auth)/register/page.tsx`                       | 서버 (metadata + Suspense) |
+| 신규 | `src/app/(auth)/register/register-form.tsx`              | 클라이언트 (useActionState + 자동 로그인) |
+| 신규 | `src/app/actions/auth.ts`                                | 서버 액션 (bcrypt.hash + Prisma user.create) |
+| 신규 | `src/app/(main)/community/page.tsx`                      | 서버 (Prisma 페칭 + boardType 필터 + 페이지네이션) |
+| 신규 | `src/app/(main)/community/community-list.tsx`            | 클라이언트 (히어로 + 탭 + Table/Card + Framer Motion) |
+| 신규 | `src/app/(main)/community/write/page.tsx`                | 서버 (auth 확인 + searchParams board 전달) |
+| 신규 | `src/app/(main)/community/write/write-form.tsx`          | 클라이언트 (useActionState + create/edit 모드 공유) |
+| 신규 | `src/app/(main)/community/[id]/page.tsx`                 | 서버 (generateMetadata + Prisma findUnique + comments) |
+| 신규 | `src/app/(main)/community/[id]/post-detail.tsx`          | 클라이언트 (본문 + 수정/삭제 AlertDialog + CommentForm + CommentItem) |
+| 신규 | `src/app/(main)/community/[id]/edit/page.tsx`            | 서버 (본인 확인 + 기존 데이터 프리필 → WriteForm 재사용) |
+| 신규 | `src/app/actions/community.ts`                           | 서버 액션 (createPost, updatePost, deletePost, createComment, deleteComment) |
+| 신규 | `src/components/ui/alert-dialog.tsx`                     | shadcn/ui AlertDialog |
+| 수정 | `src/lib/auth.ts`                                        | Credentials provider 직접 선언 (provider.id 매핑 버그 수정) + email toLowerCase |
+
+#### 3-4 기술 패턴 메모
+
+- NextAuth v5: `provider.id` 매핑 방식은 동작 불안정 → providers 배열 직접 선언 권장
+- auth.ts에서 Credentials authorize 구현 시 `email.toLowerCase().trim()` 필수 (DB 저장과 일치)
+- WriteForm: create/edit 모드 공유 — `updatePost.bind(null, postId)`로 Server Action 바인딩
+- 게시판 탭 → 글쓰기 시 `?board=` 파라미터로 게시판 선택 유지
+- 댓글 입력 후 `formRef.current?.reset()` + `revalidatePath`로 폼 초기화 + 목록 갱신
+- AlertDialog: 삭제 확인 → `deletePost(postId)` → `redirect('/community')`
 
 ### 3-6. 다국어(한/영) 적용
 
@@ -812,14 +948,14 @@
 
 ### Phase 3 완료 체크포인트
 
-- [ ] 네트워크 지도: `/network` — 50개국 핀 + 한국 강조 + 클릭 정보 패널
-- [ ] 교육 소개: `/education` — Sanity 기수 목록 + 모집 상태 뱃지
-- [ ] 교육 신청: `/education/apply` 폼 제출 → DB 저장 + 확인 이메일
-- [ ] 로그인: `/login` — Credentials 인증 + 세션 생성
-- [ ] 회원가입: `/register` — DB 저장 + bcrypt + 자동 로그인
-- [ ] 커뮤니티 인증: 비로그인 → /community → /login 리다이렉트
-- [ ] 게시글 CRUD: 글쓰기/수정/삭제 → DB 반영 + 본인 권한
-- [ ] 댓글 CRUD: 댓글 작성/삭제 → DB 반영 + 본인만 삭제
+- [x] 네트워크 지도: `/network` — 50개국 핀 + 한국 강조 + 클릭 정보 패널 + 대륙별 통계 + PCI 소개
+- [x] 교육 소개: `/education` — Sanity 기수 목록 + 모집 상태 뱃지 + 커리큘럼 아코디언
+- [x] 교육 신청: `/education/apply` 폼 제출 → DB 저장(Prisma) + Resend 이메일 (신청자+관리자)
+- [x] 로그인: `/login` — Credentials 인증 + 세션 생성
+- [x] 회원가입: `/register` — DB 저장 + bcrypt + 자동 로그인
+- [x] 커뮤니티 인증: 비로그인 → /community → /login 리다이렉트
+- [x] 게시글 CRUD: 글쓰기/수정/삭제 → DB 반영 + 본인 권한
+- [x] 댓글 CRUD: 댓글 작성/삭제 → DB 반영 + 본인만 삭제
 - [ ] 다국어: Header KO/EN 토글 → 한/영 전환 + /en/* URL prefix
 - [ ] ADMIN 권한: 일반 회원 /admin 접근 → 거부
 - [ ] 제경비 CRUD: 입력/수정/삭제 → DB 반영
@@ -879,13 +1015,13 @@
 | Phase 2-2   | 8         | 8      | **100%** |
 | Phase 2-3   | 8         | 8      | **100%** |
 | Phase 2-4   | 7         | 7      | **100%** |
-| Phase 3-5   | 4         | 0      | 0%       |
-| Phase 3-3   | 5         | 0      | 0%       |
-| Phase 3-4   | 6         | 0      | 0%       |
+| Phase 3-5   | 4         | 4      | **100%** |
+| Phase 3-3   | 5         | 5      | **100%** |
+| Phase 3-4   | 7         | 7      | **100%** |
 | Phase 3-6   | 4         | 0      | 0%       |
 | Phase 3-2   | 7         | 0      | 0%       |
 | Phase 3-1   | 5         | 0      | 0%       |
 | Phase 4     | 5         | 0      | 0%       |
-| **전체**    | **82**    | **46** | **56%**  |
+| **전체**    | **83**    | **62** | **75%**  |
 
 > Phase 3 상세 분할: 기존 6개 → 31개 소항목으로 확장 (2026-03-20)
