@@ -804,11 +804,58 @@
 
 | #     | 작업 항목                | 상태 | 세부 내용                                                                 | 블로커/비고 |
 | ----- | ------------------------ | ---- | ------------------------------------------------------------------------- | ----------- |
-| 3-3-1 | 교육 상수 + Zod 스키마   | ⬜   | `education.ts` — educationApplySchema + EDUCATION_CONFIG 상수            |             |
-| 3-3-2 | Education 소개 페이지    | ⬜   | `/education` — Sanity education 기수 목록(ISR) + 모집상태 뱃지 + 커리큘럼 아코디언 + 신청 CTA |  |
-| 3-3-3 | Education 신청 폼 페이지 | ⬜   | `/education/apply` — react-hook-form + Zod 6필드 + 글자수 카운터 + useActionState |  |
-| 3-3-4 | Education Server Action  | ⬜   | `actions/education.ts` — Zod 재검증 + Prisma create + Resend 이메일 (신청자+관리자) |  |
-| 3-3-5 | 빌드 검증                | ⬜   | tsc + lint + build + /education, /education/apply 라우트 확인            |             |
+| 3-3-1 | 교육 상수 + Zod 스키마   | ✅   | `education.ts` — educationApplySchema + EDUCATION_CONFIG + EDUCATION_STATUS 상수 |             |
+| 3-3-2 | Education 소개 페이지    | ✅   | `/education` — Sanity education 기수 목록(ISR) + 모집상태 뱃지 + 커리큘럼 Accordion + 신청 CTA |  |
+| 3-3-3 | Education 신청 폼 페이지 | ✅   | `/education/apply` — useActionState + Zod 6필드 + 글자수 카운터 + Suspense boundary |  |
+| 3-3-4 | Education Server Action  | ✅   | `actions/education.ts` — Zod 재검증 + Prisma create + Resend 이메일 (신청자+관리자) |  |
+| 3-3-5 | 빌드 검증                | ✅   | tsc 0에러 + lint 0에러 + build 성공(17.7s) + /education(ISR) + /education/apply(Static) 라우트 확인 |  |
+
+#### 3-3 빌드 검증 결과
+
+- [x] `npx tsc --noEmit` — TypeScript 에러 0건
+- [x] `npm run lint` — ESLint 에러 0건
+- [x] `npm run build` — 프로덕션 빌드 성공 (Compiled 17.7s)
+- [x] `/education` 페이지 — ISR 정적 생성 (revalidate 1h)
+- [x] `/education/apply` 페이지 — 정적 생성 (○ Static)
+- [x] 총 16개 라우트 정상 생성
+
+#### 3-3 수동 테스트 결과
+
+- [x] 히어로 배너: "평화학교" 제목 + GraduationCap 아이콘 + 서브타이틀
+- [x] 소개 섹션: "팍스크리스티 평화학교란?" + 2개 문단
+- [x] Sanity 미연결 시: "현재 모집 중인 교육이 없습니다" 빈 상태 UI
+- [x] Sanity 연결 시: 교육 카드 목록 + 모집 상태 뱃지(모집 중/마감/예정)
+- [x] 모집 중 교육: "신청하기" 버튼 → `/education/apply?cohort={ID}`
+- [x] 커리큘럼 아코디언: 강의 목록 번호 순서대로 표시
+- [x] 지난 교육: 아코디언 클릭 → 마감된 교육 목록 펼쳐짐
+- [x] 신청 폼: 이름/이메일/전화번호/소속/지원동기/개인정보동의 6필드
+- [x] 글자수 카운터: 지원 동기 입력 시 N/500 실시간 업데이트
+- [x] 폼 검증: 필수 필드 누락/잘못된 형식 → 에러 메시지 표시
+- [x] 폼 제출: "신청 중..." 로딩 → 성공 화면 (CheckCircle + 완료 메시지)
+- [x] DB 저장: Prisma Studio에서 education_applications 테이블 확인
+- [x] 반응형: 모바일 풀폭 / 데스크톱 max-w-xl 중앙 정렬
+- [x] 다크모드: 히어로 + 폼 카드 + 성공/에러 메시지 정상 전환
+- [x] 접근성: Tab 키 폼 필드 순차 이동 + aria-required + role="alert"
+
+#### 3-3 생성/수정 파일 목록
+
+| 구분 | 파일 경로                                                | 서버/클라이언트 |
+| ---- | -------------------------------------------------------- | --------------- |
+| 신규 | `src/lib/constants/education.ts`                         | 공유 데이터 (Zod + 상수) |
+| 신규 | `src/app/(main)/education/page.tsx`                      | 서버 (async, ISR) |
+| 신규 | `src/app/(main)/education/education-content.tsx`         | 클라이언트 (Framer Motion, Accordion) |
+| 신규 | `src/app/(main)/education/apply/page.tsx`                | 서버 (Suspense) |
+| 신규 | `src/app/(main)/education/apply/apply-form.tsx`          | 클라이언트 (useActionState, Framer Motion) |
+| 신규 | `src/app/actions/education.ts`                           | 서버 액션 (Prisma + Resend) |
+| 신규 | `src/components/ui/{label,textarea,checkbox,accordion}.tsx` | shadcn/ui 컴포넌트 4개 |
+| 수정 | `prisma/schema.prisma`                                   | EducationApplication에 affiliation 필드 추가 |
+
+#### 3-3 기술 패턴 메모
+
+- `useSearchParams()`는 Suspense boundary 필수 (Next.js 16 빌드 에러 방지)
+- Server Action: `useActionState` 패턴 (Newsletter과 동일) — FormData → Zod safeParse → Prisma → Resend
+- Prisma 스키마 변경 후 `prisma db push` + `prisma generate` 필수
+- 교육 상태 판별: `isRecruiting` → recruiting, 미래 startDate → upcoming, 나머지 → closed
 
 ### 3-4. 회원 커뮤니티 (인증 + 게시판)
 
@@ -855,8 +902,8 @@
 ### Phase 3 완료 체크포인트
 
 - [x] 네트워크 지도: `/network` — 50개국 핀 + 한국 강조 + 클릭 정보 패널 + 대륙별 통계 + PCI 소개
-- [ ] 교육 소개: `/education` — Sanity 기수 목록 + 모집 상태 뱃지
-- [ ] 교육 신청: `/education/apply` 폼 제출 → DB 저장 + 확인 이메일
+- [x] 교육 소개: `/education` — Sanity 기수 목록 + 모집 상태 뱃지 + 커리큘럼 아코디언
+- [x] 교육 신청: `/education/apply` 폼 제출 → DB 저장(Prisma) + Resend 이메일 (신청자+관리자)
 - [ ] 로그인: `/login` — Credentials 인증 + 세션 생성
 - [ ] 회원가입: `/register` — DB 저장 + bcrypt + 자동 로그인
 - [ ] 커뮤니티 인증: 비로그인 → /community → /login 리다이렉트
@@ -922,12 +969,12 @@
 | Phase 2-3   | 8         | 8      | **100%** |
 | Phase 2-4   | 7         | 7      | **100%** |
 | Phase 3-5   | 4         | 4      | **100%** |
-| Phase 3-3   | 5         | 0      | 0%       |
+| Phase 3-3   | 5         | 5      | **100%** |
 | Phase 3-4   | 6         | 0      | 0%       |
 | Phase 3-6   | 4         | 0      | 0%       |
 | Phase 3-2   | 7         | 0      | 0%       |
 | Phase 3-1   | 5         | 0      | 0%       |
 | Phase 4     | 5         | 0      | 0%       |
-| **전체**    | **82**    | **50** | **61%**  |
+| **전체**    | **82**    | **55** | **67%**  |
 
 > Phase 3 상세 분할: 기존 6개 → 31개 소항목으로 확장 (2026-03-20)

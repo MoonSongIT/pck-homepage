@@ -206,9 +206,10 @@ model EducationApplication {
   userId     String?
   name       String
   email      String
-  phone      String
-  motivation String   @db.Text
-  status     String   @default("PENDING")
+  phone       String
+  affiliation String?
+  motivation  String   @db.Text
+  status      String   @default("PENDING")
   cohort     String?
   createdAt  DateTime @default(now())
 
