@@ -753,10 +753,52 @@
 
 | #     | 작업 항목                | 상태 | 세부 내용                                                                 | 블로커/비고 |
 | ----- | ------------------------ | ---- | ------------------------------------------------------------------------- | ----------- |
-| 3-5-1 | 네트워크 데이터 + 상수   | ⬜   | `network.ts` — PCI 50개국 좌표/지부 데이터 + NETWORK_CONFIG 상수         |             |
-| 3-5-2 | PeaceMap 컴포넌트        | ⬜   | `PeaceMap.tsx` — react-simple-maps 세계지도 + 핀 50개 + 클릭 정보패널 + Framer Motion stagger + 한국 강조 |  |
-| 3-5-3 | Network 페이지           | ⬜   | `/network` — 서버 page.tsx(metadata) + dynamic import PeaceMap(ssr:false) + 통계 섹션 |  |
-| 3-5-4 | 빌드 검증                | ⬜   | tsc + lint + build + /network 라우트 확인                                |             |
+| 3-5-1 | 네트워크 데이터 + 상수   | ✅   | `network.ts` — PCI 50개국 좌표/지부 데이터 + NETWORK_CONFIG 상수 + 대륙별 통계 유틸 |             |
+| 3-5-2 | PeaceMap 컴포넌트        | ✅   | `PeaceMap.tsx` — react-simple-maps 세계지도 + 핀 50개 + 클릭 정보패널 + Framer Motion stagger + 한국 강조(ping) |  |
+| 3-5-3 | Network 페이지           | ✅   | `/network` — 서버 page.tsx(metadata) + 클라이언트 dynamic import PeaceMap(ssr:false) + 대륙별 통계 + PCI 소개 섹션 |  |
+| 3-5-4 | 빌드 검증                | ✅   | tsc 0에러 + lint 0에러 + build 성공(18.2s) + /network ○ Static 라우트 확인 |             |
+
+#### 3-5 빌드 검증 결과
+
+- [x] `npx tsc --noEmit` — TypeScript 에러 0건
+- [x] `npm run lint` — ESLint 에러 0건
+- [x] `npm run build` — 프로덕션 빌드 성공 (Compiled 18.2s)
+- [x] `/network` 페이지 — 정적 생성 (○ Static)
+- [x] 총 15개 라우트 정상 생성
+
+#### 3-5 수동 테스트 결과
+
+- [x] 히어로 배너: "국제 평화 네트워크" 제목 + Globe 아이콘 + 서브타이틀 정상 표시
+- [x] 지도 로딩: 스피너 스켈레톤 → world-atlas CDN 로드 → 50개국 핀 표시
+- [x] 한국 핀: peace-gold 색상 + 크기 확대 + animate-ping 맥동 링
+- [x] 일반 핀: peace-sky 색상 원형 마커
+- [x] 핀 클릭: 국가명(한/영) + 지부명(한/영) + 설립연도 + 웹사이트 링크 정보 패널 표시
+- [x] 같은 핀 재클릭: 패널 닫힘 (토글 동작)
+- [x] 다른 핀 클릭: 해당 국가 정보로 전환
+- [x] ESC 키: 패널 닫힘
+- [x] 대륙별 통계: 아시아·태평양(8) / 유럽(21) / 아메리카(10) / 아프리카(8) / 오세아니아(2) = 50개국
+- [x] PCI 소개: 설명 텍스트 + "PCI 공식 사이트" 외부 링크 + "PCK 소개 보기" 내부 링크
+- [x] Header 메뉴: "네트워크" 클릭 → `/network` 이동
+- [x] 반응형: 모바일(360px) 2열 통계 + 하단 패널 / 데스크톱 5열 통계 + 우측 패널
+- [x] 다크모드: 지도 배경 + 카드 + 텍스트 정상 전환
+- [x] Framer Motion: 스크롤 시 섹션 순차 등장 + 핀 stagger 애니메이션
+- [x] 접근성: Tab 키 핀 포커스 + Enter/Space 선택 + aria-label 적용
+
+#### 3-5 생성/수정 파일 목록
+
+| 구분 | 파일 경로                                                | 서버/클라이언트 |
+| ---- | -------------------------------------------------------- | --------------- |
+| 신규 | `src/lib/constants/network.ts`                           | 공유 데이터     |
+| 신규 | `src/components/organisms/PeaceMap.tsx`                   | 클라이언트 (react-simple-maps, Framer Motion) |
+| 신규 | `src/app/(main)/network/page.tsx`                        | 서버 (metadata) |
+| 신규 | `src/app/(main)/network/network-content.tsx`             | 클라이언트 (dynamic import, Framer Motion) |
+
+#### 3-5 기술 패턴 메모
+
+- Next.js 16에서 `dynamic(..., { ssr: false })`는 Server Component에서 사용 불가 → 클라이언트 컴포넌트에서 dynamic import
+- react-simple-maps: `geoEqualEarth` 투영 + world-atlas CDN topojson
+- 핀 토글 로직: `setState(prev => prev?.id === id ? null : member)` — 외부 클릭 핸들러와 경쟁 조건 주의
+- 한국 핀 강조: `animate-ping` CSS 애니메이션 + peace-gold 색상 + 크기 확대
 
 ### 3-3. 평화학교 교육 신청
 
@@ -812,7 +854,7 @@
 
 ### Phase 3 완료 체크포인트
 
-- [ ] 네트워크 지도: `/network` — 50개국 핀 + 한국 강조 + 클릭 정보 패널
+- [x] 네트워크 지도: `/network` — 50개국 핀 + 한국 강조 + 클릭 정보 패널 + 대륙별 통계 + PCI 소개
 - [ ] 교육 소개: `/education` — Sanity 기수 목록 + 모집 상태 뱃지
 - [ ] 교육 신청: `/education/apply` 폼 제출 → DB 저장 + 확인 이메일
 - [ ] 로그인: `/login` — Credentials 인증 + 세션 생성
@@ -879,13 +921,13 @@
 | Phase 2-2   | 8         | 8      | **100%** |
 | Phase 2-3   | 8         | 8      | **100%** |
 | Phase 2-4   | 7         | 7      | **100%** |
-| Phase 3-5   | 4         | 0      | 0%       |
+| Phase 3-5   | 4         | 4      | **100%** |
 | Phase 3-3   | 5         | 0      | 0%       |
 | Phase 3-4   | 6         | 0      | 0%       |
 | Phase 3-6   | 4         | 0      | 0%       |
 | Phase 3-2   | 7         | 0      | 0%       |
 | Phase 3-1   | 5         | 0      | 0%       |
 | Phase 4     | 5         | 0      | 0%       |
-| **전체**    | **82**    | **46** | **56%**  |
+| **전체**    | **82**    | **50** | **61%**  |
 
 > Phase 3 상세 분할: 기존 6개 → 31개 소항목으로 확장 (2026-03-20)
