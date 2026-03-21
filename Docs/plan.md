@@ -1382,6 +1382,22 @@ export const commentSchema = z.object({
 
 ---
 
+#### 3-4-7. Header/MobileNav 로그인 상태 표시
+
+**수정 파일**: `src/components/organisms/Header.tsx`, `src/components/organisms/MobileNav.tsx`
+
+**상세**:
+
+- **비로그인 상태**: "로그인" 버튼 표시 → `/login` 이동
+- **로그인 상태**: 사용자 이름 + "로그아웃" 버튼 표시 → `signOut()` 호출
+- **커뮤니티 메뉴**: Header 메뉴에 이미 포함 (middleware가 보호), 로그인 시 정상 접근
+- `useSession()` (next-auth/react) 사용하여 클라이언트에서 세션 확인
+- `SessionProvider` 래핑 필요 (루트 레이아웃 또는 MainLayout)
+
+**의존성**: 3-4-1 (NextAuth 설정 완료)
+
+---
+
 ### 3-6. 다국어(한/영) 적용
 
 > **우선순위 4** — next-intl 설치 완료, 기존 페이지 텍스트 i18n 키로 교체 필요

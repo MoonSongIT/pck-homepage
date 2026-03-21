@@ -1,6 +1,6 @@
 # PCK 웹사이트 리뉴얼 — 진도 체크리스트
 
-> 최종 수정: 2026-03-21 (Phase 3-4 회원 커뮤니티 구현 완료)
+> 최종 수정: 2026-03-21 (Phase 3-4-7 Header/MobileNav 로그인 상태 구현 완료)
 > 상태 표시: ⬜ 미시작 | 🔄 진행 중 | ✅ 완료 | ❌ 블로커 | ⏭️ 건너뜀
 
 ---
@@ -867,6 +867,7 @@
 | 3-4-4 | 글쓰기/수정 + Server Actions | ✅ | `/community/write` + `/community/[id]/edit` — useActionState + Select/Input/Textarea + `actions/community.ts` CRUD (create/update/delete Post) + 게시판 선택 유지 |  |
 | 3-4-5 | 게시글 상세 + 댓글       | ✅   | `/community/[id]` page.tsx(서버) + post-detail.tsx(클라이언트) — 본문 + 수정/삭제(본인, AlertDialog) + 댓글 CRUD Server Actions |  |
 | 3-4-6 | 빌드 검증                | ✅   | tsc 0에러 + lint 0에러 + build 성공(19.2s) + 20개 라우트 정상 생성 |  |
+| 3-4-7 | Header/MobileNav 로그인 상태 | ✅ | SessionProvider 추가, Header 로그인/로그아웃+커뮤니티메뉴, MobileNav 로그인상태+커뮤니티메뉴 |  |
 
 #### 3-4 빌드 검증 결과
 
@@ -1016,11 +1017,11 @@
 | Phase 2-4   | 7         | 7      | **100%** |
 | Phase 3-5   | 4         | 4      | **100%** |
 | Phase 3-3   | 5         | 5      | **100%** |
-| Phase 3-4   | 6         | 6      | **100%** |
+| Phase 3-4   | 7         | 7      | **100%** |
 | Phase 3-6   | 4         | 0      | 0%       |
 | Phase 3-2   | 7         | 0      | 0%       |
 | Phase 3-1   | 5         | 0      | 0%       |
 | Phase 4     | 5         | 0      | 0%       |
-| **전체**    | **82**    | **61** | **74%**  |
+| **전체**    | **83**    | **62** | **75%**  |
 
 > Phase 3 상세 분할: 기존 6개 → 31개 소항목으로 확장 (2026-03-20)
