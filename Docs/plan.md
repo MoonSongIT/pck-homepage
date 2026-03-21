@@ -1,6 +1,6 @@
 # PCK 웹사이트 리뉴얼 — 전체 구현 계획서
 
-> 최종 수정: 2026-03-20
+> 최종 수정: 2026-03-21
 > 프로젝트: 팍스크리스티코리아(Pax Christi Korea) 공식 웹사이트 리뉴얼
 > 기술 스택: Next.js 16 + TypeScript + Tailwind CSS v4 + Supabase + Sanity.io
 
