@@ -1,9 +1,10 @@
 'use client'
 
 import { useRef, useState } from 'react'
-import Link from 'next/link'
 import { motion, useInView, useReducedMotion } from 'framer-motion'
+import { useTranslations } from 'next-intl'
 
+import { Link } from '@/i18n/navigation'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -37,16 +38,30 @@ const formatCurrency = (amount: number) =>
 const defaultPlan = DONATION_PLANS.find((p) => p.popular) ?? DONATION_PLANS[0]
 
 const DonationCTA = ({ className }: { className?: string }) => {
+  const t = useTranslations()
   const ref = useRef<HTMLElement>(null)
   const isInView = useInView(ref, { once: true, margin: '-80px' })
   const shouldReduceMotion = useReducedMotion()
   const activeVariants = shouldReduceMotion ? reducedItemVariants : itemVariants
   const [selected, setSelected] = useState<DonationPlan['id']>(defaultPlan.id)
 
+  const planLabels: Record<string, string> = {
+    'monthly-10k': t('Donation.planSeed'),
+    'monthly-30k': t('Donation.planCompanion'),
+    'monthly-50k': t('Donation.planWorker'),
+    'monthly-100k': t('Donation.planSponsor'),
+  }
+  const planDescs: Record<string, string> = {
+    'monthly-10k': t('Donation.planSeedDesc'),
+    'monthly-30k': t('Donation.planCompanionDesc'),
+    'monthly-50k': t('Donation.planWorkerDesc'),
+    'monthly-100k': t('Donation.planSponsorDesc'),
+  }
+
   return (
     <section
       ref={ref}
-      aria-label="후원 안내"
+      aria-label={t('Donation.sectionAriaLabel')}
       className={cn('bg-peace-cream py-12 dark:bg-muted md:py-20', className)}
     >
       <div className="container mx-auto px-4">
@@ -58,10 +73,10 @@ const DonationCTA = ({ className }: { className?: string }) => {
           className="mb-10 text-center md:mb-12"
         >
           <h2 className="text-2xl font-bold text-peace-navy dark:text-peace-cream md:text-3xl">
-            {DONATION_CONFIG.sectionTitle}
+            {t('Donation.sectionTitle')}
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-muted-foreground">
-            {DONATION_CONFIG.sectionSubtitle}
+            {t('Donation.sectionSubtitle')}
           </p>
         </motion.div>
 
@@ -92,7 +107,7 @@ const DonationCTA = ({ className }: { className?: string }) => {
               >
                 {plan.popular && (
                   <Badge className="absolute -top-2.5 border-0 bg-peace-gold text-xs font-semibold text-white shadow-sm">
-                    {DONATION_CONFIG.popularBadge}
+                    {t('Donation.popularBadge')}
                   </Badge>
                 )}
 
@@ -109,18 +124,18 @@ const DonationCTA = ({ className }: { className?: string }) => {
                 </div>
 
                 <h3 className="text-sm font-semibold text-peace-navy dark:text-peace-cream">
-                  {plan.label}
+                  {planLabels[plan.id]}
                 </h3>
 
                 <p className="mt-3 text-2xl font-bold text-peace-navy dark:text-peace-cream">
                   {formatCurrency(plan.amount)}
                   <span className="text-sm font-normal text-muted-foreground">
-                    {DONATION_CONFIG.currencyUnit}/{DONATION_CONFIG.monthlyLabel}
+                    {t('Donation.currencyUnit')}/{t('Donation.monthlyLabel')}
                   </span>
                 </p>
 
                 <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-                  {plan.description}
+                  {planDescs[plan.id]}
                 </p>
               </motion.button>
             )
@@ -144,8 +159,8 @@ const DonationCTA = ({ className }: { className?: string }) => {
               >
                 <Link href={`/donate?amount=${selectedPlan?.amount ?? ''}`}>
                   {selectedPlan
-                    ? `${formatCurrency(selectedPlan.amount)}${DONATION_CONFIG.currencyUnit} ${DONATION_CONFIG.ctaText}`
-                    : DONATION_CONFIG.ctaText}
+                    ? `${formatCurrency(selectedPlan.amount)}${t('Donation.currencyUnit')} ${t('Donation.ctaText')}`
+                    : t('Donation.ctaText')}
                 </Link>
               </Button>
             )

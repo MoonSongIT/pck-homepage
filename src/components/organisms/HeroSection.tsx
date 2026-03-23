@@ -2,12 +2,13 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
-import Link from 'next/link'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { ChevronDown } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 
+import { Link } from '@/i18n/navigation'
 import { Button } from '@/components/ui/button'
-import { HERO_SLIDES, TYPING_TEXTS, HERO_CONFIG } from '@/lib/constants/hero'
+import { HERO_SLIDES, HERO_CONFIG } from '@/lib/constants/hero'
 import { cn } from '@/lib/utils'
 
 const slideVariants = {
@@ -60,6 +61,10 @@ const contentVariants = {
 }
 
 const HeroSection = ({ className }: { className?: string }) => {
+  const t = useTranslations()
+  const typingTexts = [t('Hero.typingText1'), t('Hero.typingText2')]
+  const slideAlts = [t('Hero.slide1Alt'), t('Hero.slide2Alt'), t('Hero.slide3Alt'), t('Hero.slide4Alt')]
+
   const [currentSlide, setCurrentSlide] = useState(0)
   const [textIndex, setTextIndex] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
@@ -78,7 +83,7 @@ const HeroSection = ({ className }: { className?: string }) => {
   useEffect(() => {
     const interval = setInterval(
       () => {
-        setTextIndex((prev) => (prev + 1) % TYPING_TEXTS.length)
+        setTextIndex((prev) => (prev + 1) % typingTexts.length)
       },
       (HERO_CONFIG.typingDuration + HERO_CONFIG.typingPause) * 1000,
     )
@@ -97,7 +102,7 @@ const HeroSection = ({ className }: { className?: string }) => {
     }
   }, [])
 
-  const currentText = TYPING_TEXTS[textIndex]
+  const currentText = typingTexts[textIndex]
   const activeVariants = shouldReduceMotion
     ? reducedSlideVariants
     : slideVariants
@@ -105,7 +110,7 @@ const HeroSection = ({ className }: { className?: string }) => {
   return (
     <section
       aria-roledescription="carousel"
-      aria-label="메인 히어로 슬라이더"
+      aria-label={t('Hero.carouselLabel')}
       className={cn('relative h-[80svh] w-full overflow-hidden', className)}
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
@@ -126,7 +131,7 @@ const HeroSection = ({ className }: { className?: string }) => {
           {/* 모바일 이미지 (md 미만) */}
           <Image
             src={HERO_SLIDES[currentSlide].mobile}
-            alt={HERO_SLIDES[currentSlide].alt}
+            alt={slideAlts[currentSlide]}
             fill
             priority={currentSlide === 0}
             sizes="100vw"
@@ -135,7 +140,7 @@ const HeroSection = ({ className }: { className?: string }) => {
           {/* 데스크톱 이미지 (md 이상) */}
           <Image
             src={HERO_SLIDES[currentSlide].desktop}
-            alt={HERO_SLIDES[currentSlide].alt}
+            alt={slideAlts[currentSlide]}
             fill
             priority={currentSlide === 0}
             sizes="100vw"
@@ -196,9 +201,7 @@ const HeroSection = ({ className }: { className?: string }) => {
             animate="visible"
             className="mx-auto mt-6 max-w-2xl text-lg text-peace-cream/80"
           >
-            비폭력과 평화, 화해와 연대의 가치를 실천하는
-            <br className="hidden sm:inline" />
-            가톨릭 국제 평화운동 한국 지부
+            {t('Hero.description')}
           </motion.p>
 
           {/* CTA 버튼 */}
@@ -214,7 +217,7 @@ const HeroSection = ({ className }: { className?: string }) => {
               size="lg"
               className="bg-peace-orange text-white hover:bg-peace-orange/90"
             >
-              <Link href="/donate">후원하기</Link>
+              <Link href="/donate">{t('Common.donate')}</Link>
             </Button>
             <Button
               asChild
@@ -222,7 +225,7 @@ const HeroSection = ({ className }: { className?: string }) => {
               variant="outline"
               className="border-peace-cream/30 text-peace-cream hover:bg-peace-cream/10"
             >
-              <Link href="/about">더 알아보기</Link>
+              <Link href="/about">{t('Common.learnMore')}</Link>
             </Button>
           </motion.div>
         </div>
@@ -232,14 +235,14 @@ const HeroSection = ({ className }: { className?: string }) => {
       <div
         className="absolute bottom-8 left-1/2 z-20 flex -translate-x-1/2 gap-3"
         role="tablist"
-        aria-label="슬라이드 선택"
+        aria-label={t('Hero.slideSelector')}
       >
         {HERO_SLIDES.map((slide, index) => (
           <button
             key={slide.id}
             role="tab"
             aria-selected={index === currentSlide}
-            aria-label={`슬라이드 ${index + 1}: ${slide.alt}`}
+            aria-label={`${t('Hero.slideLabel', { number: index + 1 })}: ${slideAlts[index]}`}
             onClick={() => setCurrentSlide(index)}
             className={cn(
               'h-3 rounded-full transition-all duration-300',
