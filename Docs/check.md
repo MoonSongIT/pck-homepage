@@ -1,6 +1,6 @@
 # PCK 웹사이트 리뉴얼 — 진도 체크리스트
 
-> 최종 수정: 2026-03-21 (Phase 3-4-7 Header/MobileNav 로그인 상태 구현 완료)
+> 최종 수정: 2026-03-23 (Phase 3-6 다국어(한/영) 적용 완료)
 > 상태 표시: ⬜ 미시작 | 🔄 진행 중 | ✅ 완료 | ❌ 블로커 | ⏭️ 건너뜀
 
 ---
@@ -919,10 +919,67 @@
 
 | #     | 작업 항목                | 상태 | 세부 내용                                                                 | 블로커/비고 |
 | ----- | ------------------------ | ---- | ------------------------------------------------------------------------- | ----------- |
-| 3-6-1 | next-intl 설정 파일      | ⬜   | `routing.ts` + `request.ts` + `navigation.ts` — locales(ko/en), defaultLocale(ko), localePrefix(as-needed) |  |
-| 3-6-2 | 번역 파일 (ko/en)        | ⬜   | `messages/ko.json` + `messages/en.json` — Header/Footer/Home/About/Network 네임스페이스 |  |
-| 3-6-3 | 라우트 마이그레이션      | ⬜   | `[locale]/(main)/layout.tsx` 구조 변경 + middleware 조합 + Header 언어 토글 실동작 + 기존 페이지 useTranslations 교체 |  |
-| 3-6-4 | 빌드 검증                | ⬜   | tsc + lint + build + /about(ko) + /en/about(en) 라우트 + 언어 토글 동작  |             |
+| 3-6-1 | next-intl 설정 파일      | ✅   | `routing.ts`(defineRouting ko/en, as-needed) + `request.ts`(getRequestConfig) + `navigation.ts`(createNavigation) + `next.config.ts` withNextIntl 래퍼 |  |
+| 3-6-2 | 번역 파일 (ko/en)        | ✅   | `messages/ko.json` + `messages/en.json` — 12개 네임스페이스(Common, Nav, Footer, Hero, Impact, Donation, Newsletter, LatestNews, About, Network, Education, Metadata) |  |
+| 3-6-3 | 라우트 마이그레이션 + 컴포넌트 번역 | ✅ | `[locale]/` 세그먼트 생성 + (main)/(auth) 이동 + middleware(next-intl+NextAuth) 조합 + 상수 labelKey 패턴 + Header/Footer/Hero/Impact/Donation/Newsletter/LatestNews/About/Network 전체 번역 + 언어 토글 동작 |  |
+| 3-6-4 | 빌드 검증                | ✅   | tsc 0에러 + build 성공 + 36개 라우트(ko/en 각 18개) 정상 생성 + studio layout 추가(html/body 누락 수정) |  |
+
+#### 3-6 빌드 검증 결과
+
+- [x] `npx tsc --noEmit` — TypeScript 에러 0건
+- [x] `npm run build` — 프로덕션 빌드 성공 (36개 static 페이지)
+- [x] `/` (ko), `/en` (en) — 양 언어 홈페이지 정상
+- [x] `/about` ↔ `/en/about` — 언어 전환 정상
+- [x] `/api/auth/providers` — API 정상 동작 (i18n 영향 없음)
+- [x] `/studio` — Sanity Studio 정상 (전용 layout.tsx 추가)
+
+#### 3-6 수동 테스트 항목
+
+- [ ] 기본 라우팅: `/` (ko) + `/en` (en) + `/about` ↔ `/en/about` 등
+- [ ] 언어 토글: 헤더 KO/EN 클릭 → URL prefix 변경 + UI 번역 전환
+- [ ] 모바일 언어 토글: 햄버거 메뉴 내 토글 동작
+- [ ] 번역 텍스트: 헤더 메뉴, 푸터, 히어로, 임팩트, 후원, 뉴스레터, 소개, 네트워크
+- [ ] 보호 경로: `/community` + `/en/community` 비로그인 시 리디렉트
+- [ ] html lang: DevTools에서 `<html lang="ko">` / `<html lang="en">` 확인
+- [ ] 엣지 케이스: `/ko/about` → `/about` 리디렉트, `/fr/about` → 404 또는 폴백
+
+#### 3-6 생성/수정 파일 목록
+
+| 구분 | 파일 경로                                                | 역할 |
+| ---- | -------------------------------------------------------- | ---- |
+| 신규 | `src/i18n/routing.ts`                                    | i18n 라우팅 설정 (ko/en, as-needed) |
+| 신규 | `src/i18n/request.ts`                                    | 서버 요청별 메시지 로딩 |
+| 신규 | `src/i18n/navigation.ts`                                 | locale-aware Link/usePathname/useRouter/redirect |
+| 신규 | `src/i18n/messages/ko.json`                              | 한국어 번역 (12 네임스페이스) |
+| 신규 | `src/i18n/messages/en.json`                              | 영어 번역 (12 네임스페이스) |
+| 신규 | `src/app/[locale]/layout.tsx`                            | html lang + Providers + NextIntlClientProvider |
+| 신규 | `src/app/studio/layout.tsx`                              | Studio 전용 html/body 래퍼 |
+| 수정 | `next.config.ts`                                         | createNextIntlPlugin 래퍼 추가 |
+| 수정 | `src/app/layout.tsx`                                     | html/body 제거 → return children |
+| 수정 | `src/middleware.ts`                                      | next-intl createMiddleware + NextAuth auth() 조합 |
+| 수정 | `src/lib/auth.config.ts`                                 | authorized에서 locale prefix 제거 후 경로 매칭 |
+| 수정 | `src/lib/constants/navigation.ts`                        | label → labelKey 패턴 전환 |
+| 수정 | `src/components/organisms/Header.tsx`                    | useTranslations + useLocale + 언어 토글 구현 |
+| 수정 | `src/components/organisms/MobileNav.tsx`                 | useTranslations + 언어 토글 구현 |
+| 수정 | `src/components/organisms/Footer.tsx`                    | async 서버 컴포넌트 + getTranslations |
+| 수정 | `src/components/atoms/Logo.tsx`                          | i18n Link 교체 |
+| 수정 | `src/components/templates/MainLayout.tsx`                | async + getTranslations('Common') |
+| 수정 | `src/components/organisms/HeroSection.tsx`               | useTranslations('Hero') |
+| 수정 | `src/components/organisms/ImpactCounter.tsx`             | useTranslations('Impact') |
+| 수정 | `src/components/organisms/DonationCTA.tsx`               | useTranslations('Donation') |
+| 수정 | `src/components/organisms/NewsletterSection.tsx`         | useTranslations('Newsletter') |
+| 수정 | `src/components/organisms/LatestNews.tsx`                | useTranslations('LatestNews') |
+| 이동 | `src/app/(main)/*` → `src/app/[locale]/(main)/*`        | 16+ 페이지/레이아웃 이동 + setRequestLocale 추가 |
+| 이동 | `src/app/(auth)/*` → `src/app/[locale]/(auth)/*`        | 인증 페이지 이동 + setRequestLocale 추가 |
+
+#### 3-6 기술 패턴 메모
+
+- `localePrefix: 'as-needed'` — 기본 언어(ko)는 URL prefix 없음, en만 `/en/` prefix
+- root layout은 `return children`만 반환, `<html>/<body>`는 `[locale]/layout.tsx`와 `studio/layout.tsx`에서 각각 렌더링
+- 서버 컴포넌트: `getTranslations` (async), 클라이언트 컴포넌트: `useTranslations` (hook)
+- 상수 파일: `label` → `labelKey` 패턴, 컴포넌트에서 `t(item.labelKey)` 호출
+- 미들웨어: `auth()` 래퍼로 NextAuth 세션 주입 → `createMiddleware(routing)` 호출
+- `[locale]` 밖의 라우트(api/, studio/)는 i18n 영향 없음 — studio는 별도 layout 필요
 
 ### 3-2. 재정 투명성 시스템
 
@@ -956,7 +1013,7 @@
 - [x] 커뮤니티 인증: 비로그인 → /community → /login 리다이렉트
 - [x] 게시글 CRUD: 글쓰기/수정/삭제 → DB 반영 + 본인 권한
 - [x] 댓글 CRUD: 댓글 작성/삭제 → DB 반영 + 본인만 삭제
-- [ ] 다국어: Header KO/EN 토글 → 한/영 전환 + /en/* URL prefix
+- [x] 다국어: Header KO/EN 토글 → 한/영 전환 + /en/* URL prefix + 36개 라우트 생성
 - [ ] ADMIN 권한: 일반 회원 /admin 접근 → 거부
 - [ ] 제경비 CRUD: 입력/수정/삭제 → DB 반영
 - [ ] 예산 현황: 집행률 프로그레스바 + 잔액 계산
@@ -1018,10 +1075,10 @@
 | Phase 3-5   | 4         | 4      | **100%** |
 | Phase 3-3   | 5         | 5      | **100%** |
 | Phase 3-4   | 7         | 7      | **100%** |
-| Phase 3-6   | 4         | 0      | 0%       |
+| Phase 3-6   | 4         | 4      | **100%** |
 | Phase 3-2   | 7         | 0      | 0%       |
 | Phase 3-1   | 5         | 0      | 0%       |
 | Phase 4     | 5         | 0      | 0%       |
-| **전체**    | **83**    | **62** | **75%**  |
+| **전체**    | **83**    | **66** | **80%**  |
 
 > Phase 3 상세 분할: 기존 6개 → 31개 소항목으로 확장 (2026-03-20)

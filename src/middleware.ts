@@ -1,8 +1,16 @@
+import createMiddleware from 'next-intl/middleware'
 import NextAuth from 'next-auth'
 import { authConfig } from '@/lib/auth.config'
+import { routing } from '@/i18n/routing'
 
-export default NextAuth(authConfig).auth
+const handleI18nRouting = createMiddleware(routing)
+const { auth } = NextAuth(authConfig)
+
+export default auth((request) => {
+  // i18n 라우팅 처리
+  return handleI18nRouting(request)
+})
 
 export const config = {
-  matcher: ['/community/:path*', '/admin/:path*', '/api/donate', '/api/finance/:path*'],
+  matcher: ['/((?!api|_next|_vercel|studio|.*\\..*).*)',],
 }

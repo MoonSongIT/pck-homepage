@@ -3,6 +3,7 @@
 import { useRef, useActionState } from 'react'
 import { motion, useInView, useReducedMotion } from 'framer-motion'
 import { CheckCircle, Loader2 } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -30,6 +31,7 @@ const reducedItemVariants = {
 const Icon = NEWSLETTER_CONFIG.icon
 
 const NewsletterSection = ({ className }: { className?: string }) => {
+  const t = useTranslations('Newsletter')
   const ref = useRef<HTMLElement>(null)
   const isInView = useInView(ref, { once: true, margin: '-80px' })
   const shouldReduceMotion = useReducedMotion()
@@ -45,7 +47,7 @@ const NewsletterSection = ({ className }: { className?: string }) => {
   return (
     <section
       ref={ref}
-      aria-label="뉴스레터 구독"
+      aria-label={t('sectionAriaLabel')}
       className={cn(
         'bg-peace-navy py-12 dark:bg-peace-navy/90 md:py-20',
         className
@@ -64,10 +66,10 @@ const NewsletterSection = ({ className }: { className?: string }) => {
               <Icon className="size-6 text-peace-cream" aria-hidden="true" />
             </div>
             <h2 className="text-2xl font-bold text-peace-cream md:text-3xl">
-              {NEWSLETTER_CONFIG.sectionTitle}
+              {t('sectionTitle')}
             </h2>
             <p className="mt-3 text-peace-cream/70">
-              {NEWSLETTER_CONFIG.sectionSubtitle}
+              {t('sectionSubtitle')}
             </p>
           </div>
 
@@ -93,10 +95,10 @@ const NewsletterSection = ({ className }: { className?: string }) => {
                   <Input
                     type="email"
                     name="email"
-                    placeholder={NEWSLETTER_CONFIG.placeholder}
+                    placeholder={t('placeholder')}
                     required
                     disabled={isPending}
-                    aria-label="이메일 주소"
+                    aria-label={t('emailLabel')}
                     className="h-11 flex-1 rounded-lg border-white/20 bg-white/10 text-peace-cream placeholder:text-peace-cream/40 focus:border-peace-sky focus:ring-peace-sky"
                   />
                   <Button
@@ -111,11 +113,11 @@ const NewsletterSection = ({ className }: { className?: string }) => {
                           aria-hidden="true"
                         />
                         <span className="sr-only">
-                          {NEWSLETTER_CONFIG.loadingText}
+                          {t('loadingText')}
                         </span>
                       </>
                     ) : (
-                      NEWSLETTER_CONFIG.buttonText
+                      t('buttonText')
                     )}
                   </Button>
                 </div>
@@ -127,7 +129,7 @@ const NewsletterSection = ({ className }: { className?: string }) => {
                 )}
 
                 <p className="text-xs text-peace-cream/40">
-                  구독은 언제든지 취소할 수 있습니다.
+                  {t('cancelNote')}
                 </p>
               </form>
             )}

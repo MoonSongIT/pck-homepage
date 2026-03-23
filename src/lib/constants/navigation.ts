@@ -1,10 +1,10 @@
 export const NAV_ITEMS = [
-  { label: '단체소개', href: '/about' },
-  { label: '활동', href: '/activities' },
-  { label: '교육', href: '/education' },
-  { label: '뉴스', href: '/news' },
-  { label: '네트워크', href: '/network' },
-  { label: '재정공개', href: '/transparency' },
+  { labelKey: 'about' as const, href: '/about' },
+  { labelKey: 'activities' as const, href: '/activities' },
+  { labelKey: 'education' as const, href: '/education' },
+  { labelKey: 'news' as const, href: '/news' },
+  { labelKey: 'network' as const, href: '/network' },
+  { labelKey: 'transparency' as const, href: '/transparency' },
 ] as const
 
 export const SNS_LINKS = [
@@ -33,14 +33,16 @@ export const CONTACT_INFO = {
 
 export const ORG_INFO = {
   name: '팍스크리스티코리아',
+  nameEn: 'Pax Christi Korea',
   representatives: '강우일 주교, 김미란, 이성훈, 정봉미(수녀)',
+  representativesEn: 'Bishop Kang Woo-il, Kim Mi-ran, Lee Sung-hoon, Jeong Bong-mi (Sr.)',
   businessNumber: '591-80-01356',
 } as const
 
 export const FOOTER_LINKS = [
-  { label: '개인정보처리방침', href: '/privacy' },
-  { label: '이용약관', href: '/terms' },
-  { label: '사이트맵', href: '/sitemap' },
+  { labelKey: 'privacy' as const, href: '/privacy' },
+  { labelKey: 'terms' as const, href: '/terms' },
+  { labelKey: 'sitemap' as const, href: '/sitemap' },
 ] as const
 
 export type NavItem = (typeof NAV_ITEMS)[number]

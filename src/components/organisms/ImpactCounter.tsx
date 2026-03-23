@@ -2,6 +2,7 @@
 
 import { useRef, useEffect, useState } from 'react'
 import { motion, useInView, useReducedMotion } from 'framer-motion'
+import { useTranslations } from 'next-intl'
 
 import { IMPACT_STATS, IMPACT_CONFIG } from '@/lib/constants/impact'
 import { cn } from '@/lib/utils'
@@ -73,15 +74,29 @@ const CounterValue = ({
 }
 
 const ImpactCounter = ({ className }: { className?: string }) => {
+  const t = useTranslations()
   const ref = useRef<HTMLElement>(null)
   const isInView = useInView(ref, { once: true, margin: '-100px' })
   const shouldReduceMotion = useReducedMotion()
   const activeVariants = shouldReduceMotion ? reducedItemVariants : itemVariants
 
+  const statLabels: Record<number, string> = {
+    1: t('Impact.statFounded'),
+    2: t('Impact.statMembers'),
+    3: t('Impact.statCountries'),
+    4: t('Impact.statCampaigns'),
+  }
+  const statSuffixes: Record<number, string> = {
+    1: t('Impact.yearSuffix'),
+    2: '+',
+    3: '',
+    4: '+',
+  }
+
   return (
     <section
       ref={ref}
-      aria-label="팍스크리스티코리아 주요 성과"
+      aria-label={t('Impact.sectionAriaLabel')}
       className={cn('bg-peace-cream py-12 dark:bg-muted md:py-20', className)}
     >
       <div className="container mx-auto px-4">
@@ -93,10 +108,10 @@ const ImpactCounter = ({ className }: { className?: string }) => {
           className="mb-10 text-center md:mb-12"
         >
           <h2 className="text-2xl font-bold text-peace-navy dark:text-peace-cream md:text-3xl">
-            {IMPACT_CONFIG.sectionTitle}
+            {t('Impact.sectionTitle')}
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-muted-foreground">
-            {IMPACT_CONFIG.sectionSubtitle}
+            {t('Impact.sectionSubtitle')}
           </p>
         </motion.div>
 
@@ -127,12 +142,12 @@ const ImpactCounter = ({ className }: { className?: string }) => {
                     duration={IMPACT_CONFIG.animationDuration}
                     shouldReduceMotion={shouldReduceMotion}
                   />
-                  {stat.suffix && (
-                    <span className="text-peace-sky">{stat.suffix}</span>
+                  {statSuffixes[stat.id] && (
+                    <span className="text-peace-sky">{statSuffixes[stat.id]}</span>
                   )}
                 </p>
                 <p className="mt-2 text-sm font-medium text-muted-foreground">
-                  {stat.label}
+                  {statLabels[stat.id]}
                 </p>
               </motion.div>
             )

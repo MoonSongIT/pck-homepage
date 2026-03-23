@@ -1,12 +1,12 @@
 'use client'
 
 import { useState, useEffect, useSyncExternalStore } from 'react'
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
 import { useTheme } from 'next-themes'
+import { useTranslations, useLocale } from 'next-intl'
 import { useSession, signOut } from 'next-auth/react'
 import { Phone, Mail, Sun, Moon, Instagram, Youtube, Facebook, LogIn, User } from 'lucide-react'
 
+import { Link, usePathname, useRouter } from '@/i18n/navigation'
 import { Button } from '@/components/ui/button'
 import { Logo } from '@/components/atoms/Logo'
 import { MobileNav } from '@/components/organisms/MobileNav'
@@ -28,6 +28,9 @@ const Header = () => {
     () => true,
     () => false
   )
+  const t = useTranslations()
+  const locale = useLocale()
+  const router = useRouter()
   const pathname = usePathname()
   const { theme, setTheme } = useTheme()
   const { data: session, status } = useSession()
@@ -80,7 +83,7 @@ const Header = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="rounded-md p-1.5 text-muted-foreground transition-colors hover:text-foreground"
-                  aria-label={`${link.label} (새 창)`}
+                  aria-label={t('Common.newWindow', { label: link.label })}
                 >
                   <Icon className="size-3.5" />
                 </a>
@@ -95,7 +98,7 @@ const Header = () => {
                 variant="ghost"
                 size="icon-xs"
                 onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                aria-label="테마 전환"
+                aria-label={t('Common.themeToggle')}
               >
                 <Sun className="size-3.5 rotate-0 scale-100 transition-transform dark:-rotate-90 dark:scale-0" />
                 <Moon className="absolute size-3.5 rotate-90 scale-0 transition-transform dark:rotate-0 dark:scale-100" />
@@ -106,9 +109,23 @@ const Header = () => {
 
             {/* 언어 토글 */}
             <div className="flex items-center gap-0.5 text-xs font-medium">
-              <button className="rounded px-1.5 py-0.5 text-foreground">KO</button>
+              <button
+                onClick={() => router.replace(pathname, { locale: 'ko' })}
+                className={cn(
+                  'rounded px-1.5 py-0.5 transition-colors',
+                  locale === 'ko' ? 'text-foreground font-semibold' : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                KO
+              </button>
               <span className="text-border">|</span>
-              <button className="rounded px-1.5 py-0.5 text-muted-foreground transition-colors hover:text-foreground">
+              <button
+                onClick={() => router.replace(pathname, { locale: 'en' })}
+                className={cn(
+                  'rounded px-1.5 py-0.5 transition-colors',
+                  locale === 'en' ? 'text-foreground font-semibold' : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
                 EN
               </button>
             </div>
@@ -121,13 +138,13 @@ const Header = () => {
                 <div className="flex items-center gap-2">
                   <span className="flex items-center gap-1 text-xs text-muted-foreground">
                     <User className="size-3" />
-                    {session.user?.name || '회원'}
+                    {session.user?.name || t('Common.member')}
                   </span>
                   <button
                     onClick={() => signOut({ callbackUrl: '/' })}
                     className="rounded px-1.5 py-0.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
                   >
-                    로그아웃
+                    {t('Common.logout')}
                   </button>
                 </div>
               ) : (
@@ -136,7 +153,7 @@ const Header = () => {
                   className="flex items-center gap-1 rounded px-1.5 py-0.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
                 >
                   <LogIn className="size-3" />
-                  로그인
+                  {t('Common.login')}
                 </Link>
               )
             )}
@@ -164,7 +181,7 @@ const Header = () => {
                 )}
                 {...(pathname === item.href ? { 'aria-current': 'page' as const } : {})}
               >
-                {item.label}
+                {t(`Nav.${item.labelKey}`)}
               </Link>
             </li>
           ))}
@@ -181,7 +198,7 @@ const Header = () => {
                 )}
                 {...(pathname.startsWith('/community') ? { 'aria-current': 'page' as const } : {})}
               >
-                커뮤니티
+                {t('Common.community')}
               </Link>
             </li>
           )}
@@ -194,12 +211,12 @@ const Header = () => {
             <Button asChild variant="outline" size="sm" className="hidden md:inline-flex">
               <Link href="/login">
                 <LogIn className="mr-1.5 size-3.5" />
-                로그인
+                {t('Common.login')}
               </Link>
             </Button>
           )}
           <Button asChild className="bg-peace-orange text-white hover:bg-peace-orange/90">
-            <Link href="/donate">후원하기</Link>
+            <Link href="/donate">{t('Common.donate')}</Link>
           </Button>
           <div className="md:hidden">
             <MobileNav />

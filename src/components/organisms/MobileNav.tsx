@@ -1,10 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
+import { useTranslations, useLocale } from 'next-intl'
 import { Menu, Phone, Mail, LogIn, LogOut, User } from 'lucide-react'
+
+import { Link, usePathname, useRouter } from '@/i18n/navigation'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -22,6 +23,9 @@ import { cn } from '@/lib/utils'
 
 const MobileNav = () => {
   const [open, setOpen] = useState(false)
+  const t = useTranslations()
+  const locale = useLocale()
+  const router = useRouter()
   const pathname = usePathname()
   const { data: session, status } = useSession()
   const isAuthenticated = status === 'authenticated'
@@ -29,7 +33,7 @@ const MobileNav = () => {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" aria-label="메뉴 열기">
+        <Button variant="ghost" size="icon" aria-label={t('Common.openMenu')}>
           <Menu className="size-5" />
         </Button>
       </SheetTrigger>
@@ -38,10 +42,10 @@ const MobileNav = () => {
           <SheetTitle>
             <Logo size="sm" />
           </SheetTitle>
-          <SheetDescription className="sr-only">사이트 내비게이션 메뉴</SheetDescription>
+          <SheetDescription className="sr-only">{t('Common.siteNavigation')}</SheetDescription>
         </SheetHeader>
 
-        <nav aria-label="모바일 내비게이션" className="flex flex-col px-4">
+        <nav aria-label={t('Common.siteNavigation')} className="flex flex-col px-4">
           {NAV_ITEMS.map((item) => (
             <Link
               key={item.href}
@@ -55,7 +59,7 @@ const MobileNav = () => {
               )}
               {...(pathname === item.href ? { 'aria-current': 'page' as const } : {})}
             >
-              {item.label}
+              {t(`Nav.${item.labelKey}`)}
             </Link>
           ))}
           {isAuthenticated && (
@@ -70,7 +74,7 @@ const MobileNav = () => {
               )}
               {...(pathname.startsWith('/community') ? { 'aria-current': 'page' as const } : {})}
             >
-              커뮤니티
+              {t('Common.community')}
             </Link>
           )}
         </nav>
@@ -83,7 +87,7 @@ const MobileNav = () => {
             <div className="flex items-center justify-between">
               <span className="flex items-center gap-2 text-sm text-foreground">
                 <User className="size-4 text-peace-sky" />
-                {session.user?.name || '회원'}
+                {session.user?.name || t('Common.member')}
               </span>
               <button
                 onClick={() => {
@@ -93,7 +97,7 @@ const MobileNav = () => {
                 className="flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
               >
                 <LogOut className="size-4" />
-                로그아웃
+                {t('Common.logout')}
               </button>
             </div>
           ) : (
@@ -103,7 +107,7 @@ const MobileNav = () => {
               className="flex items-center gap-2 text-sm font-medium text-peace-sky transition-colors hover:text-peace-navy"
             >
               <LogIn className="size-4" />
-              로그인 / 회원가입
+              {t('Common.login')} / {t('Common.register')}
             </Link>
           )}
         </div>
@@ -127,10 +131,39 @@ const MobileNav = () => {
           </a>
         </div>
 
+        {/* 언어 토글 */}
+        <div className="flex items-center gap-2 px-4 pt-4">
+          <button
+            onClick={() => {
+              router.replace(pathname, { locale: 'ko' })
+              setOpen(false)
+            }}
+            className={cn(
+              'rounded px-2 py-1 text-sm transition-colors',
+              locale === 'ko' ? 'font-semibold text-foreground' : 'text-muted-foreground hover:text-foreground'
+            )}
+          >
+            KO
+          </button>
+          <span className="text-border">|</span>
+          <button
+            onClick={() => {
+              router.replace(pathname, { locale: 'en' })
+              setOpen(false)
+            }}
+            className={cn(
+              'rounded px-2 py-1 text-sm transition-colors',
+              locale === 'en' ? 'font-semibold text-foreground' : 'text-muted-foreground hover:text-foreground'
+            )}
+          >
+            EN
+          </button>
+        </div>
+
         <div className="px-4 pt-6">
           <Button asChild className="w-full bg-peace-orange text-white hover:bg-peace-orange/90">
             <Link href="/donate" onClick={() => setOpen(false)}>
-              후원하기
+              {t('Common.donate')}
             </Link>
           </Button>
         </div>

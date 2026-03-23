@@ -1,10 +1,11 @@
 'use client'
 
 import { useRef } from 'react'
-import Link from 'next/link'
 import { motion, useInView, useReducedMotion } from 'framer-motion'
 import { ArrowRight } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 
+import { Link } from '@/i18n/navigation'
 import { NewsCard } from '@/components/molecules/NewsCard'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
@@ -51,6 +52,7 @@ const LatestNews = ({
   posts: Post[]
   className?: string
 }) => {
+  const t = useTranslations()
   const ref = useRef<HTMLElement>(null)
   const isInView = useInView(ref, { once: true, margin: '-80px' })
   const shouldReduceMotion = useReducedMotion()
@@ -61,7 +63,7 @@ const LatestNews = ({
   return (
     <section
       ref={ref}
-      aria-label="최신 소식"
+      aria-label={t('LatestNews.sectionAriaLabel')}
       className={cn('py-12 md:py-20', className)}
     >
       <div className="container mx-auto px-4">
@@ -74,17 +76,17 @@ const LatestNews = ({
         >
           <div>
             <h2 className="text-2xl font-bold text-peace-navy dark:text-peace-cream md:text-3xl">
-              {LATEST_NEWS_CONFIG.sectionTitle}
+              {t('LatestNews.sectionTitle')}
             </h2>
             <p className="mt-2 text-muted-foreground">
-              {LATEST_NEWS_CONFIG.sectionSubtitle}
+              {t('LatestNews.sectionSubtitle')}
             </p>
           </div>
           <Link
             href={LATEST_NEWS_CONFIG.viewAllHref}
             className="group/link hidden items-center gap-1 text-sm font-medium text-peace-sky transition-colors hover:text-peace-sky/80 sm:flex"
           >
-            {LATEST_NEWS_CONFIG.viewAllText}
+            {t('LatestNews.viewAllText')}
             <ArrowRight
               className="size-4 transition-transform group-hover/link:translate-x-0.5"
               aria-hidden="true"
@@ -125,7 +127,7 @@ const LatestNews = ({
             href={LATEST_NEWS_CONFIG.viewAllHref}
             className="inline-flex items-center gap-1 text-sm font-medium text-peace-sky transition-colors hover:text-peace-sky/80"
           >
-            {LATEST_NEWS_CONFIG.viewAllText}
+            {t('LatestNews.viewAllText')}
             <ArrowRight className="size-4" aria-hidden="true" />
           </Link>
         </motion.div>
