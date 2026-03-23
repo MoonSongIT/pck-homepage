@@ -981,17 +981,19 @@
 - 미들웨어: `auth()` 래퍼로 NextAuth 세션 주입 → `createMiddleware(routing)` 호출
 - `[locale]` 밖의 라우트(api/, studio/)는 i18n 영향 없음 — studio는 별도 layout 필요
 
-### 3-2. 재정 투명성 시스템
+### 3-2. 재정 투명성 시스템 (영수증 OCR + 자동 분류)
 
-| #     | 작업 항목                | 상태 | 세부 내용                                                                 | 블로커/비고 |
-| ----- | ------------------------ | ---- | ------------------------------------------------------------------------- | ----------- |
-| 3-2-1 | 패키지 + 상수 + Zod 스키마 | ⬜ | `npm install recharts` + `finance.ts` 상수 + expenseSchema/budgetSchema/reportSchema |  |
-| 3-2-2 | 관리자 레이아웃          | ⬜   | `(admin)/layout.tsx` — ADMIN 권한 체크 + 사이드바 + `(admin)/page.tsx` 대시보드 통계 |  |
-| 3-2-3 | 제경비 관리 (CRUD)       | ⬜   | `/admin/finance/expenses` — 목록(테이블+필터+합계) + 등록/수정 폼 + Server Actions |  |
-| 3-2-4 | 예산 관리                | ⬜   | `/admin/finance/budget` — 연도별 편성/집행/잔액 테이블 + 프로그레스바 + 등록 폼 |  |
-| 3-2-5 | 결산 보고서 관리         | ⬜   | `/admin/finance/reports` — 연도 수입/지출 자동 집계 + isPublished 토글 + PDF URL |  |
-| 3-2-6 | 재정 투명성 공개 페이지  | ⬜   | `/transparency` + `/transparency/[year]` — 연도별 요약 카드 + Recharts 도넛 차트 + PDF 다운로드 |  |
-| 3-2-7 | 빌드 검증                | ⬜   | tsc + lint + build + /admin/finance/* + /transparency 라우트 확인         |             |
+| #     | 작업 항목                      | 상태 | 세부 내용                                                                 | 블로커/비고 |
+| ----- | ------------------------------ | ---- | ------------------------------------------------------------------------- | ----------- |
+| 3-2-1 | 패키지 + Storage + 상수 + Zod  | ✅   | `recharts` `@anthropic-ai/sdk` `@supabase/supabase-js` `chokidar` 설치 + Supabase Storage 버킷 설정 + finance.ts 상수 + Zod 스키마 + Prisma Expense 모델 확장 (ocrConfidence, ocrRawText, status) + OCR 테스트 성공 | 완료 |
+| 3-2-2 | 관리자 레이아웃                | ⬜   | `(admin)/layout.tsx` — ADMIN 권한 체크 + 사이드바 + `(admin)/page.tsx` 대시보드 통계 + OCR 대기 건수 뱃지 |  |
+| 3-2-3 | 영수증 OCR 스캔 API + 업로드 UI | ⬜   | `/api/finance/receipt-scan` — 이미지 업로드 → Supabase Storage → Claude Vision OCR → JSON 반환 + ReceiptUploader 드래그&드롭 + ScanResultForm 확인/수정 | Anthropic API Key |
+| 3-2-4 | 제경비 관리 (CRUD + OCR 통합)  | ⬜   | `/admin/finance/expenses` — 목록(테이블+필터+상태뱃지+합계) + 등록(영수증스캔탭/수동입력탭) + 수정/삭제 + 일괄확인 + Server Actions |  |
+| 3-2-5 | 로컬 폴더 감시 CLI 스크립트    | ⬜   | `scripts/receipt-watcher.ts` — chokidar 폴더감시 → 자동 업로드+OCR → DB 저장(PENDING_REVIEW) → 처리완료 폴더 이동 | RECEIPT_API_KEY, RECEIPT_WATCH_DIR |
+| 3-2-6 | 예산 관리                      | ⬜   | `/admin/finance/budget` — 연도별 편성/집행/잔액 테이블 + 프로그레스바 + 등록 폼 (CONFIRMED만 집행액 계산) |  |
+| 3-2-7 | 결산 보고서 관리               | ⬜   | `/admin/finance/reports` — 연도 수입/지출 자동 집계 + PENDING_REVIEW 경고 + isPublished 토글 + PDF URL |  |
+| 3-2-8 | 재정 투명성 공개 페이지        | ⬜   | `/transparency` + `/transparency/[year]` — 연도별 요약 카드 + Recharts 도넛 차트 + PDF 다운로드 + i18n |  |
+| 3-2-9 | 빌드 검증                      | ⬜   | tsc + lint + build + /admin/finance/* + /transparency 라우트 + OCR API 테스트 + 폴더감시 테스트 |  |
 
 ### 3-1. 후원 시스템 (토스페이먼츠 연동)
 
@@ -1015,8 +1017,11 @@
 - [x] 댓글 CRUD: 댓글 작성/삭제 → DB 반영 + 본인만 삭제
 - [x] 다국어: Header KO/EN 토글 → 한/영 전환 + /en/* URL prefix + 36개 라우트 생성
 - [ ] ADMIN 권한: 일반 회원 /admin 접근 → 거부
-- [ ] 제경비 CRUD: 입력/수정/삭제 → DB 반영
-- [ ] 예산 현황: 집행률 프로그레스바 + 잔액 계산
+- [ ] 영수증 OCR: 이미지 업로드 → Claude Vision 분석 → 자동 분류 JSON 반환
+- [ ] 영수증 업로드 UI: 드래그&드롭 + OCR 결과 확인/수정 폼
+- [ ] 로컬 폴더 감시: chokidar 스크립트 → 자동 업로드+OCR → PENDING_REVIEW DB 저장
+- [ ] 제경비 CRUD: 입력(OCR스캔+수동)/수정/삭제 → DB 반영 + 상태 관리
+- [ ] 예산 현황: 집행률 프로그레스바 + 잔액 계산 (CONFIRMED만)
 - [ ] 투명성 페이지: Recharts 도넛 차트 + PDF 다운로드
 - [x] 후원 결제: 토스 테스트 결제 성공 → DB 저장 → 감사 이메일
 - [x] Rate Limiting: Upstash Redis 기반 구현 (미설정 시 graceful skip)
@@ -1028,6 +1033,10 @@
 - [ ] Upstash Redis 생성 → REST_URL / TOKEN 확보
 - [ ] Resend 계정 확인 → API_KEY 확보 (이메일 발송 필수)
 - [ ] 카카오 개발자 앱 등록 → CLIENT_ID / SECRET 확보 (소셜 로그인)
+- [x] Supabase Storage 버킷 생성 → `receipts` 버킷 + 업로드/삭제 테스트 완료
+- [x] Supabase Service Key 확보 → SUPABASE_URL / SUPABASE_SERVICE_KEY 설정 완료
+- [x] Anthropic API Key 확보 → ANTHROPIC_API_KEY 설정 + 영수증 OCR 테스트 성공
+- [ ] 영수증 감시 폴더 설정 → RECEIPT_WATCH_DIR + RECEIPT_API_KEY
 
 ---
 
@@ -1076,9 +1085,10 @@
 | Phase 3-3   | 5         | 5      | **100%** |
 | Phase 3-4   | 7         | 7      | **100%** |
 | Phase 3-6   | 4         | 4      | **100%** |
-| Phase 3-2   | 7         | 0      | 0%       |
+| Phase 3-2   | 9         | 1      | 11%      |
 | Phase 3-1   | 5         | 5      | **100%** |
 | Phase 4     | 5         | 0      | 0%       |
-| **전체**    | **83**    | **71** | **86%**  |
+| **전체**    | **85**    | **72** | **85%**  |
 
 > Phase 3 상세 분할: 기존 6개 → 31개 소항목으로 확장 (2026-03-20)
+> Phase 3-2 확장: 영수증 OCR + Supabase Storage + 로컬 폴더 감시 추가 (2026-03-23, 7개 → 9개)

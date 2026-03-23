@@ -25,6 +25,14 @@ export const loginRateLimit = redis
     })
   : null
 
+export const ocrRateLimit = redis
+  ? new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(20, '1 m'),
+      prefix: 'ocr',
+    })
+  : null
+
 export async function checkRateLimit(
   limiter: Ratelimit | null,
   identifier: string,

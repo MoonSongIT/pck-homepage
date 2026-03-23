@@ -127,18 +127,22 @@ model Donation {
 // ─── Finance ─────────────────────────────────────────
 
 model Expense {
-  id          String          @id @default(cuid())
-  date        DateTime
-  description String
-  category    ExpenseCategory
-  amount      Int
-  receipt     String?
-  note        String?
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
+  id            String          @id @default(cuid())
+  date          DateTime
+  description   String
+  category      ExpenseCategory
+  amount        Int
+  receipt       String?
+  ocrConfidence Float?
+  ocrRawText    String?
+  status        String          @default("CONFIRMED")
+  note          String?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
 
   @@index([date])
   @@index([category])
+  @@index([status])
   @@map("expenses")
 }
 

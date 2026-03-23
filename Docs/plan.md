@@ -1,6 +1,6 @@
 # PCK 웹사이트 리뉴얼 — 전체 구현 계획서
 
-> 최종 수정: 2026-03-21
+> 최종 수정: 2026-03-23
 > 프로젝트: 팍스크리스티코리아(Pax Christi Korea) 공식 웹사이트 리뉴얼
 > 기술 스택: Next.js 16 + TypeScript + Tailwind CSS v4 + Supabase + Sanity.io
 
@@ -1512,13 +1512,200 @@ export default getRequestConfig(async ({ requestLocale }) => {
 
 ---
 
-### 3-2. 재정 투명성 시스템
+### 3-2. 재정 투명성 시스템 (영수증 OCR + 자동 분류)
 
-> **우선순위 5** — Recharts 추가 설치 필요, 관리자 레이아웃 신규 구축
+> **우선순위 5** — Recharts + Supabase Storage + Claude Vision API 연동
+> 핵심 신규 기능: 영수증 사진 업로드 → AI OCR 자동 판독 → 카테고리 분류 → 제경비 자동 등록
 
-#### 3-2-1. 패키지 설치 + 재정 상수 + Zod 스키마
+#### 시스템 아키텍처 개요
 
-**추가 설치**: `npm install recharts`
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    영수증 OCR 제경비 시스템                        │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  [입력 경로 1: 웹 UI]                                            │
+│  관리자 브라우저 → 드래그&드롭/파일선택 → /api/finance/receipt-scan │
+│                                                                 │
+│  [입력 경로 2: 로컬 폴더 감시]                                    │
+│  PC 폴더 (예: C:\영수증\) → chokidar 감시 → /api/finance/receipt-scan │
+│  (별도 CLI 스크립트: scripts/receipt-watcher.ts)                  │
+│                                                                 │
+│  ┌─────────────────────────────────────┐                        │
+│  │  /api/finance/receipt-scan          │                        │
+│  │  1. ADMIN 권한 확인 (또는 API Key)  │                        │
+│  │  2. 파일 유효성 (타입/크기)         │                        │
+│  │  3. Supabase Storage 업로드         │                        │
+│  │  4. Claude Vision API OCR           │                        │
+│  │  5. JSON 구조화 데이터 반환         │                        │
+│  └──────────────┬──────────────────────┘                        │
+│                 │                                                │
+│                 ▼                                                │
+│  ┌─────────────────────────────────────┐                        │
+│  │  OCR 결과 JSON                      │                        │
+│  │  {                                  │                        │
+│  │    imageUrl: "https://supabase/...",│                        │
+│  │    extracted: {                     │                        │
+│  │      date: "2026-03-15",            │                        │
+│  │      description: "사무용품 구매",   │                        │
+│  │      amount: 35000,                 │                        │
+│  │      category: "OFFICE",            │                        │
+│  │      note: "A4용지 10박스"          │                        │
+│  │    }                                │                        │
+│  │  }                                  │                        │
+│  └──────────────┬──────────────────────┘                        │
+│                 │                                                │
+│      ┌──────────┴──────────┐                                    │
+│      ▼                     ▼                                    │
+│  [웹 UI 경로]         [폴더 감시 경로]                           │
+│  관리자 확인/수정      자동 DB 저장                               │
+│  화면 → 저장           (status: PENDING_REVIEW)                  │
+│                        → 관리자 추후 검토                         │
+│                                                                 │
+│                 ▼                                                │
+│  ┌─────────────────────────────────────┐                        │
+│  │  Prisma DB (Expense 테이블)         │                        │
+│  │  + receipt: Supabase Storage URL    │                        │
+│  │  + ocrConfidence: AI 신뢰도         │                        │
+│  │  + ocrRawText: 원본 OCR 텍스트      │                        │
+│  └─────────────────────────────────────┘                        │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+#### Claude Vision API 프롬프트 설계
+
+```typescript
+const RECEIPT_SCAN_PROMPT = `
+이 영수증/간이영수증 이미지를 분석해주세요.
+다음 JSON 형식으로 정보를 추출하세요 (JSON만 반환, 다른 텍스트 불필요):
+
+{
+  "date": "YYYY-MM-DD 또는 null",
+  "description": "지출 항목 요약 (20자 이내)",
+  "amount": 숫자(원 단위, 정수) 또는 null,
+  "category": "PERSONNEL" | "OFFICE" | "EVENT" | "TRANSPORT" | "OTHER",
+  "note": "상세 내용 (상호명, 품목 등)",
+  "confidence": 0.0~1.0 (인식 신뢰도)
+}
+
+카테고리 분류 기준:
+- PERSONNEL: 인건비, 급여, 강사료, 용역비
+- OFFICE: 사무용품, 인쇄, 통신, 임대료, 소프트웨어
+- EVENT: 행사, 세미나, 워크숍, 식비(행사용), 현수막
+- TRANSPORT: 교통비, 주유, 택시, 주차, 톨게이트
+- OTHER: 위에 해당하지 않는 항목
+
+읽을 수 없는 부분은 null로 표시하세요.
+`
+```
+
+---
+
+#### 3-2-1. 패키지 설치 + Supabase Storage + 재정 상수 + Zod 스키마
+
+**추가 설치**:
+
+```bash
+npm install recharts @anthropic-ai/sdk @supabase/supabase-js chokidar
+```
+
+| 패키지 | 용도 |
+|--------|------|
+| `recharts` | 재정 투명성 페이지 도넛 차트 |
+| `@anthropic-ai/sdk` | Claude Vision API (영수증 OCR) |
+| `@supabase/supabase-js` | Supabase Storage (영수증 이미지 저장) |
+| `chokidar` | 로컬 폴더 감시 (영수증 자동 업로드) |
+
+**환경변수 추가** (`.env` + `.env.example`):
+
+```env
+# Supabase Storage
+SUPABASE_URL="https://bsccnnpebrxuinymziyn.supabase.co"
+SUPABASE_SERVICE_KEY="eyJ..."
+
+# Anthropic Claude Vision API
+ANTHROPIC_API_KEY="sk-ant-..."
+
+# 영수증 로컬 감시 폴더 (선택, CLI 전용)
+RECEIPT_WATCH_DIR="C:\\영수증"
+```
+
+**파일**: `src/lib/supabase/storage.ts`
+
+```typescript
+import { createClient } from '@supabase/supabase-js'
+
+const supabase = createClient(
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_KEY!,
+)
+
+export async function uploadReceipt(
+  file: Buffer,
+  filename: string,
+): Promise<string> {
+  const path = `receipts/${Date.now()}-${filename}`
+  const { error } = await supabase.storage
+    .from('receipts')
+    .upload(path, file, { contentType: 'image/*', upsert: false })
+
+  if (error) throw new Error(`Storage upload failed: ${error.message}`)
+
+  const { data } = supabase.storage.from('receipts').getPublicUrl(path)
+  return data.publicUrl
+}
+
+export async function deleteReceipt(url: string): Promise<void> {
+  const path = url.split('/receipts/')[1]
+  if (path) {
+    await supabase.storage.from('receipts').remove([`receipts/${path}`])
+  }
+}
+```
+
+**파일**: `src/lib/ocr/claude-vision.ts`
+
+```typescript
+import Anthropic from '@anthropic-ai/sdk'
+
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
+
+export interface OcrResult {
+  date: string | null
+  description: string
+  amount: number | null
+  category: 'PERSONNEL' | 'OFFICE' | 'EVENT' | 'TRANSPORT' | 'OTHER'
+  note: string
+  confidence: number
+}
+
+export async function scanReceipt(
+  imageBuffer: Buffer,
+  mimeType: string,
+): Promise<OcrResult> {
+  const base64 = imageBuffer.toString('base64')
+
+  const response = await anthropic.messages.create({
+    model: 'claude-sonnet-4-20250514',
+    max_tokens: 500,
+    messages: [
+      {
+        role: 'user',
+        content: [
+          {
+            type: 'image',
+            source: { type: 'base64', media_type: mimeType, data: base64 },
+          },
+          { type: 'text', text: RECEIPT_SCAN_PROMPT },
+        ],
+      },
+    ],
+  })
+
+  const text = response.content[0].type === 'text' ? response.content[0].text : ''
+  return JSON.parse(text) as OcrResult
+}
+```
 
 **파일**: `src/lib/constants/finance.ts`, `src/lib/validations/finance.ts`
 
@@ -1530,6 +1717,9 @@ export const expenseSchema = z.object({
   description: z.string().min(2, '항목명은 2자 이상이어야 합니다').max(200),
   category: z.enum(['PERSONNEL', 'OFFICE', 'EVENT', 'TRANSPORT', 'OTHER']),
   amount: z.number().int().positive('금액은 0보다 커야 합니다'),
+  receipt: z.string().url().optional(),       // Supabase Storage URL
+  ocrConfidence: z.number().min(0).max(1).optional(),
+  ocrRawText: z.string().max(2000).optional(),
   note: z.string().max(500).optional(),
 })
 
@@ -1556,6 +1746,12 @@ export const EXPENSE_CATEGORY_COLORS: Record<ExpenseCategory, string> = {
   PERSONNEL: '#4a90d9', OFFICE: '#6b8f47', EVENT: '#c9a84c', TRANSPORT: '#e8911a', OTHER: '#94a3b8',
 }
 
+export const RECEIPT_CONFIG = {
+  maxFileSize: 10 * 1024 * 1024,  // 10MB
+  allowedTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/heic'],
+  storageBucket: 'receipts',
+} as const
+
 export const FINANCE_CONFIG = {
   admin: { title: '재정 관리', subtitle: '제경비·예산·결산 관리' },
   transparency: { title: '재정 공개', subtitle: '투명한 재정 운용 현황' },
@@ -1563,7 +1759,37 @@ export const FINANCE_CONFIG = {
 } as const
 ```
 
+**Prisma 스키마 수정** (`Expense` 모델 필드 추가):
+
+```prisma
+model Expense {
+  id            String          @id @default(cuid())
+  date          DateTime
+  description   String
+  category      ExpenseCategory
+  amount        Int
+  receipt       String?         // Supabase Storage URL (기존)
+  ocrConfidence Float?          // AI OCR 신뢰도 0.0~1.0 (신규)
+  ocrRawText    String?         // OCR 원본 텍스트 (신규)
+  status        String          @default("CONFIRMED") // CONFIRMED | PENDING_REVIEW (신규)
+  note          String?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@index([date])
+  @@index([category])
+  @@index([status])
+  @@map("expenses")
+}
+```
+
 **의존성**: 없음
+
+**Supabase Storage 설정** (Supabase 대시보드에서):
+
+1. Storage → New Bucket → `receipts` (Public 또는 Authenticated)
+2. Policies: `service_role`만 업로드/삭제 허용
+3. 최대 파일 크기: 10MB
 
 ---
 
@@ -1579,20 +1805,94 @@ export const FINANCE_CONFIG = {
 **layout.tsx 상세**:
 
 - `auth()` 세션 확인 → `user.role !== 'ADMIN'` → `redirect('/login')`
-- **사이드바 메뉴**: 재정 관리(제경비/예산/후원금/결산), 교육 관리, 회원 관리
+- **사이드바 메뉴**: 재정 관리(제경비/예산/후원금/결산), 영수증 스캔, 교육 관리, 회원 관리
 - **반응형**: 데스크톱 좌측 사이드바 240px / 모바일 상단 드롭다운
 - 관리자 전용 스타일 (peace-navy 사이드바)
 
 **대시보드**:
 
 - 요약 카드 4개: 총 후원금, 총 지출, 회원 수, 이번 달 교육 신청
+- **OCR 대기 건수 뱃지**: `Expense.count({ where: { status: 'PENDING_REVIEW' } })`
 - Prisma `aggregate` / `count` 쿼리
 
 **의존성**: 1-4 (인증 ADMIN), 1-3 (Prisma)
 
 ---
 
-#### 3-2-3. 제경비 관리 (CRUD)
+#### 3-2-3. 영수증 OCR 스캔 API + 업로드 UI
+
+**파일**:
+
+| 파일 | 설명 |
+|------|------|
+| `src/app/api/finance/receipt-scan/route.ts` | 영수증 업로드 + OCR API Route |
+| `src/app/(admin)/finance/expenses/receipt-uploader.tsx` | 영수증 드래그&드롭 업로드 컴포넌트 (클라이언트) |
+| `src/app/(admin)/finance/expenses/scan-result-form.tsx` | OCR 결과 확인/수정 폼 (클라이언트) |
+
+**API Route `/api/finance/receipt-scan`** (POST):
+
+```typescript
+// 1. ADMIN 세션 확인 (또는 X-API-Key 헤더로 CLI 스크립트 인증)
+// 2. FormData에서 파일 추출
+// 3. 파일 유효성 검사 (타입: JPEG/PNG/WebP/HEIC, 크기: ≤10MB)
+// 4. Supabase Storage 업로드 → imageUrl 획득
+// 5. Claude Vision API 호출 → OcrResult 획득
+// 6. Rate Limiting: IP 기반 20회/분 (OCR API 비용 보호)
+// 7. JSON 응답: { imageUrl, extracted: OcrResult }
+```
+
+**ReceiptUploader 컴포넌트**:
+
+```
+┌─────────────────────────────────────────┐
+│                                         │
+│    📷 영수증 이미지를 드래그하거나       │
+│       클릭하여 업로드하세요             │
+│                                         │
+│    지원 형식: JPG, PNG, WebP, HEIC      │
+│    최대 크기: 10MB                      │
+│                                         │
+│    [파일 선택]                           │
+│                                         │
+└─────────────────────────────────────────┘
+```
+
+- 드래그 앤 드롭 영역 (`onDragOver`, `onDrop`)
+- 파일 선택 input (`accept="image/*"`)
+- 업로드 진행 프로그레스바
+- 이미지 미리보기 (업로드 전 로컬 미리보기)
+- 스캔 중 로딩 스피너 + "AI가 영수증을 분석하고 있습니다..."
+
+**ScanResultForm 컴포넌트** (OCR 결과 확인):
+
+```
+┌───────────────────────────────────────────────────┐
+│                                                   │
+│  ┌──────────────┐   ┌────────────────────────┐   │
+│  │              │   │ 📅 날짜: [2026-03-15]   │   │
+│  │   영수증     │   │ 📝 항목: [사무용품 구매] │   │
+│  │   미리보기   │   │ 💰 금액: [35,000]       │   │
+│  │   (이미지)   │   │ 🏷️ 분류: [사무비 ▼]     │   │
+│  │              │   │ 📋 비고: [A4용지 10박스] │   │
+│  │              │   │ 🎯 신뢰도: 92%          │   │
+│  └──────────────┘   │                        │   │
+│                     │ [✅ 저장] [🔄 다시 스캔] │   │
+│                     └────────────────────────┘   │
+│                                                   │
+└───────────────────────────────────────────────────┘
+```
+
+- 좌측: 영수증 이미지 미리보기 (확대 가능)
+- 우측: OCR 추출 데이터 (모든 필드 수정 가능)
+- 신뢰도 표시: ≥0.8 녹색, 0.5~0.8 노란색, <0.5 빨간색 (수동 확인 강조)
+- "저장" → Server Action `createExpense` 호출
+- "다시 스캔" → 동일 이미지로 OCR 재요청
+
+**의존성**: 3-2-1
+
+---
+
+#### 3-2-4. 제경비 관리 (CRUD)
 
 **파일**:
 
@@ -1600,37 +1900,108 @@ export const FINANCE_CONFIG = {
 |------|------|
 | `src/app/(admin)/finance/expenses/page.tsx` | 제경비 목록 (테이블, 필터, 검색) |
 | `src/app/(admin)/finance/expenses/expense-list.tsx` | 목록 클라이언트 컴포넌트 |
-| `src/app/(admin)/finance/expenses/new/page.tsx` | 제경비 등록 폼 |
+| `src/app/(admin)/finance/expenses/new/page.tsx` | 제경비 등록 (수동 + 영수증 스캔 탭) |
 | `src/app/(admin)/finance/expenses/[id]/edit/page.tsx` | 제경비 수정 폼 |
-| `src/app/actions/finance.ts` | 재정 Server Actions (createExpense, updateExpense, deleteExpense) |
+| `src/app/actions/finance.ts` | 재정 Server Actions |
 
 **목록 페이지**:
 
-- **테이블 컬럼**: 날짜, 항목명, 카테고리(뱃지), 금액(toLocaleString), 비고, 액션(수정/삭제)
-- **필터**: 카테고리 Select + 기간 DateRange (시작일~종료일)
+- **테이블 컬럼**: 날짜, 항목명, 카테고리(뱃지), 금액(toLocaleString), 영수증(🖼️ 아이콘), 상태(뱃지), 비고, 액션(수정/삭제)
+- **상태 뱃지**: `CONFIRMED`(확인됨/녹색) / `PENDING_REVIEW`(검토 대기/노란색)
+- **필터**: 카테고리 Select + 기간 DateRange + 상태 Select
 - **정렬**: 날짜 내림차순 기본, 금액/카테고리 정렬 토글
 - **페이지네이션**: 20건씩
 - **합계 표시**: 필터 적용 후 총 금액 합계
+- **일괄 확인**: PENDING_REVIEW 항목 체크박스 → "선택 항목 확인" 버튼
 
-**등록/수정 폼**:
+**등록 페이지 (2탭 구조)**:
 
-- `react-hook-form` + `expenseSchema`
-- 날짜: Input type="date"
-- 카테고리: Select (5종)
-- 금액: Input type="number" (`toLocaleString` 포맷 표시)
-- **증빙파일**: 향후 Supabase Storage 연동 (현재는 URL 텍스트 입력)
+- **탭 1 — 영수증 스캔**: `ReceiptUploader` → `ScanResultForm` → 저장
+- **탭 2 — 수동 입력**: 기존 폼 (날짜, 카테고리, 금액, 비고)
 
 **Server Actions**:
 
-- `createExpense(formData)` → Zod → `prisma.expense.create()`
+- `createExpense(formData)` → Zod → `prisma.expense.create()` (receipt URL + OCR 데이터 포함)
 - `updateExpense(id, formData)` → Zod → `prisma.expense.update()`
-- `deleteExpense(id)` → `prisma.expense.delete()` + `revalidatePath`
+- `deleteExpense(id)` → `prisma.expense.delete()` + Supabase Storage 영수증 삭제 + `revalidatePath`
+- `confirmExpenses(ids)` → `prisma.expense.updateMany({ where: { id: { in: ids } }, data: { status: 'CONFIRMED' } })`
 
-**의존성**: 3-2-1, 3-2-2
+**의존성**: 3-2-1, 3-2-2, 3-2-3
 
 ---
 
-#### 3-2-4. 예산 관리
+#### 3-2-5. 로컬 폴더 감시 CLI 스크립트
+
+**파일**:
+
+| 파일 | 설명 |
+|------|------|
+| `scripts/receipt-watcher.ts` | 로컬 폴더 감시 + 자동 업로드 CLI |
+| `scripts/receipt-watcher.config.ts` | 감시 설정 (폴더 경로, API URL, 인증키) |
+
+**receipt-watcher.ts 동작 흐름**:
+
+```
+1. chokidar로 RECEIPT_WATCH_DIR 감시 시작
+2. 새 이미지 파일 감지 (*.jpg, *.jpeg, *.png, *.webp, *.heic)
+3. 파일 읽기 → FormData 생성
+4. fetch('/api/finance/receipt-scan') 호출
+   - Header: X-API-Key (관리자 인증)
+5. OCR 결과 수신
+6. 자동으로 Expense DB 저장 (status: 'PENDING_REVIEW')
+7. 원본 파일 → 처리완료 폴더로 이동 (RECEIPT_WATCH_DIR/processed/)
+8. 콘솔 로그 출력: [✅ 처리완료] 2026-03-15 사무용품 구매 35,000원 (OFFICE)
+```
+
+**실행 방법**:
+
+```bash
+# 개발 환경
+npx tsx scripts/receipt-watcher.ts
+
+# 또는 package.json scripts 등록
+npm run receipt:watch
+```
+
+**설정 (receipt-watcher.config.ts)**:
+
+```typescript
+export const WATCHER_CONFIG = {
+  watchDir: process.env.RECEIPT_WATCH_DIR || 'C:\\영수증',
+  processedDir: 'processed',     // watchDir 하위 처리완료 폴더
+  apiUrl: process.env.AUTH_URL || 'http://localhost:3000',
+  apiKey: process.env.RECEIPT_API_KEY || '', // 관리자 인증키
+  extensions: ['.jpg', '.jpeg', '.png', '.webp', '.heic'],
+  pollInterval: 1000,            // ms
+  debounceDelay: 500,            // 파일 쓰기 완료 대기
+} as const
+```
+
+**API 인증 확장** (`/api/finance/receipt-scan`):
+
+```typescript
+// 기존: ADMIN 세션 확인
+// 추가: X-API-Key 헤더 확인 (CLI 스크립트용)
+const apiKey = request.headers.get('x-api-key')
+if (apiKey === process.env.RECEIPT_API_KEY) {
+  // CLI 스크립트 인증 통과
+} else {
+  // 기존 세션 기반 ADMIN 인증
+}
+```
+
+**환경변수 추가**:
+
+```env
+# 영수증 CLI 인증키 (서버 전용)
+RECEIPT_API_KEY="pck-receipt-{랜덤32자}"
+```
+
+**의존성**: 3-2-1, 3-2-3
+
+---
+
+#### 3-2-6. 예산 관리
 
 **파일**:
 
@@ -1644,7 +2015,7 @@ export const FINANCE_CONFIG = {
 
 - **연도 선택**: Select (2019~현재)
 - **테이블**: 카테고리, 편성액, 집행액(Expense 합계 자동계산), 잔액, 집행률 프로그레스바
-- 집행 금액 = `prisma.expense.aggregate({ where: { category, date: { gte: yearStart, lte: yearEnd } }, _sum: { amount: true } })`
+- 집행 금액 = `prisma.expense.aggregate({ where: { category, date: { gte: yearStart, lte: yearEnd }, status: 'CONFIRMED' }, _sum: { amount: true } })`
 - 잔액 = 편성액 - 집행액 (음수 시 빨간색 경고)
 - **프로그레스바**: shadcn/ui Progress, 100% 초과 시 `destructive` 색상
 
@@ -1657,7 +2028,7 @@ export const FINANCE_CONFIG = {
 
 ---
 
-#### 3-2-5. 결산 보고서 관리
+#### 3-2-7. 결산 보고서 관리
 
 **파일**:
 
@@ -1671,8 +2042,9 @@ export const FINANCE_CONFIG = {
 - 연도 선택 → "보고서 생성" 버튼
 - Server Action: `generateReport(year)`:
   1. `totalIncome = prisma.donation.aggregate({ where: { status: 'COMPLETED', createdAt: yearRange }, _sum: { amount: true } })`
-  2. `totalExpense = prisma.expense.aggregate({ where: { date: yearRange }, _sum: { amount: true } })`
+  2. `totalExpense = prisma.expense.aggregate({ where: { date: yearRange, status: 'CONFIRMED' }, _sum: { amount: true } })`
   3. `prisma.financeReport.upsert({ where: { year }, create: { year, totalIncome, totalExpense }, update: { totalIncome, totalExpense } })`
+- **PENDING_REVIEW 경고**: 미확인 영수증이 있으면 "검토 대기 N건이 있습니다" 알림
 - isPublished 토글 → 공개/비공개 전환
 - PDF URL: 현재는 수동 업로드 (URL 입력), 향후 서버 PDF 생성
 
@@ -1680,15 +2052,15 @@ export const FINANCE_CONFIG = {
 
 ---
 
-#### 3-2-6. 재정 투명성 공개 페이지
+#### 3-2-8. 재정 투명성 공개 페이지
 
 **파일**:
 
 | 파일 | 설명 |
 |------|------|
-| `src/app/(main)/transparency/page.tsx` | 연도별 재정 현황 요약 (서버) |
-| `src/app/(main)/transparency/transparency-content.tsx` | 차트 + 카드 (클라이언트) |
-| `src/app/(main)/transparency/[year]/page.tsx` | 연도별 상세 보고서 (서버) |
+| `src/app/[locale]/(main)/transparency/page.tsx` | 연도별 재정 현황 요약 (서버) |
+| `src/app/[locale]/(main)/transparency/transparency-content.tsx` | 차트 + 카드 (클라이언트) |
+| `src/app/[locale]/(main)/transparency/[year]/page.tsx` | 연도별 상세 보고서 (서버) |
 | `src/components/molecules/DonutChart.tsx` | Recharts 도넛 차트 래퍼 |
 
 **투명성 메인 페이지**:
@@ -1714,14 +2086,37 @@ export const FINANCE_CONFIG = {
 - 다크모드 대응 (배경/텍스트 색상)
 - `dynamic(() => import('./DonutChart'), { ssr: false })` SSR 비활성화 (Recharts)
 
-**의존성**: 3-2-1, 3-2-5
+**의존성**: 3-2-1, 3-2-7
 
 ---
 
-#### 3-2-7. 빌드 검증
+#### 3-2-9. 빌드 검증
 
 - `tsc --noEmit` + `npm run lint` + `npm run build`
 - `/admin/finance/*`, `/transparency`, `/transparency/[year]` 라우트 확인
+- 영수증 OCR API 테스트 (이미지 업로드 → JSON 응답)
+- 로컬 폴더 감시 스크립트 테스트 (`npm run receipt:watch`)
+
+---
+
+#### 의존성 체인 (Phase 3-2)
+
+```
+3-2-1 (패키지 + Storage + 상수 + Zod + Prisma 수정)
+  ↓
+3-2-2 (관리자 레이아웃) ← 1-4 (NextAuth ADMIN)
+  ↓
+3-2-3 (영수증 OCR API + 업로드 UI) ← 3-2-1
+  ↓
+3-2-4 (제경비 CRUD + OCR 통합) ← 3-2-1, 3-2-2, 3-2-3
+3-2-5 (로컬 폴더 감시 CLI) ← 3-2-1, 3-2-3
+3-2-6 (예산 관리) ← 3-2-1, 3-2-2
+3-2-7 (결산 보고서) ← 3-2-1, 3-2-2
+  ↓
+3-2-8 (투명성 공개 페이지) ← 3-2-1, 3-2-7
+  ↓
+3-2-9 (빌드 검증)
+```
 
 ---
 
