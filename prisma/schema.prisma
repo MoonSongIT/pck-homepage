@@ -107,6 +107,7 @@ model Donation {
   userId        String?
   donorName     String
   donorEmail    String
+  phone         String?
   amount        Int
   type          DonationType
   paymentKey    String?      @unique
