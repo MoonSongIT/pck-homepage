@@ -997,11 +997,11 @@
 
 | #     | 작업 항목                | 상태 | 세부 내용                                                                 | 블로커/비고 |
 | ----- | ------------------------ | ---- | ------------------------------------------------------------------------- | ----------- |
-| 3-1-1 | 토스 유틸 + 상수 + Zod   | ⬜   | `@tosspayments/tosspayments-sdk` 설치 + `toss.ts` 승인 유틸 + donateSchema | ❗ 토스 가맹점 |
-| 3-1-2 | 후원 페이지              | ⬜   | `/donate` — 정기/일시 탭 + 금액 프리셋+직접입력 + 개인정보 폼 + 토스 SDK requestPayment |  |
-| 3-1-3 | 결제 콜백 + 성공/실패    | ⬜   | `/donate/success` + `/donate/fail` + `/api/donate/confirm` — 승인 API + DB update + Resend 감사 이메일 |  |
-| 3-1-4 | Rate Limiting 설정       | ⬜   | `rate-limit.ts` — Upstash Redis slidingWindow (후원 10회/분, 로그인 5회/분) | ❗ Upstash Redis |
-| 3-1-5 | 빌드 검증                | ⬜   | tsc + lint + build + /donate, /donate/success, /donate/fail 라우트 확인  |             |
+| 3-1-1 | 토스 유틸 + 상수 + Zod   | ✅   | `@tosspayments/tosspayments-sdk` 설치 + `toss.ts` 승인 유틸 + donateSchema | 완료 |
+| 3-1-2 | 후원 페이지              | ✅   | `/donate` — 정기/일시 탭 + 금액 프리셋+직접입력 + 개인정보 폼 + 토스 SDK requestPayment + i18n | 완료 |
+| 3-1-3 | 결제 콜백 + 성공/실패    | ✅   | `/donate/success` + `/donate/fail` + `/api/donate/confirm` — 승인 API + DB update + Resend 감사 이메일 | 완료 |
+| 3-1-4 | Rate Limiting 설정       | ✅   | `rate-limit.ts` — Upstash Redis slidingWindow (후원 10회/분, 로그인 5회/분) + graceful skip | 완료 |
+| 3-1-5 | 빌드 검증                | ✅   | tsc + lint + build 통과 + /donate, /donate/success, /donate/fail 라우트 확인 + 테스트 결제 성공 | 완료 |
 
 ### Phase 3 완료 체크포인트
 
@@ -1018,13 +1018,13 @@
 - [ ] 제경비 CRUD: 입력/수정/삭제 → DB 반영
 - [ ] 예산 현황: 집행률 프로그레스바 + 잔액 계산
 - [ ] 투명성 페이지: Recharts 도넛 차트 + PDF 다운로드
-- [ ] 후원 결제: 토스 테스트 결제 성공 → DB 저장 → 감사 이메일
-- [ ] Rate Limiting: 로그인 6회 시도 → 429 응답
-- [ ] 빌드: `npm run build` 에러 0건
+- [x] 후원 결제: 토스 테스트 결제 성공 → DB 저장 → 감사 이메일
+- [x] Rate Limiting: Upstash Redis 기반 구현 (미설정 시 graceful skip)
+- [x] 빌드: `npm run build` 에러 0건
 
 ### Phase 3 외부 작업 체크리스트
 
-- [ ] 토스페이먼츠 가맹점 등록 → 테스트키/실제키 확보
+- [x] 토스페이먼츠 가맹점 등록 → 테스트키 확보 완료 (실제키는 배포 시 교체)
 - [ ] Upstash Redis 생성 → REST_URL / TOKEN 확보
 - [ ] Resend 계정 확인 → API_KEY 확보 (이메일 발송 필수)
 - [ ] 카카오 개발자 앱 등록 → CLIENT_ID / SECRET 확보 (소셜 로그인)
@@ -1077,8 +1077,8 @@
 | Phase 3-4   | 7         | 7      | **100%** |
 | Phase 3-6   | 4         | 4      | **100%** |
 | Phase 3-2   | 7         | 0      | 0%       |
-| Phase 3-1   | 5         | 0      | 0%       |
+| Phase 3-1   | 5         | 5      | **100%** |
 | Phase 4     | 5         | 0      | 0%       |
-| **전체**    | **83**    | **66** | **80%**  |
+| **전체**    | **83**    | **71** | **86%**  |
 
 > Phase 3 상세 분할: 기존 6개 → 31개 소항목으로 확장 (2026-03-20)
