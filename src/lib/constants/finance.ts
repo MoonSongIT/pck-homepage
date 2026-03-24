@@ -20,6 +20,16 @@ export const EXPENSE_CATEGORY_COLORS: Record<ExpenseCategory, string> = {
   OTHER: '#94a3b8',
 }
 
+// ─── 카테고리 순서 배열 ─────────────────────────────────
+
+export const EXPENSE_CATEGORIES: ExpenseCategory[] = [
+  'PERSONNEL',
+  'OFFICE',
+  'EVENT',
+  'TRANSPORT',
+  'OTHER',
+]
+
 // ─── 영수증 업로드 설정 ─────────────────────────────────
 
 export const RECEIPT_CONFIG = {

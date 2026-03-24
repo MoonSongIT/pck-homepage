@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache'
 
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { expenseSchema, updateExpenseSchema } from '@/lib/validations/finance'
+import { expenseSchema, updateExpenseSchema, budgetSchema } from '@/lib/validations/finance'
 import { deleteReceipt } from '@/lib/supabase/storage'
 
 export type ExpenseActionResult = {
@@ -16,7 +16,14 @@ export type ExpenseActionResult = {
   count?: number
 }
 
+export type BudgetActionResult = {
+  success: boolean
+  message: string
+  fieldErrors?: Record<string, string>
+}
+
 const EXPENSES_PATH = '/admin/finance/expenses'
+const BUDGET_PATH = '/admin/finance/budget'
 
 // ─── 헬퍼 ────────────────────────────────────────────
 
@@ -205,5 +212,63 @@ export async function bulkConfirmExpenses(ids: string[]): Promise<ExpenseActionR
   } catch (error: unknown) {
     console.error('[Finance] bulkConfirmExpenses failed:', error)
     return { success: false, message: '처리 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.' }
+  }
+}
+
+// ─── 예산 등록/수정 (upsert) ──────────────────────────
+
+export async function upsertBudget(
+  _prev: BudgetActionResult | null,
+  formData: FormData,
+): Promise<BudgetActionResult> {
+  await requireAdmin()
+
+  const raw = {
+    year: Number(formData.get('year')),
+    category: formData.get('category'),
+    amount: Number(formData.get('amount')),
+  }
+
+  const parsed = budgetSchema.safeParse(raw)
+  if (!parsed.success) {
+    return {
+      success: false,
+      message: '입력 정보를 확인해 주세요',
+      fieldErrors: parseFieldErrors(parsed.error.issues),
+    }
+  }
+
+  try {
+    await prisma.budgetItem.upsert({
+      where: {
+        year_category: {
+          year: parsed.data.year,
+          category: parsed.data.category,
+        },
+      },
+      create: parsed.data,
+      update: { amount: parsed.data.amount },
+    })
+
+    revalidatePath(BUDGET_PATH)
+    return { success: true, message: '예산이 저장되었습니다' }
+  } catch (error: unknown) {
+    console.error('[Finance] upsertBudget failed:', error)
+    return { success: false, message: '저장 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.' }
+  }
+}
+
+// ─── 예산 삭제 ─────────────────────────────────────────
+
+export async function deleteBudget(budgetId: string): Promise<BudgetActionResult> {
+  await requireAdmin()
+
+  try {
+    await prisma.budgetItem.delete({ where: { id: budgetId } })
+    revalidatePath(BUDGET_PATH)
+    return { success: true, message: '예산이 삭제되었습니다' }
+  } catch (error: unknown) {
+    console.error('[Finance] deleteBudget failed:', error)
+    return { success: false, message: '삭제 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.' }
   }
 }
