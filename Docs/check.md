@@ -990,7 +990,7 @@
 | 3-2-3 | 영수증 OCR 스캔 API + 업로드 UI | ✅   | `/api/finance/receipt-scan` — 이미지 업로드 → Supabase Storage → Claude Vision OCR → JSON 반환 + ReceiptUploader 드래그&드롭 + ScanResultForm 확인/수정 | 검증완료(18개 항목) |
 | 3-2-4 | 제경비 관리 (CRUD + OCR 통합)  | ✅   | `/admin/finance/expenses` — 목록(테이블+필터+상태뱃지+합계) + 등록(영수증스캔탭/수동입력탭) + 수정/삭제 + 일괄확인 + Server Actions | 검증완료(27개 항목) |
 | 3-2-5 | 로컬 폴더 감시 CLI 스크립트    | ✅   | `scripts/receipt-watcher.ts` — chokidar 폴더감시 → 자동 업로드+OCR → DB 저장(PENDING_REVIEW) → 처리완료 폴더 이동 | 검증완료(17개 항목) |
-| 3-2-6 | 예산 관리                      | 🔄   | `/admin/finance/budget` — 연도별 편성/집행/잔액 테이블 + 프로그레스바 + 등록 폼 (CONFIRMED만 집행액 계산) |  |
+| 3-2-6 | 예산 관리                      | ✅   | `/admin/finance/budget` — 연도별 편성/집행/잔액 테이블 + 프로그레스바 + 등록 폼 (CONFIRMED만 집행액 계산) | 검증완료(22개 항목) |
 | 3-2-7 | 결산 보고서 관리               | ⬜   | `/admin/finance/reports` — 연도 수입/지출 자동 집계 + PENDING_REVIEW 경고 + isPublished 토글 + PDF URL |  |
 | 3-2-8 | 재정 투명성 공개 페이지        | ⬜   | `/transparency` + `/transparency/[year]` — 연도별 요약 카드 + Recharts 도넛 차트 + PDF 다운로드 + i18n |  |
 | 3-2-9 | 빌드 검증                      | ⬜   | tsc + lint + build + /admin/finance/* + /transparency 라우트 + OCR API 테스트 + 폴더감시 테스트 |  |
