@@ -987,13 +987,74 @@
 | ----- | ------------------------------ | ---- | ------------------------------------------------------------------------- | ----------- |
 | 3-2-1 | 패키지 + Storage + 상수 + Zod  | ✅   | `recharts` `@anthropic-ai/sdk` `@supabase/supabase-js` `chokidar` 설치 + Supabase Storage 버킷 설정 + finance.ts 상수 + Zod 스키마 + Prisma Expense 모델 확장 (ocrConfidence, ocrRawText, status) + OCR 테스트 성공 | 완료 |
 | 3-2-2 | 관리자 레이아웃                | ✅   | `(admin)/layout.tsx` — ADMIN 권한 체크 + 사이드바 + `(admin)/page.tsx` 대시보드 통계 + OCR 대기 건수 뱃지 | 검증완료(20개 항목) |
-| 3-2-3 | 영수증 OCR 스캔 API + 업로드 UI | ⬜   | `/api/finance/receipt-scan` — 이미지 업로드 → Supabase Storage → Claude Vision OCR → JSON 반환 + ReceiptUploader 드래그&드롭 + ScanResultForm 확인/수정 | Anthropic API Key |
+| 3-2-3 | 영수증 OCR 스캔 API + 업로드 UI | 🔄   | `/api/finance/receipt-scan` — 이미지 업로드 → Supabase Storage → Claude Vision OCR → JSON 반환 + ReceiptUploader 드래그&드롭 + ScanResultForm 확인/수정 | 검증 대기 |
 | 3-2-4 | 제경비 관리 (CRUD + OCR 통합)  | ⬜   | `/admin/finance/expenses` — 목록(테이블+필터+상태뱃지+합계) + 등록(영수증스캔탭/수동입력탭) + 수정/삭제 + 일괄확인 + Server Actions |  |
 | 3-2-5 | 로컬 폴더 감시 CLI 스크립트    | ⬜   | `scripts/receipt-watcher.ts` — chokidar 폴더감시 → 자동 업로드+OCR → DB 저장(PENDING_REVIEW) → 처리완료 폴더 이동 | RECEIPT_API_KEY, RECEIPT_WATCH_DIR |
 | 3-2-6 | 예산 관리                      | ⬜   | `/admin/finance/budget` — 연도별 편성/집행/잔액 테이블 + 프로그레스바 + 등록 폼 (CONFIRMED만 집행액 계산) |  |
 | 3-2-7 | 결산 보고서 관리               | ⬜   | `/admin/finance/reports` — 연도 수입/지출 자동 집계 + PENDING_REVIEW 경고 + isPublished 토글 + PDF URL |  |
 | 3-2-8 | 재정 투명성 공개 페이지        | ⬜   | `/transparency` + `/transparency/[year]` — 연도별 요약 카드 + Recharts 도넛 차트 + PDF 다운로드 + i18n |  |
 | 3-2-9 | 빌드 검증                      | ⬜   | tsc + lint + build + /admin/finance/* + /transparency 라우트 + OCR API 테스트 + 폴더감시 테스트 |  |
+
+#### 3-2-3 영수증 OCR 스캔 검증 절차
+
+**A. 사전 준비**
+
+| # | 항목 | 방법 |
+|---|---|---|
+| A-1 | ADMIN 계정 준비 | `scripts/promote-admin.ts` 또는 DB에서 role=ADMIN 계정 확인 |
+| A-2 | 테스트 영수증 이미지 준비 | JPG/PNG/WebP 파일 1개 이상 준비 (실제 영수증 또는 샘플 이미지) |
+
+**B. 접근 제어**
+
+| # | 항목 | 방법 |
+|---|---|---|
+| B-1 | 비로그인 접근 차단 | 로그아웃 상태에서 `/admin/finance/expenses/new` → `/login` 리다이렉트 확인 |
+| B-2 | API 직접 호출 차단 | 비로그인 상태에서 `POST /api/finance/receipt-scan` → 401 반환 확인 |
+
+**C. 파일 업로더 (ReceiptUploader)**
+
+| # | 항목 | 방법 |
+|---|---|---|
+| C-1 | 페이지 진입 | ADMIN 로그인 후 `/admin/finance/expenses/new` → "영수증 스캔" 탭 기본 활성 확인 |
+| C-2 | 드래그&드롭 | 영수증 이미지를 드래그해서 영역에 올려놓으면 테두리 하이라이트 확인 |
+| C-3 | 파일 선택 | "파일 선택" 버튼 또는 영역 클릭 → 파일 탐색기 열림 확인 |
+| C-4 | 스캔 중 상태 | 파일 선택 후 "영수증을 분석 중입니다..." 스피너 표시 확인 |
+| C-5 | 오류 파일 거부 | `.pdf` 또는 10MB 초과 파일 선택 → 에러 toast 표시 확인 |
+
+**D. OCR 결과 폼 (ScanResultForm)**
+
+| # | 항목 | 방법 |
+|---|---|---|
+| D-1 | OCR 결과 자동 입력 | 스캔 완료 후 날짜/항목명/카테고리/금액 필드에 값이 채워짐 확인 |
+| D-2 | 신뢰도 Badge | 분석 신뢰도에 따라 초록(≥85%) / 노란(60~84%) / 주황(<60%) Badge 표시 확인 |
+| D-3 | 영수증 미리보기 | Supabase에 업로드된 이미지가 폼 상단에 표시되는지 확인 |
+| D-4 | 새 탭 링크 | "새 탭에서 열기" 클릭 → Supabase public URL로 이미지 열림 확인 |
+| D-5 | 필드 수정 | 날짜/항목명/카테고리/금액/메모 수정 가능 확인 |
+| D-6 | 다시 스캔 | "다시 스캔" 버튼 클릭 → ReceiptUploader 화면으로 복귀 확인 |
+| D-7 | 폼 제출 | "지출 등록" 클릭 → 성공 toast + `/admin/finance/expenses` 이동 확인 |
+
+**E. DB 저장 확인**
+
+| # | 항목 | 방법 |
+|---|---|---|
+| E-1 | Expense 레코드 생성 | `npx prisma studio` → expenses 테이블에 레코드 생성 확인 |
+| E-2 | status PENDING_REVIEW | OCR 경로 저장 시 `status = 'PENDING_REVIEW'` 확인 |
+| E-3 | receipt URL | Supabase public URL이 `receipt` 필드에 저장됐는지 확인 |
+
+**F. 대시보드 연동**
+
+| # | 항목 | 방법 |
+|---|---|---|
+| F-1 | OCR 대기 뱃지 갱신 | `/admin` 대시보드에서 "영수증 검토 대기 N건" 뱃지 카운트 증가 확인 |
+| F-2 | 지출 목록 stub | `/admin/finance/expenses` 접근 → "제경비 관리" 페이지 + 건수 표시 확인 |
+
+**G. 수동 입력 탭**
+
+| # | 항목 | 방법 |
+|---|---|---|
+| G-1 | 탭 전환 | "수동 입력" 탭 클릭 → placeholder 카드("Phase 3-2-4에서 구현 예정") 표시 확인 |
+
+총 18개 항목
 
 ### 3-1. 후원 시스템 (토스페이먼츠 연동)
 
