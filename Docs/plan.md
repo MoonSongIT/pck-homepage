@@ -2099,6 +2099,275 @@ RECEIPT_API_KEY="pck-receipt-{랜덤32자}"
 
 ---
 
+#### 3-2-10. PDF 자동 생성 및 Supabase Storage 자동 저장
+
+> **목표**: 결산 보고서 관리 화면에서 "PDF 자동 생성" 클릭 →
+> `@react-pdf/renderer`로 서버사이드 PDF 렌더링 →
+> Supabase Storage `reports` 버킷 업로드 →
+> `pdfUrl` DB 자동 저장 (기존 수동 URL 입력 대체)
+
+**추가 설치**:
+
+```bash
+npm install @react-pdf/renderer
+```
+
+**환경변수** (`.env.local`에 추가):
+
+```
+SUPABASE_SERVICE_ROLE_KEY=...   # Service Role Key — 서버 전용, NEXT_PUBLIC_ 접두사 금지
+```
+
+> Supabase 대시보드 → Project Settings → API → `service_role` 키 복사
+
+**파일**:
+
+| 파일 | 역할 |
+|------|------|
+| `src/components/pdf/FinanceReportPdf.tsx` | `@react-pdf/renderer` 기반 결산 보고서 PDF 컴포넌트 (서버 전용) |
+| `src/lib/supabase/storage.ts` | Supabase Storage 업로드 유틸 (`reports` 버킷) |
+| `src/app/actions/finance.ts` | `generateReportPdf` Server Action 추가 |
+| `src/app/(admin)/admin/finance/reports/report-form.tsx` | "PDF 자동 생성" 버튼 추가 |
+
+---
+
+**① PDF 템플릿 (`src/components/pdf/FinanceReportPdf.tsx`)**:
+
+```tsx
+// ⚠️ 서버 컴포넌트 전용 — 'use client' 금지
+import { Document, Page, Text, View, StyleSheet, Font } from '@react-pdf/renderer'
+
+// 한글 폰트 등록 (Noto Sans KR, 구글 폰트 CDN)
+Font.register({
+  family: 'NotoSansKR',
+  fonts: [
+    { src: 'https://fonts.gstatic.com/s/notosanskr/v36/PbykFmXiEBPT4ITbgNA5Cgm20xz64px_1hVWr0wuPNGmlQNMEfD4.0.woff2' },
+    { src: 'https://fonts.gstatic.com/s/notosanskr/v36/PbykFmXiEBPT4ITbgNA5Cgm20xz64px_1hVWr0wuPNGmlQNMEfD4.9.woff2', fontWeight: 'bold' },
+  ],
+})
+
+const styles = StyleSheet.create({
+  page:    { fontFamily: 'NotoSansKR', padding: 48, fontSize: 10, color: '#222' },
+  header:  { marginBottom: 28 },
+  title:   { fontSize: 20, fontWeight: 'bold', color: '#1a3a5c', marginBottom: 6 },
+  org:     { fontSize: 11, color: '#4a90d9' },
+  section: { marginBottom: 20 },
+  label:   { fontSize: 9, color: '#888', marginBottom: 4 },
+  row:     { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 5, borderBottomWidth: 0.5, borderBottomColor: '#eee' },
+  key:     { color: '#444' },
+  val:     { fontWeight: 'bold', color: '#1a3a5c' },
+  dot:     { width: 8, height: 8, borderRadius: 4, marginRight: 6 },
+  catRow:  { flexDirection: 'row', alignItems: 'center', paddingVertical: 4, borderBottomWidth: 0.5, borderBottomColor: '#f0f0f0' },
+  footer:  { position: 'absolute', bottom: 32, left: 48, right: 48, textAlign: 'center', fontSize: 8, color: '#aaa' },
+})
+
+const CATEGORY_LABELS: Record<string, string> = {
+  PERSONNEL: '인건비', OFFICE: '사무비', EVENT: '행사비', TRANSPORT: '교통비', OTHER: '기타',
+}
+const CATEGORY_COLORS: Record<string, string> = {
+  PERSONNEL: '#4a90d9', OFFICE: '#6b8f47', EVENT: '#c9a84c', TRANSPORT: '#1a3a5c', OTHER: '#e8911a',
+}
+
+interface Props {
+  year: number
+  totalIncome: number
+  totalExpense: number
+  breakdown: Array<{ category: string; amount: number }>
+}
+
+export const FinanceReportPdf = ({ year, totalIncome, totalExpense, breakdown }: Props) => {
+  const balance = totalIncome - totalExpense
+  const fmt = (n: number) => n.toLocaleString('ko-KR') + '원'
+
+  return (
+    <Document>
+      <Page size="A4" style={styles.page}>
+        {/* 헤더 */}
+        <View style={styles.header}>
+          <Text style={styles.title}>{year}년 결산 보고서</Text>
+          <Text style={styles.org}>팍스크리스티코리아 (Pax Christi Korea)</Text>
+        </View>
+
+        {/* 요약 */}
+        <View style={styles.section}>
+          <Text style={styles.label}>■ 수입·지출 요약</Text>
+          <View style={styles.row}>
+            <Text style={styles.key}>총 수입</Text>
+            <Text style={[styles.val, { color: '#4a90d9' }]}>{fmt(totalIncome)}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text style={styles.key}>총 지출</Text>
+            <Text style={[styles.val, { color: '#6b8f47' }]}>{fmt(totalExpense)}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text style={styles.key}>{balance >= 0 ? '잉여금' : '부족액'}</Text>
+            <Text style={[styles.val, { color: balance >= 0 ? '#1a3a5c' : '#e53e3e' }]}>{fmt(Math.abs(balance))}</Text>
+          </View>
+        </View>
+
+        {/* 지출 카테고리 */}
+        {breakdown.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.label}>■ 지출 항목별 내역</Text>
+            {breakdown.map((b) => (
+              <View key={b.category} style={styles.catRow}>
+                <View style={[styles.dot, { backgroundColor: CATEGORY_COLORS[b.category] ?? '#888' }]} />
+                <Text style={{ flex: 1 }}>{CATEGORY_LABELS[b.category] ?? b.category}</Text>
+                <Text style={{ fontWeight: 'bold' }}>{fmt(b.amount)}</Text>
+                <Text style={{ color: '#888', marginLeft: 12, width: 48, textAlign: 'right' }}>
+                  {totalExpense > 0 ? `${((b.amount / totalExpense) * 100).toFixed(1)}%` : '-'}
+                </Text>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* 푸터 */}
+        <Text style={styles.footer}>
+          본 보고서는 팍스크리스티코리아가 공식 발행한 {year}년도 결산 보고서입니다. 생성일: {new Date().toLocaleDateString('ko-KR')}
+        </Text>
+      </Page>
+    </Document>
+  )
+}
+```
+
+---
+
+**② Storage 유틸 (`src/lib/supabase/storage.ts`)**:
+
+```typescript
+import { createClient } from '@supabase/supabase-js'
+
+// Service Role Key — 서버 사이드 전용 (클라이언트 번들에 포함 금지)
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+)
+
+const BUCKET = 'reports'
+
+/**
+ * 결산 보고서 PDF를 Supabase Storage에 업로드하고 공개 URL을 반환한다.
+ * @param year  보고서 연도 (파일명에 사용)
+ * @param pdfBuffer  @react-pdf/renderer renderToBuffer 결과
+ */
+export async function uploadReportPdf(year: number, pdfBuffer: Buffer): Promise<string> {
+  const path = `finance/${year}-annual-report.pdf`
+
+  const { error } = await supabaseAdmin.storage.from(BUCKET).upload(path, pdfBuffer, {
+    contentType: 'application/pdf',
+    upsert: true,   // 동일 연도 재생성 시 덮어쓰기
+  })
+  if (error) throw new Error(`Storage 업로드 실패: ${error.message}`)
+
+  const { data } = supabaseAdmin.storage.from(BUCKET).getPublicUrl(path)
+  return data.publicUrl
+}
+```
+
+> **Supabase 버킷 설정**: 대시보드 → Storage → New bucket → 이름 `reports` → Public 체크 ✅
+
+---
+
+**③ Server Action (`src/app/actions/finance.ts`에 추가)**:
+
+```typescript
+'use server'
+import { createElement } from 'react'
+import { renderToBuffer } from '@react-pdf/renderer'
+import { FinanceReportPdf } from '@/components/pdf/FinanceReportPdf'
+import { uploadReportPdf } from '@/lib/supabase/storage'
+
+export async function generateReportPdf(reportId: string) {
+  // 1) ADMIN 권한 확인
+  const session = await auth()
+  if (session?.user?.role !== 'ADMIN') return { success: false, message: '권한 없음' }
+
+  // 2) DB에서 보고서 + 지출 집계 로드
+  const report = await prisma.financeReport.findUniqueOrThrow({ where: { id: reportId } })
+  const yearStart = new Date(`${report.year}-01-01`)
+  const yearEnd   = new Date(`${report.year + 1}-01-01`)
+
+  const rawBreakdown = await prisma.expense.groupBy({
+    by: ['category'],
+    where: { status: 'CONFIRMED', date: { gte: yearStart, lt: yearEnd } },
+    _sum: { amount: true },
+    orderBy: { _sum: { amount: 'desc' } },
+  })
+  const breakdown = rawBreakdown.map((b) => ({
+    category: b.category,
+    amount:   b._sum.amount ?? 0,
+  }))
+
+  // 3) PDF 렌더링 (서버사이드)
+  const pdfBuffer = await renderToBuffer(
+    createElement(FinanceReportPdf, {
+      year:         report.year,
+      totalIncome:  report.totalIncome,
+      totalExpense: report.totalExpense,
+      breakdown,
+    }),
+  )
+
+  // 4) Supabase Storage 업로드 → 공개 URL 획득
+  const pdfUrl = await uploadReportPdf(report.year, Buffer.from(pdfBuffer))
+
+  // 5) DB pdfUrl 업데이트 + 캐시 무효화
+  await prisma.financeReport.update({ where: { id: reportId }, data: { pdfUrl } })
+  revalidatePath('/admin/finance/reports')
+  revalidatePath(`/transparency/${report.year}`)
+  revalidatePath('/transparency')
+
+  return { success: true, pdfUrl }
+}
+```
+
+---
+
+**④ UI 통합 (`report-form.tsx` 수정)**:
+
+- 기존 "PDF URL" 다이얼로그 트리거 버튼 옆에 **"PDF 자동 생성"** 버튼 추가
+- 클릭 시 `startTransition` + `generateReportPdf(report.id)` 호출
+- 로딩 중 버튼 disabled + 스피너 표시
+- 완료 후 `localReports` 상태의 해당 항목 `pdfUrl` 즉시 갱신 (낙관적 업데이트와 동일 패턴)
+- 에러 시 `sonner` toast로 알림
+
+```tsx
+const [isGenerating, setIsGenerating] = useState<string | null>(null)   // reportId 추적
+
+const handleGeneratePdf = async (reportId: string) => {
+  setIsGenerating(reportId)
+  const result = await generateReportPdf(reportId)
+  setIsGenerating(null)
+  if (result.success && result.pdfUrl) {
+    setLocalReports((prev) =>
+      prev.map((r) => (r.id === reportId ? { ...r, pdfUrl: result.pdfUrl! } : r)),
+    )
+    toast.success('PDF가 생성되어 저장되었습니다.')
+  } else {
+    toast.error(result.message ?? 'PDF 생성 실패')
+  }
+}
+```
+
+---
+
+**주의사항**:
+
+| 항목 | 내용 |
+|------|------|
+| 서버 전용 | `@react-pdf/renderer`, `storage.ts`는 서버 모듈 — `'use client'` 파일에서 import 금지 |
+| JSX 사용 | `renderToBuffer`에 JSX 전달 시 Server Action 파일에서 JSX 사용 → `tsconfig.json` `jsx: "react-jsx"` 확인 (기존 설정) |
+| 한글 폰트 | CDN woff2 URL은 최초 생성 시 네트워크 요청 발생 → 캐싱됨. 오프라인 환경에서는 `public/fonts/`로 로컬 폰트 배포 필요 |
+| 버킷 공개 설정 | Supabase Storage `reports` 버킷 → Public 설정 필수 (비공개 시 URL 접근 불가) |
+| Buffer 변환 | `renderToBuffer` 반환값은 `ArrayBuffer` → `Buffer.from(pdfBuffer)` 변환 후 업로드 |
+| 생성 시간 | PDF 렌더링 + 업로드 총 1~3초 소요 → UI에 로딩 스피너 필수 |
+
+**의존성**: 3-2-7 (결산 보고서 관리), Supabase Storage (Service Role Key 필요)
+
+---
+
 #### 의존성 체인 (Phase 3-2)
 
 ```
@@ -2116,6 +2385,7 @@ RECEIPT_API_KEY="pck-receipt-{랜덤32자}"
 3-2-8 (투명성 공개 페이지) ← 3-2-1, 3-2-7
   ↓
 3-2-9 (빌드 검증)
+3-2-10 (PDF 자동 생성 + Storage) ← 3-2-7, Supabase Storage  ← 신규
 ```
 
 ---

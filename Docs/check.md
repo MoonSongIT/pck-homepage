@@ -1,6 +1,6 @@
 # PCK 웹사이트 리뉴얼 — 진도 체크리스트
 
-> 최종 수정: 2026-03-24 (Phase 3-2-3 영수증 OCR 스캔 API + 업로드 UI 검증 완료)
+> 최종 수정: 2026-03-24 (Phase 3-2-10 PDF 자동 생성 및 Supabase Storage 자동 저장 계획 추가)
 > 상태 표시: ⬜ 미시작 | 🔄 진행 중 | ✅ 완료 | ❌ 블로커 | ⏭️ 건너뜀
 
 ---
@@ -993,7 +993,8 @@
 | 3-2-6 | 예산 관리                      | ✅   | `/admin/finance/budget` — 연도별 편성/집행/잔액 테이블 + 프로그레스바 + 등록 폼 (CONFIRMED만 집행액 계산) | 검증완료(22개 항목) |
 | 3-2-7 | 결산 보고서 관리               | ✅   | `/admin/finance/reports` — 연도 수입/지출 자동 집계 + PENDING_REVIEW 경고 + isPublished 토글 + PDF URL + Zod URL 검증 | 검증완료(22개 항목) |
 | 3-2-8 | 재정 투명성 공개 페이지        | ✅   | `/transparency` + `/transparency/[year]` — 연도별 요약 카드 + Recharts 도넛 차트(수입/지출) + 카테고리별 내역 테이블 + PDF 다운로드 + i18n | 검증완료(브라우저 직접 확인) |
-| 3-2-9 | 빌드 검증                      | ✅   | tsc 통과 + lint 에러 0건(AdminSidebar/DonationCTA unused import 정리, HeroSection useCallback deps 수정) + build 성공(51 routes) + /admin/finance/* + /transparency 브라우저 확인 | 검증완료 |
+| 3-2-9  | 빌드 검증                                      | ✅   | tsc 통과 + lint 에러 0건(AdminSidebar/DonationCTA unused import 정리, HeroSection useCallback deps 수정) + build 성공(51 routes) + /admin/finance/* + /transparency 브라우저 확인 | 검증완료 |
+| 3-2-10 | PDF 자동 생성 및 Supabase Storage 자동 저장   | ⬜   | `generateReportPdf` Server Action — `@react-pdf/renderer` 렌더링 → Supabase `reports` 버킷 업로드 → `pdfUrl` 자동 저장 + 관리자 UI "PDF 자동 생성" 버튼 | |
 
 #### 3-2-3 영수증 OCR 스캔 검증 절차
 
@@ -1420,10 +1421,11 @@
 | Phase 3-3   | 5         | 5      | **100%** |
 | Phase 3-4   | 7         | 7      | **100%** |
 | Phase 3-6   | 4         | 4      | **100%** |
-| Phase 3-2   | 9         | 9      | **100%** |
+| Phase 3-2   | 10        | 9      | 90%      |
 | Phase 3-1   | 5         | 5      | **100%** |
 | Phase 4     | 5         | 0      | 0%       |
-| **전체**    | **85**    | **80** | **94%**  |
+| **전체**    | **86**    | **80** | **93%**  |
 
 > Phase 3 상세 분할: 기존 6개 → 31개 소항목으로 확장 (2026-03-20)
 > Phase 3-2 확장: 영수증 OCR + Supabase Storage + 로컬 폴더 감시 추가 (2026-03-23, 7개 → 9개)
+> Phase 3-2 확장: PDF 자동 생성 + Supabase Storage 자동 저장 추가 (2026-03-24, 9개 → 10개)
