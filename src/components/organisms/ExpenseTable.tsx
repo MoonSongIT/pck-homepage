@@ -138,23 +138,24 @@ const ExpenseTable = ({ expenses }: Props) => {
       <div className="overflow-hidden rounded-xl border">
         <Table>
           <TableHeader>
-            <TableRow className="bg-gray-50">
-              <TableHead className="w-10">
+            <TableRow className="bg-[var(--peace-navy)] hover:bg-[var(--peace-navy)]">
+              <TableHead className="w-10 text-white">
                 <Checkbox
                   checked={allPendingSelected && pendingRows.length > 0}
                   onCheckedChange={toggleSelectAll}
                   disabled={pendingRows.length === 0}
                   aria-label="PENDING_REVIEW 전체 선택"
+                  className="border-white/50 data-[state=checked]:bg-white data-[state=checked]:text-[var(--peace-navy)]"
                 />
               </TableHead>
-              <TableHead className="w-28">날짜</TableHead>
-              <TableHead>항목명</TableHead>
-              <TableHead className="w-24">카테고리</TableHead>
-              <TableHead className="w-28 text-right">금액</TableHead>
-              <TableHead className="w-24">상태</TableHead>
-              <TableHead className="w-16 text-center">신뢰도</TableHead>
-              <TableHead className="w-12 text-center">영수증</TableHead>
-              <TableHead className="w-20 text-center">액션</TableHead>
+              <TableHead className="w-28 text-white">날짜</TableHead>
+              <TableHead className="text-white">항목명</TableHead>
+              <TableHead className="w-24 text-white">카테고리</TableHead>
+              <TableHead className="w-28 text-right text-white">금액</TableHead>
+              <TableHead className="w-24 text-white">상태</TableHead>
+              <TableHead className="w-16 text-center text-white">신뢰도</TableHead>
+              <TableHead className="w-12 text-center text-white">영수증</TableHead>
+              <TableHead className="w-20 text-center text-white">액션</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

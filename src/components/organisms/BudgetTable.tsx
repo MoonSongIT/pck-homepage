@@ -74,13 +74,13 @@ export const BudgetTable = ({ year, rows }: Props) => {
     <>
       <Table>
         <TableHeader>
-          <TableRow>
-            <TableHead>카테고리</TableHead>
-            <TableHead className="text-right">예산</TableHead>
-            <TableHead className="text-right">집행</TableHead>
-            <TableHead className="text-right">잔여</TableHead>
-            <TableHead className="w-40">집행률</TableHead>
-            <TableHead className="w-20 text-center">관리</TableHead>
+          <TableRow className="bg-[var(--peace-navy)] hover:bg-[var(--peace-navy)]">
+            <TableHead className="text-white">카테고리</TableHead>
+            <TableHead className="text-right text-white">예산</TableHead>
+            <TableHead className="text-right text-white">집행</TableHead>
+            <TableHead className="text-right text-white">잔여</TableHead>
+            <TableHead className="w-40 text-white">집행률</TableHead>
+            <TableHead className="w-20 text-center text-white">관리</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>

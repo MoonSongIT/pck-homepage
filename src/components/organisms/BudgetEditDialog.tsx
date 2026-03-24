@@ -90,7 +90,7 @@ export const BudgetEditDialog = ({
             <Button
               type="submit"
               disabled={isPending}
-              className="bg-[var(--peace-navy)] hover:bg-[var(--peace-navy)]/90"
+              className="bg-[var(--peace-navy)] text-white hover:bg-[var(--peace-navy)]/90"
             >
               {isPending ? '저장 중...' : '저장'}
             </Button>
