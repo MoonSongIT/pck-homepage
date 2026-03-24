@@ -165,10 +165,9 @@ function main() {
   console.log(`오류 폴더 : ${ERROR_DIR}`)
   console.log('')
 
-  // chokidar v5: Windows 경로 구분자(\) → 슬래시(/) 정규화 필요
-  const globPattern = WATCH_DIR!.replace(/\\/g, '/') + '/*.{jpg,jpeg,png,webp}'
-
-  const watcher = watch(globPattern, {
+  // chokidar v5 Windows 호환: glob 패턴 대신 폴더 자체를 감시하고
+  // 핸들러에서 확장자 필터링 (glob + Windows 경로 조합 오동작 방지)
+  const watcher = watch(WATCH_DIR!, {
     persistent: true,
     ignoreInitial: false,     // 시작 시 이미 있는 파일도 처리
     awaitWriteFinish: {       // 파일 쓰기 완료 후 이벤트 발생
@@ -178,7 +177,11 @@ function main() {
   })
 
   watcher
-    .on('add', (filePath) => enqueue(filePath))
+    .on('add', (filePath) => {
+      const ext = path.extname(filePath).toLowerCase()
+      if (!MIME_MAP[ext]) return  // 비지원 형식 무시 (done/, error/ 포함)
+      enqueue(filePath)
+    })
     .on('error', (error) => console.error('[WATCHER ERROR]', error))
     .on('ready', () => console.log('[READY] 새 파일 감시 중... (Ctrl+C 종료)\n'))
 
