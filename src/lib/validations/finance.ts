@@ -28,6 +28,21 @@ export const expenseSchema = z.object({
 
 export type ExpenseInput = z.infer<typeof expenseSchema>
 
+// ─── 지출 수정 스키마 (OCR 필드 제외) ────────────────────
+
+export const updateExpenseSchema = z.object({
+  date: z.coerce.date(),
+  description: z
+    .string()
+    .min(2, '항목명은 2자 이상이어야 합니다')
+    .max(200, '항목명은 200자 이하여야 합니다'),
+  category: expenseCategoryEnum,
+  amount: z.number().int().positive('금액은 0보다 커야 합니다'),
+  note: z.string().max(500).optional(),
+})
+
+export type UpdateExpenseInput = z.infer<typeof updateExpenseSchema>
+
 // ─── 예산 스키마 ────────────────────────────────────────
 
 export const budgetSchema = z.object({
