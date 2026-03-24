@@ -19,6 +19,7 @@ const TransparencyPage = async ({
   const { locale } = await params
   setRequestLocale(locale)
 
+  // DB 연결 실패 시 (CI 빌드 환경 등) 빈 배열로 폴백
   const reports = await prisma.financeReport.findMany({
     where: { isPublished: true },
     orderBy: { year: 'desc' },
@@ -29,7 +30,7 @@ const TransparencyPage = async ({
       totalExpense: true,
       pdfUrl: true,
     },
-  })
+  }).catch(() => [])
 
   const serialized = reports.map((r) => ({
     id: r.id,
