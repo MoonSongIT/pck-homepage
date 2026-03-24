@@ -68,7 +68,6 @@ export const BudgetEditDialog = ({
               name="amount"
               type="number"
               min={1}
-              step={10000}
               defaultValue={currentAmount || ''}
               placeholder="예: 1000000"
               required
