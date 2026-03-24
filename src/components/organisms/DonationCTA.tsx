@@ -8,7 +8,7 @@ import { Link } from '@/i18n/navigation'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { DONATION_PLANS, DONATION_CONFIG } from '@/lib/constants/donation'
+import { DONATION_PLANS } from '@/lib/constants/donation'
 import type { DonationPlan } from '@/lib/constants/donation'
 
 const containerVariants = {
