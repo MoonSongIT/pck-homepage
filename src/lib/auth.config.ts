@@ -37,13 +37,15 @@ export const authConfig = {
       }
       return session
     },
-    authorized({ auth, request: { nextUrl } }) {
+    authorized({ auth, request }) {
       const isLoggedIn = !!auth?.user
       // locale prefix 제거 (en만 prefix 사용, ko는 prefix 없음)
-      const pathname = nextUrl.pathname.replace(/^\/(en)(?=\/|$)/, '') || '/'
+      const pathname = request.nextUrl.pathname.replace(/^\/(en)(?=\/|$)/, '') || '/'
 
       // 관리자 전용 경로
       if (pathname.startsWith('/admin') || pathname.startsWith('/api/finance')) {
+        // CLI 스크립트용 API Key 헤더 허용 (route.ts에서 재검증)
+        if (request.headers.get('x-api-key')) return true
         return isLoggedIn && auth?.user?.role === 'ADMIN'
       }
 
