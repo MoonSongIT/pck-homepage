@@ -992,7 +992,7 @@
 | 3-2-5 | 로컬 폴더 감시 CLI 스크립트    | ✅   | `scripts/receipt-watcher.ts` — chokidar 폴더감시 → 자동 업로드+OCR → DB 저장(PENDING_REVIEW) → 처리완료 폴더 이동 | 검증완료(17개 항목) |
 | 3-2-6 | 예산 관리                      | ✅   | `/admin/finance/budget` — 연도별 편성/집행/잔액 테이블 + 프로그레스바 + 등록 폼 (CONFIRMED만 집행액 계산) | 검증완료(22개 항목) |
 | 3-2-7 | 결산 보고서 관리               | ✅   | `/admin/finance/reports` — 연도 수입/지출 자동 집계 + PENDING_REVIEW 경고 + isPublished 토글 + PDF URL + Zod URL 검증 | 검증완료(22개 항목) |
-| 3-2-8 | 재정 투명성 공개 페이지        | ⬜   | `/transparency` + `/transparency/[year]` — 연도별 요약 카드 + Recharts 도넛 차트 + PDF 다운로드 + i18n |  |
+| 3-2-8 | 재정 투명성 공개 페이지        | ✅   | `/transparency` + `/transparency/[year]` — 연도별 요약 카드 + Recharts 도넛 차트(수입/지출) + 카테고리별 내역 테이블 + PDF 다운로드 + i18n | 검증완료(브라우저 직접 확인) |
 | 3-2-9 | 빌드 검증                      | ⬜   | tsc + lint + build + /admin/finance/* + /transparency 라우트 + OCR API 테스트 + 폴더감시 테스트 |  |
 
 #### 3-2-3 영수증 OCR 스캔 검증 절차
@@ -1420,10 +1420,10 @@
 | Phase 3-3   | 5         | 5      | **100%** |
 | Phase 3-4   | 7         | 7      | **100%** |
 | Phase 3-6   | 4         | 4      | **100%** |
-| Phase 3-2   | 9         | 7      | 78%      |
+| Phase 3-2   | 9         | 8      | 89%      |
 | Phase 3-1   | 5         | 5      | **100%** |
 | Phase 4     | 5         | 0      | 0%       |
-| **전체**    | **85**    | **78** | **92%**  |
+| **전체**    | **85**    | **79** | **93%**  |
 
 > Phase 3 상세 분할: 기존 6개 → 31개 소항목으로 확장 (2026-03-20)
 > Phase 3-2 확장: 영수증 OCR + Supabase Storage + 로컬 폴더 감시 추가 (2026-03-23, 7개 → 9개)
