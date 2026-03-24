@@ -66,6 +66,11 @@ export const reportSchema = z.object({
     .min(2019, '2019년 이후만 가능합니다')
     .max(2030, '2030년까지만 가능합니다'),
   isPublished: z.boolean().default(false),
+  pdfUrl: z
+    .string()
+    .url('올바른 URL 형식이 아닙니다 (https://...)')
+    .optional()
+    .or(z.literal('')),
 })
 
 export type ReportInput = z.infer<typeof reportSchema>

@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache'
 
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { expenseSchema, updateExpenseSchema, budgetSchema } from '@/lib/validations/finance'
+import { expenseSchema, updateExpenseSchema, budgetSchema, reportSchema } from '@/lib/validations/finance'
 import { deleteReceipt } from '@/lib/supabase/storage'
 
 export type ExpenseActionResult = {
@@ -22,8 +22,14 @@ export type BudgetActionResult = {
   fieldErrors?: Record<string, string>
 }
 
+export type ReportActionResult = {
+  success: boolean
+  message: string
+}
+
 const EXPENSES_PATH = '/admin/finance/expenses'
 const BUDGET_PATH = '/admin/finance/budget'
+const REPORTS_PATH = '/admin/finance/reports'
 
 // ─── 헬퍼 ────────────────────────────────────────────
 
@@ -270,5 +276,133 @@ export async function deleteBudget(budgetId: string): Promise<BudgetActionResult
   } catch (error: unknown) {
     console.error('[Finance] deleteBudget failed:', error)
     return { success: false, message: '삭제 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.' }
+  }
+}
+
+// ─── 결산 보고서 생성/갱신 ────────────────────────────
+
+export async function generateReport(year: number): Promise<ReportActionResult> {
+  await requireAdmin()
+
+  const parsed = reportSchema.shape.year.safeParse(year)
+  if (!parsed.success) {
+    return { success: false, message: '유효하지 않은 연도입니다' }
+  }
+
+  const yearStart = new Date(`${year}-01-01`)
+  const yearEnd = new Date(`${year + 1}-01-01`)
+
+  try {
+    const [incomeAgg, expenseAgg] = await Promise.all([
+      prisma.donation.aggregate({
+        where: {
+          status: 'COMPLETED',
+          createdAt: { gte: yearStart, lt: yearEnd },
+        },
+        _sum: { amount: true },
+      }),
+      prisma.expense.aggregate({
+        where: {
+          status: 'CONFIRMED',
+          date: { gte: yearStart, lt: yearEnd },
+        },
+        _sum: { amount: true },
+      }),
+    ])
+
+    const totalIncome = incomeAgg._sum.amount ?? 0
+    const totalExpense = expenseAgg._sum.amount ?? 0
+
+    await prisma.financeReport.upsert({
+      where: { year },
+      create: { year, totalIncome, totalExpense },
+      update: { totalIncome, totalExpense },
+    })
+
+    revalidatePath(REPORTS_PATH)
+    return {
+      success: true,
+      message: `${year}년 결산 보고서가 생성되었습니다 (수입 ${totalIncome.toLocaleString('ko-KR')}원 / 지출 ${totalExpense.toLocaleString('ko-KR')}원)`,
+    }
+  } catch (error: unknown) {
+    console.error('[Finance] generateReport failed:', error)
+    return { success: false, message: '보고서 생성 중 오류가 발생했습니다' }
+  }
+}
+
+// ─── 결산 보고서 공개/비공개 토글 ──────────────────────
+
+export async function toggleReportPublish(reportId: string): Promise<ReportActionResult> {
+  await requireAdmin()
+
+  try {
+    const report = await prisma.financeReport.findUnique({ where: { id: reportId } })
+    if (!report) {
+      return { success: false, message: '보고서를 찾을 수 없습니다' }
+    }
+
+    await prisma.financeReport.update({
+      where: { id: reportId },
+      data: { isPublished: !report.isPublished },
+    })
+
+    revalidatePath(REPORTS_PATH)
+    return {
+      success: true,
+      message: report.isPublished ? '비공개로 전환되었습니다' : '공개로 전환되었습니다',
+    }
+  } catch (error: unknown) {
+    console.error('[Finance] toggleReportPublish failed:', error)
+    return { success: false, message: '상태 변경 중 오류가 발생했습니다' }
+  }
+}
+
+// ─── 결산 보고서 PDF URL 저장 ─────────────────────────
+
+export async function updateReportPdfUrl(
+  reportId: string,
+  pdfUrl: string,
+): Promise<ReportActionResult> {
+  await requireAdmin()
+
+  // URL 형식 검증 (빈 문자열은 삭제로 허용)
+  if (pdfUrl) {
+    const parsed = reportSchema.shape.pdfUrl.safeParse(pdfUrl)
+    if (!parsed.success) {
+      return { success: false, message: parsed.error.issues[0]?.message ?? '올바른 URL 형식이 아닙니다 (https://...)' }
+    }
+  }
+
+  try {
+    const report = await prisma.financeReport.findUnique({ where: { id: reportId } })
+    if (!report) {
+      return { success: false, message: '보고서를 찾을 수 없습니다' }
+    }
+
+    await prisma.financeReport.update({
+      where: { id: reportId },
+      data: { pdfUrl: pdfUrl || null },
+    })
+
+    revalidatePath(REPORTS_PATH)
+    return { success: true, message: 'PDF URL이 저장되었습니다' }
+  } catch (error: unknown) {
+    console.error('[Finance] updateReportPdfUrl failed:', error)
+    return { success: false, message: 'PDF URL 저장 중 오류가 발생했습니다' }
+  }
+}
+
+// ─── 결산 보고서 삭제 ─────────────────────────────────
+
+export async function deleteReport(reportId: string): Promise<ReportActionResult> {
+  await requireAdmin()
+
+  try {
+    await prisma.financeReport.delete({ where: { id: reportId } })
+    revalidatePath(REPORTS_PATH)
+    return { success: true, message: '보고서가 삭제되었습니다' }
+  } catch (error: unknown) {
+    console.error('[Finance] deleteReport failed:', error)
+    return { success: false, message: '삭제 중 오류가 발생했습니다' }
   }
 }
