@@ -1,6 +1,6 @@
 # PCK 웹사이트 리뉴얼 — 진도 체크리스트
 
-> 최종 수정: 2026-03-23 (Phase 3-6 다국어(한/영) 적용 완료)
+> 최종 수정: 2026-03-24 (Phase 3-2-2 관리자 레이아웃 + 대시보드 검증 완료)
 > 상태 표시: ⬜ 미시작 | 🔄 진행 중 | ✅ 완료 | ❌ 블로커 | ⏭️ 건너뜀
 
 ---
@@ -986,7 +986,7 @@
 | #     | 작업 항목                      | 상태 | 세부 내용                                                                 | 블로커/비고 |
 | ----- | ------------------------------ | ---- | ------------------------------------------------------------------------- | ----------- |
 | 3-2-1 | 패키지 + Storage + 상수 + Zod  | ✅   | `recharts` `@anthropic-ai/sdk` `@supabase/supabase-js` `chokidar` 설치 + Supabase Storage 버킷 설정 + finance.ts 상수 + Zod 스키마 + Prisma Expense 모델 확장 (ocrConfidence, ocrRawText, status) + OCR 테스트 성공 | 완료 |
-| 3-2-2 | 관리자 레이아웃                | ⬜   | `(admin)/layout.tsx` — ADMIN 권한 체크 + 사이드바 + `(admin)/page.tsx` 대시보드 통계 + OCR 대기 건수 뱃지 |  |
+| 3-2-2 | 관리자 레이아웃                | ✅   | `(admin)/layout.tsx` — ADMIN 권한 체크 + 사이드바 + `(admin)/page.tsx` 대시보드 통계 + OCR 대기 건수 뱃지 | 검증완료(20개 항목) |
 | 3-2-3 | 영수증 OCR 스캔 API + 업로드 UI | ⬜   | `/api/finance/receipt-scan` — 이미지 업로드 → Supabase Storage → Claude Vision OCR → JSON 반환 + ReceiptUploader 드래그&드롭 + ScanResultForm 확인/수정 | Anthropic API Key |
 | 3-2-4 | 제경비 관리 (CRUD + OCR 통합)  | ⬜   | `/admin/finance/expenses` — 목록(테이블+필터+상태뱃지+합계) + 등록(영수증스캔탭/수동입력탭) + 수정/삭제 + 일괄확인 + Server Actions |  |
 | 3-2-5 | 로컬 폴더 감시 CLI 스크립트    | ⬜   | `scripts/receipt-watcher.ts` — chokidar 폴더감시 → 자동 업로드+OCR → DB 저장(PENDING_REVIEW) → 처리완료 폴더 이동 | RECEIPT_API_KEY, RECEIPT_WATCH_DIR |
@@ -1085,10 +1085,10 @@
 | Phase 3-3   | 5         | 5      | **100%** |
 | Phase 3-4   | 7         | 7      | **100%** |
 | Phase 3-6   | 4         | 4      | **100%** |
-| Phase 3-2   | 9         | 1      | 11%      |
+| Phase 3-2   | 9         | 2      | 22%      |
 | Phase 3-1   | 5         | 5      | **100%** |
 | Phase 4     | 5         | 0      | 0%       |
-| **전체**    | **85**    | **72** | **85%**  |
+| **전체**    | **85**    | **73** | **86%**  |
 
 > Phase 3 상세 분할: 기존 6개 → 31개 소항목으로 확장 (2026-03-20)
 > Phase 3-2 확장: 영수증 OCR + Supabase Storage + 로컬 폴더 감시 추가 (2026-03-23, 7개 → 9개)
