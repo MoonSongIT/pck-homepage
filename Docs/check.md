@@ -989,7 +989,7 @@
 | 3-2-2 | 관리자 레이아웃                | ✅   | `(admin)/layout.tsx` — ADMIN 권한 체크 + 사이드바 + `(admin)/page.tsx` 대시보드 통계 + OCR 대기 건수 뱃지 | 검증완료(20개 항목) |
 | 3-2-3 | 영수증 OCR 스캔 API + 업로드 UI | ✅   | `/api/finance/receipt-scan` — 이미지 업로드 → Supabase Storage → Claude Vision OCR → JSON 반환 + ReceiptUploader 드래그&드롭 + ScanResultForm 확인/수정 | 검증완료(18개 항목) |
 | 3-2-4 | 제경비 관리 (CRUD + OCR 통합)  | ✅   | `/admin/finance/expenses` — 목록(테이블+필터+상태뱃지+합계) + 등록(영수증스캔탭/수동입력탭) + 수정/삭제 + 일괄확인 + Server Actions | 검증완료(27개 항목) |
-| 3-2-5 | 로컬 폴더 감시 CLI 스크립트    | ⬜   | `scripts/receipt-watcher.ts` — chokidar 폴더감시 → 자동 업로드+OCR → DB 저장(PENDING_REVIEW) → 처리완료 폴더 이동 | RECEIPT_API_KEY, RECEIPT_WATCH_DIR |
+| 3-2-5 | 로컬 폴더 감시 CLI 스크립트    | 🔄   | `scripts/receipt-watcher.ts` — chokidar 폴더감시 → 자동 업로드+OCR → DB 저장(PENDING_REVIEW) → 처리완료 폴더 이동 | RECEIPT_API_KEY, RECEIPT_WATCH_DIR |
 | 3-2-6 | 예산 관리                      | ⬜   | `/admin/finance/budget` — 연도별 편성/집행/잔액 테이블 + 프로그레스바 + 등록 폼 (CONFIRMED만 집행액 계산) |  |
 | 3-2-7 | 결산 보고서 관리               | ⬜   | `/admin/finance/reports` — 연도 수입/지출 자동 집계 + PENDING_REVIEW 경고 + isPublished 토글 + PDF URL |  |
 | 3-2-8 | 재정 투명성 공개 페이지        | ⬜   | `/transparency` + `/transparency/[year]` — 연도별 요약 카드 + Recharts 도넛 차트 + PDF 다운로드 + i18n |  |
@@ -1130,6 +1130,68 @@
 | H-1 | 빈 상태 UI | 필터 적용 후 결과 0건 → Receipt 아이콘 + "등록된 지출이 없습니다" 메시지 표시 확인 |
 
 총 27개 항목
+
+#### 3-2-5 영수증 폴더 감시 CLI 스크립트 검증 절차
+
+**A. 사전 준비**
+
+| # | 항목 | 방법 |
+|---|---|---|
+| A-1 | 환경변수 설정 | `.env.local`에 `RECEIPT_WATCH_DIR`, `RECEIPT_API_KEY`, `APP_URL` 추가 |
+| A-2 | 감시 폴더 생성 | `RECEIPT_WATCH_DIR` 경로 폴더 생성 확인 |
+| A-3 | Next.js 서버 실행 | `npm run dev` — localhost:3000 기동 확인 |
+
+**B. 시작 및 폴더 구조**
+
+| # | 항목 | 방법 |
+|---|---|---|
+| B-1 | 스크립트 시작 | `npm run receipt-watcher` → "=== PCK 영수증 폴더 감시 시작 ===" 출력 확인 |
+| B-2 | 서브폴더 자동 생성 | 감시 폴더 하위에 `done/`, `error/` 폴더 자동 생성 확인 |
+| B-3 | READY 메시지 | "[READY] 새 파일 감시 중..." 출력 확인 |
+
+**C. 환경변수 누락 에러**
+
+| # | 항목 | 방법 |
+|---|---|---|
+| C-1 | RECEIPT_WATCH_DIR 누락 | 환경변수 제거 후 실행 → "[ERROR] RECEIPT_WATCH_DIR 미설정" + 프로세스 종료(exit 1) 확인 |
+| C-2 | RECEIPT_API_KEY 누락 | 환경변수 제거 후 실행 → "[ERROR] RECEIPT_API_KEY 미설정" + 프로세스 종료 확인 |
+
+**D. 정상 처리 (이미지 파일 복사)**
+
+| # | 항목 | 방법 |
+|---|---|---|
+| D-1 | 파일 감지 | `.jpg`/`.png`/`.webp` 이미지를 감시 폴더에 복사 → "[START] 파일명" 출력 확인 |
+| D-2 | DONE 로그 | 처리 완료 후 "[DONE] Xs", 설명/금액/분류/신뢰도/Expense ID 출력 확인 |
+| D-3 | done/ 이동 | 원본 파일이 감시 폴더에서 제거되고 `done/` 폴더로 이동 확인 |
+| D-4 | DB 저장 | Prisma Studio에서 `status = 'PENDING_REVIEW'`, `ocrConfidence`/`receipt` 필드 확인 |
+| D-5 | 관리자 목록 반영 | `/admin/finance/expenses` 페이지에 해당 항목 추가 확인 |
+
+**E. 비지원 형식 처리**
+
+| # | 항목 | 방법 |
+|---|---|---|
+| E-1 | PDF 무시 | 감시 폴더에 `.pdf` 파일 복사 → "[SKIP] 지원하지 않는 형식" 출력 + 파일 그대로 유지 확인 |
+
+**F. API Key 인증 검증**
+
+| # | 항목 | 방법 |
+|---|---|---|
+| F-1 | 잘못된 API Key | `RECEIPT_API_KEY`를 틀린 값으로 변경 후 파일 복사 → "[ERROR] HTTP 401" + `error/` 이동 확인 |
+| F-2 | 브라우저 OCR 스캔 정상 | ADMIN 세션으로 영수증 스캔 탭 여전히 동작 확인 (route.ts 세션 인증 경로 유지) |
+
+**G. 큐(순차 처리)**
+
+| # | 항목 | 방법 |
+|---|---|---|
+| G-1 | 복수 파일 순차 처리 | 이미지 3장을 동시에 복사 → [START]→[DONE] 순서대로 1건씩 처리됨 확인 |
+
+**H. 종료**
+
+| # | 항목 | 방법 |
+|---|---|---|
+| H-1 | Ctrl+C 종료 | Ctrl+C → "[STOP] 종료 중..." + 프로세스 정상 종료 확인 |
+
+총 17개 항목
 
 ### 3-1. 후원 시스템 (토스페이먼츠 연동)
 
