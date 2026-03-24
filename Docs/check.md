@@ -988,7 +988,7 @@
 | 3-2-1 | 패키지 + Storage + 상수 + Zod  | ✅   | `recharts` `@anthropic-ai/sdk` `@supabase/supabase-js` `chokidar` 설치 + Supabase Storage 버킷 설정 + finance.ts 상수 + Zod 스키마 + Prisma Expense 모델 확장 (ocrConfidence, ocrRawText, status) + OCR 테스트 성공 | 완료 |
 | 3-2-2 | 관리자 레이아웃                | ✅   | `(admin)/layout.tsx` — ADMIN 권한 체크 + 사이드바 + `(admin)/page.tsx` 대시보드 통계 + OCR 대기 건수 뱃지 | 검증완료(20개 항목) |
 | 3-2-3 | 영수증 OCR 스캔 API + 업로드 UI | ✅   | `/api/finance/receipt-scan` — 이미지 업로드 → Supabase Storage → Claude Vision OCR → JSON 반환 + ReceiptUploader 드래그&드롭 + ScanResultForm 확인/수정 | 검증완료(18개 항목) |
-| 3-2-4 | 제경비 관리 (CRUD + OCR 통합)  | ⬜   | `/admin/finance/expenses` — 목록(테이블+필터+상태뱃지+합계) + 등록(영수증스캔탭/수동입력탭) + 수정/삭제 + 일괄확인 + Server Actions |  |
+| 3-2-4 | 제경비 관리 (CRUD + OCR 통합)  | ✅   | `/admin/finance/expenses` — 목록(테이블+필터+상태뱃지+합계) + 등록(영수증스캔탭/수동입력탭) + 수정/삭제 + 일괄확인 + Server Actions | 검증완료(27개 항목) |
 | 3-2-5 | 로컬 폴더 감시 CLI 스크립트    | ⬜   | `scripts/receipt-watcher.ts` — chokidar 폴더감시 → 자동 업로드+OCR → DB 저장(PENDING_REVIEW) → 처리완료 폴더 이동 | RECEIPT_API_KEY, RECEIPT_WATCH_DIR |
 | 3-2-6 | 예산 관리                      | ⬜   | `/admin/finance/budget` — 연도별 편성/집행/잔액 테이블 + 프로그레스바 + 등록 폼 (CONFIRMED만 집행액 계산) |  |
 | 3-2-7 | 결산 보고서 관리               | ⬜   | `/admin/finance/reports` — 연도 수입/지출 자동 집계 + PENDING_REVIEW 경고 + isPublished 토글 + PDF URL |  |
@@ -1055,6 +1055,81 @@
 | G-1 | 탭 전환 | "수동 입력" 탭 클릭 → placeholder 카드("Phase 3-2-4에서 구현 예정") 표시 확인 |
 
 총 18개 항목
+
+#### 3-2-4 제경비 관리 CRUD 검증 절차
+
+**A. 사전 준비**
+
+| # | 항목 | 방법 |
+|---|---|---|
+| A-1 | ADMIN 계정 로그인 | ADMIN 계정으로 로그인 후 `/admin/finance/expenses` 접근 확인 |
+| A-2 | 테스트 데이터 확보 | Prisma Studio 또는 OCR 스캔으로 PENDING_REVIEW 레코드 2건 이상 준비 |
+
+**B. 목록 페이지**
+
+| # | 항목 | 방법 |
+|---|---|---|
+| B-1 | 테이블 렌더링 | `/admin/finance/expenses` → 지출 목록 테이블 표시 확인 (날짜/항목명/카테고리/금액/상태/신뢰도/영수증/액션 컬럼) |
+| B-2 | 합계 카드 | "확정 지출 합계"(peace-olive), "검토 대기 합계"(peace-gold) 카드 표시 + 금액 확인 |
+| B-3 | 상태 뱃지 | PENDING_REVIEW → 노란 뱃지, CONFIRMED → 초록 뱃지 표시 확인 |
+| B-4 | OCR 신뢰도 | OCR 스캔 항목 행의 신뢰도 열에 `XX%` 표시, 수동입력 항목은 `—` 확인 |
+| B-5 | 영수증 링크 | receipt 있는 행 → 외부링크 아이콘 클릭 → Supabase URL로 이미지 열림 확인 |
+| B-6 | 페이지네이션 | 21건 이상 시 "이전/다음" 버튼 + "1 / N" 표시 확인 |
+
+**C. 필터 기능 (ExpenseFilterBar)**
+
+| # | 항목 | 방법 |
+|---|---|---|
+| C-1 | 카테고리 필터 | 카테고리 Select → 선택 시 URL에 `?category=XXX` 추가 + 목록 갱신 확인 |
+| C-2 | 상태 필터 | 상태 Select → `PENDING_REVIEW` 또는 `CONFIRMED` 선택 → 해당 상태만 표시 확인 |
+| C-3 | 월 필터 | 월 input[type=month] → 선택 시 URL에 `?month=YYYY-MM` 추가 + 목록 갱신 확인 |
+| C-4 | 초기화 버튼 | "초기화" 버튼 클릭 → URL 파라미터 제거 + 전체 목록 표시 확인 |
+
+**D. 일괄 확인 (bulkConfirmExpenses)**
+
+| # | 항목 | 방법 |
+|---|---|---|
+| D-1 | 체크박스 선택 | PENDING_REVIEW 행의 체크박스 클릭 → 선택됨 확인 (CONFIRMED 행 체크박스는 비활성) |
+| D-2 | 전체 선택 | 헤더 체크박스 클릭 → PENDING_REVIEW 행 전체 선택/해제 토글 확인 |
+| D-3 | 일괄 확인 바 | 1건 이상 선택 시 상단에 "N건 선택됨 + 일괄 확인(N건)" 버튼 바 표시 확인 |
+| D-4 | 일괄 확인 실행 | "일괄 확인" 버튼 클릭 → 처리 중... 표시 → 성공 toast + 선택 해제 + 상태 CONFIRMED로 변경 확인 |
+
+**E. 수정 (ExpenseEditDialog)**
+
+| # | 항목 | 방법 |
+|---|---|---|
+| E-1 | 수정 다이얼로그 열기 | 행 오른쪽 연필 아이콘 클릭 → 수정 다이얼로그 오픈 + 기존 값 pre-fill 확인 |
+| E-2 | 필드 수정 | 날짜/항목명/카테고리/금액/메모 수정 가능 확인 |
+| E-3 | 영수증 링크 (읽기 전용) | receipt 있는 항목 수정 시 "영수증 보기" 링크 표시 확인 (수정 불가) |
+| E-4 | 저장 | "저장" 클릭 → 성공 toast + 다이얼로그 닫힘 + 목록 갱신 확인 |
+| E-5 | 유효성 검증 | 필수 필드 비운 후 저장 → 필드 에러 메시지 표시 확인 |
+
+**F. 삭제 (deleteExpense)**
+
+| # | 항목 | 방법 |
+|---|---|---|
+| F-1 | 삭제 확인 다이얼로그 | 쓰레기통 아이콘 클릭 → "지출 항목 삭제" AlertDialog 표시 확인 |
+| F-2 | 취소 | "취소" 클릭 → 다이얼로그 닫힘, 레코드 유지 확인 |
+| F-3 | 삭제 실행 | "삭제" 클릭 → 성공 toast + 목록에서 행 제거 확인 |
+| F-4 | receipt 파일 삭제 | Prisma Studio에서 해당 레코드 삭제 확인 + Supabase Storage에서 파일도 삭제됐는지 확인 |
+
+**G. 수동 입력 탭**
+
+| # | 항목 | 방법 |
+|---|---|---|
+| G-1 | 탭 전환 | `/admin/finance/expenses/new` → "수동 입력" 탭 클릭 → 입력 폼 표시 확인 |
+| G-2 | 기본값 | 날짜 필드 → 오늘 날짜 pre-fill, 카테고리 → "기타" 기본 선택 확인 |
+| G-3 | 폼 제출 | 날짜/항목명/카테고리/금액 입력 후 "지출 등록" → 성공 toast + `/admin/finance/expenses` 이동 확인 |
+| G-4 | CONFIRMED 상태 | Prisma Studio에서 방금 등록한 레코드 `status = 'CONFIRMED'` 확인 (ocrConfidence = null) |
+| G-5 | 유효성 검증 | 필수 필드 비운 후 제출 → 필드 에러 메시지 표시 확인 |
+
+**H. 빈 상태**
+
+| # | 항목 | 방법 |
+|---|---|---|
+| H-1 | 빈 상태 UI | 필터 적용 후 결과 0건 → Receipt 아이콘 + "등록된 지출이 없습니다" 메시지 표시 확인 |
+
+총 27개 항목
 
 ### 3-1. 후원 시스템 (토스페이먼츠 연동)
 
