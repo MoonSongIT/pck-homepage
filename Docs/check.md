@@ -1352,12 +1352,12 @@
 - [x] 게시글 CRUD: 글쓰기/수정/삭제 → DB 반영 + 본인 권한
 - [x] 댓글 CRUD: 댓글 작성/삭제 → DB 반영 + 본인만 삭제
 - [x] 다국어: Header KO/EN 토글 → 한/영 전환 + /en/* URL prefix + 36개 라우트 생성
-- [ ] ADMIN 권한: 일반 회원 /admin 접근 → 거부
-- [ ] 영수증 OCR: 이미지 업로드 → Claude Vision 분석 → 자동 분류 JSON 반환
-- [ ] 영수증 업로드 UI: 드래그&드롭 + OCR 결과 확인/수정 폼
-- [ ] 로컬 폴더 감시: chokidar 스크립트 → 자동 업로드+OCR → PENDING_REVIEW DB 저장
-- [ ] 제경비 CRUD: 입력(OCR스캔+수동)/수정/삭제 → DB 반영 + 상태 관리
-- [ ] 예산 현황: 집행률 프로그레스바 + 잔액 계산 (CONFIRMED만)
+- [x] ADMIN 권한: 일반 회원 /admin 접근 → 거부
+- [x] 영수증 OCR: 이미지 업로드 → Claude Vision 분석 → 자동 분류 JSON 반환
+- [x] 영수증 업로드 UI: 드래그&드롭 + OCR 결과 확인/수정 폼
+- [x] 로컬 폴더 감시: chokidar 스크립트 → 자동 업로드+OCR → PENDING_REVIEW DB 저장
+- [x] 제경비 CRUD: 입력(OCR스캔+수동)/수정/삭제 → DB 반영 + 상태 관리
+- [x] 예산 현황: 집행률 프로그레스바 + 잔액 계산 (CONFIRMED만)
 - [x] 투명성 페이지: Recharts 도넛 차트 + PDF 다운로드 (Pretendard OTF 폰트, Supabase Storage, 캐시 버스팅)
 - [x] 후원 결제: 토스 테스트 결제 성공 → DB 저장 → 감사 이메일
 - [x] Rate Limiting: Upstash Redis 기반 구현 (미설정 시 graceful skip)
