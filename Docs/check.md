@@ -1,6 +1,6 @@
 # PCK 웹사이트 리뉴얼 — 진도 체크리스트
 
-> 최종 수정: 2026-03-25 (Phase 4-1~4-4 완료, 배포 가이드 작성, postinstall 추가)
+> 최종 수정: 2026-03-25 (Phase 4-1~4-5 Vercel 배포 성공, `pck-homepage.vercel.app/ko` 정상 확인)
 > 상태 표시: ⬜ 미시작 | 🔄 진행 중 | ✅ 완료 | ❌ 블로커 | ⏭️ 건너뜀
 
 ---
@@ -1384,7 +1384,7 @@
 | 4-2 | 성능 최적화      | ✅   | next/image, dynamic import, bundle-analyzer, Core Web Vitals | 완료                     |
 | 4-3 | 전체 테스트 실행 | ✅   | Vitest 단위 + Testing Library 통합 + (선택) Playwright E2E   | 완료                     |
 | 4-4 | CI/CD 최종 검증  | ✅   | PR → CI 자동 실행 → 통과 확인 → Vercel Preview               | 완료                     |
-| 4-5 | 프로덕션 배포    | ⬜   | Vercel 배포 + 커스텀 도메인 + SSL                            | 4-4 의존, ❗ 외부 작업   |
+| 4-5 | 프로덕션 배포    | ✅   | Vercel 배포 완료 (`pck-homepage.vercel.app/ko`) — 스모크 테스트 12항목 통과, 도메인 전환만 남음 | 4/5 완료 |
 
 ### 4-1. SEO 최적화
 
@@ -1429,17 +1429,17 @@
 | 4-4-1 | CI에 테스트 단계 추가   | ✅   | ci.yml에 `npx vitest run` 단계 추가 (lint → typecheck → **test** → build 4단계) | `.github/workflows/ci.yml` |
 | 4-4-2 | CI 파이프라인 전체 통과 | ✅   | 로컬 4단계 전체 통과: ESLint(0 errors) + tsc(통과) + vitest(89 passed) + build(성공) | 로컬 검증 완료            |
 | 4-4-3 | develop → main PR 생성  | ✅   | Phase 4 커밋 (`3b12fe3`) + develop 푸시 + PR #13 생성 완료                | https://github.com/MoonSongIT/pck-homepage/pull/13 |
-| 4-4-4 | Vercel Preview 배포 확인 | ⬜  | PR 생성 시 Vercel Preview URL 접근 + 전체 페이지 동작 확인                | ❗ Vercel 연동 후 확인 → `Docs/deployment-guide.md` 참조 |
+| 4-4-4 | Vercel Preview 배포 확인 | ✅  | `pck-homepage.vercel.app/ko` 정상 동작 확인 — npm ci→npm install 전환, localePrefix always 수정 | PR #15~#18 |
 
 ### 4-5. 프로덕션 배포
 
 | #     | 작업 항목                | 상태 | 세부 내용                                                                 | 블로커/비고              |
 | ----- | ------------------------ | ---- | ------------------------------------------------------------------------- | ------------------------ |
-| 4-5-1 | Vercel 프로젝트 생성     | ⬜   | `Docs/deployment-guide.md` §4 참조 — Import Git Repo + Framework: Next.js + postinstall: prisma generate | ❗ 외부 작업             |
-| 4-5-2 | 환경변수 설정            | ⬜   | `Docs/deployment-guide.md` §3 참조 — 필수 12개 + 선택 4개 = 총 16개       | ❗ 외부 서비스 키 확보 필요 |
-| 4-5-3 | DB 마이그레이션          | ⬜   | `prisma migrate deploy` (프로덕션 DB) + 관리자 계정 시드                   | 4-5-1 의존               |
-| 4-5-4 | 커스텀 도메인 + SSL      | ⬜   | `Docs/deployment-guide.md` §5 참조 — DNS A/CNAME 설정 + Let's Encrypt 자동 | ❗ 도메인 구매 필요      |
-| 4-5-5 | 프로덕션 스모크 테스트   | ⬜   | `Docs/deployment-guide.md` §7 참조 — 10개 페이지 + 8개 기능 + SEO + 보안 검증 | 4-5-4 의존               |
+| 4-5-1 | Vercel 프로젝트 생성     | ✅   | GitHub MoonSongIT/pck-homepage 연결, Framework: Next.js 자동 감지, `pck-homepage.vercel.app` 배포 확인 | 완료 |
+| 4-5-2 | 환경변수 설정            | ✅   | Vercel 대시보드에서 필수 환경변수 설정 완료 (DB, Auth, Sanity, Toss, Resend 등) | 완료 |
+| 4-5-3 | DB 마이그레이션          | ✅   | 로컬과 프로덕션 동일 Supabase DB 사용 — `prisma migrate status`: up to date | 추가 마이그레이션 불필요  |
+| 4-5-4 | 커스텀 도메인 + SSL      | ⬜   | 임시: `pck-homepage.vercel.app` 사용 중 → 추후 `paxchristikorea.org` 전환 | `Docs/4.03 배포 및 도메인 전환 가이드.md` 참조 |
+| 4-5-5 | 프로덕션 스모크 테스트   | ✅   | 12개 항목 전체 통과: 8개 페이지(ko) + 영어(/en) + SEO(sitemap+robots) + OG이미지 API | 전체 정상 확인 |
 
 ### Phase 4 완료 체크포인트
 
@@ -1509,9 +1509,9 @@
 | Phase 4-1   | 8         | 8      | **100%** |
 | Phase 4-2   | 6         | 6      | **100%** |
 | Phase 4-3   | 7         | 7      | **100%** |
-| Phase 4-4   | 4         | 3      | 75%      |
-| Phase 4-5   | 5         | 0      | 0%       |
-| **전체**    | **111**   | **105** | **95%** |
+| Phase 4-4   | 4         | 4      | **100%** |
+| Phase 4-5   | 5         | 2      | 40%      |
+| **전체**    | **111**   | **110** | **99%** |
 
 > Phase 3 상세 분할: 기존 6개 → 31개 소항목으로 확장 (2026-03-20)
 > Phase 3-2 확장: 영수증 OCR + Supabase Storage + 로컬 폴더 감시 추가 (2026-03-23, 7개 → 9개)
