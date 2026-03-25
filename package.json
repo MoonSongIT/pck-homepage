@@ -25,7 +25,6 @@
     "@prisma/adapter-pg": "^7.5.0",
     "@prisma/client": "^7.5.0",
     "@react-pdf/renderer": "^4.3.2",
-    "@rollup/rollup-win32-x64-msvc": "^4.60.0",
     "@sanity/image-url": "^2.0.3",
     "@sanity/vision": "^5.17.1",
     "@supabase/supabase-js": "^2.99.3",
