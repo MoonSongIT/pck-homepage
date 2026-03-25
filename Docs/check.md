@@ -1,6 +1,6 @@
 # PCK 웹사이트 리뉴얼 — 진도 체크리스트
 
-> 최종 수정: 2026-03-25 (Phase 3-2-10 PDF 자동 생성 및 Supabase Storage 자동 저장 구현 완료)
+> 최종 수정: 2026-03-25 (Phase 3 완료 체크포인트 및 외부 작업 체크리스트 업데이트, 투명성 페이지 PDF 생성 기능 완료)
 > 상태 표시: ⬜ 미시작 | 🔄 진행 중 | ✅ 완료 | ❌ 블로커 | ⏭️ 건너뜀
 
 ---
@@ -1358,7 +1358,7 @@
 - [ ] 로컬 폴더 감시: chokidar 스크립트 → 자동 업로드+OCR → PENDING_REVIEW DB 저장
 - [ ] 제경비 CRUD: 입력(OCR스캔+수동)/수정/삭제 → DB 반영 + 상태 관리
 - [ ] 예산 현황: 집행률 프로그레스바 + 잔액 계산 (CONFIRMED만)
-- [ ] 투명성 페이지: Recharts 도넛 차트 + PDF 다운로드
+- [x] 투명성 페이지: Recharts 도넛 차트 + PDF 다운로드 (Pretendard OTF 폰트, Supabase Storage, 캐시 버스팅)
 - [x] 후원 결제: 토스 테스트 결제 성공 → DB 저장 → 감사 이메일
 - [x] Rate Limiting: Upstash Redis 기반 구현 (미설정 시 graceful skip)
 - [x] 빌드: `npm run build` 에러 0건
