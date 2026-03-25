@@ -1372,7 +1372,7 @@
 - [x] Supabase Storage 버킷 생성 → `receipts` 버킷 + 업로드/삭제 테스트 완료
 - [x] Supabase Service Key 확보 → SUPABASE_URL / SUPABASE_SERVICE_KEY 설정 완료
 - [x] Anthropic API Key 확보 → ANTHROPIC_API_KEY 설정 + 영수증 OCR 테스트 성공
-- [ ] 영수증 감시 폴더 설정 → RECEIPT_WATCH_DIR + RECEIPT_API_KEY
+- [x] 영수증 감시 폴더 설정 → RECEIPT_WATCH_DIR + RECEIPT_API_KEY (C:\\영수증 경로 설정 완료)
 
 ---
 
