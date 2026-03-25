@@ -7,8 +7,13 @@ import { CommunityList } from './community-list'
 import type { BoardType } from '@/generated/prisma/client'
 
 export const metadata: Metadata = {
-  title: '커뮤니티 | 팍스크리스티코리아',
+  title: '커뮤니티',
   description: '팍스크리스티코리아 회원 커뮤니티 — 자유게시판, 평화 나눔',
+  openGraph: {
+    title: '커뮤니티 | 팍스크리스티코리아',
+    description: '팍스크리스티코리아 회원 커뮤니티 — 자유게시판, 평화 나눔',
+    images: [{ url: '/api/og?title=커뮤니티', width: 1200, height: 630 }],
+  },
 }
 
 export default async function CommunityPage({

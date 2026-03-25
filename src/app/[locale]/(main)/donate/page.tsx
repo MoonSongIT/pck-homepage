@@ -5,9 +5,14 @@ import { setRequestLocale } from 'next-intl/server'
 import { DonateForm } from './donate-form'
 
 export const metadata: Metadata = {
-  title: '후원하기 | 팍스크리스티코리아',
+  title: '후원하기',
   description:
     '팍스크리스티코리아의 평화 활동을 후원해 주세요. 정기 후원과 일시 후원을 선택할 수 있습니다.',
+  openGraph: {
+    title: '후원하기 | 팍스크리스티코리아',
+    description: '팍스크리스티코리아의 평화 활동을 후원해 주세요.',
+    images: [{ url: '/api/og?title=후원하기', width: 1200, height: 630 }],
+  },
 }
 
 export default async function DonatePage({

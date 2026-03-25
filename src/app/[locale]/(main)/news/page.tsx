@@ -15,9 +15,14 @@ import type { Post, PostCategory } from '@/types/sanity'
 export const revalidate = 3600
 
 export const metadata: Metadata = {
-  title: '뉴스 & 활동 | 팍스크리스티코리아',
+  title: '뉴스 & 활동',
   description:
     '팍스크리스티코리아의 최신 뉴스, 활동 보고, 성명서, 보도자료를 확인하세요.',
+  openGraph: {
+    title: '뉴스 & 활동 | 팍스크리스티코리아',
+    description: '최신 뉴스, 활동 보고, 성명서, 보도자료를 확인하세요.',
+    images: [{ url: '/api/og?title=뉴스 %26 활동', width: 1200, height: 630 }],
+  },
 }
 
 export default async function NewsPage({
