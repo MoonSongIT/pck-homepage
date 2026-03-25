@@ -112,6 +112,7 @@ export const ABOUT_NAV = [
   { label: '소개', href: '/about' },
   { label: '연혁', href: '/about/history' },
   { label: '임원진', href: '/about/team' },
+  { label: '오시는 길', href: '/about/location' },
 ] as const
 
 // History 타임라인 페이지 설정

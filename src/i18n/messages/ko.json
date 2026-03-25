@@ -143,7 +143,16 @@
     "teamTitle": "임원진 소개",
     "teamSubtitle": "팍스크리스티코리아와 함께하는 사람들",
     "teamEmpty": "아직 등록된 임원진이 없습니다.",
-    "teamEmptyDesc": "Sanity CMS에서 임원진 데이터를 추가해주세요."
+    "teamEmptyDesc": "Sanity CMS에서 임원진 데이터를 추가해주세요.",
+    "navLocation": "오시는 길",
+    "locationTitle": "오시는 길",
+    "locationSubtitle": "팍스크리스티코리아 사무실 위치 안내",
+    "locationContact": "연락처 정보",
+    "locationTransport": "대중교통 안내",
+    "locationSubway": "지하철",
+    "locationSubwayDesc": "2호선 합정역 7번 출구에서 도보 10분",
+    "locationBus": "버스",
+    "locationBusDesc": "마포구청 정류장 하차 후 도보 5분"
   },
   "Network": {
     "heroTitle": "국제 평화 네트워크",

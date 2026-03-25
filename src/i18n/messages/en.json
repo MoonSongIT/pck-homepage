@@ -143,7 +143,16 @@
     "teamTitle": "Leadership",
     "teamSubtitle": "People who work with Pax Christi Korea",
     "teamEmpty": "No leadership members registered yet.",
-    "teamEmptyDesc": "Please add leadership data in Sanity CMS."
+    "teamEmptyDesc": "Please add leadership data in Sanity CMS.",
+    "navLocation": "Directions",
+    "locationTitle": "Directions",
+    "locationSubtitle": "How to find the Pax Christi Korea office",
+    "locationContact": "Contact Information",
+    "locationTransport": "Public Transportation",
+    "locationSubway": "Subway",
+    "locationSubwayDesc": "10-min walk from Exit 7, Hapjeong Station (Line 2)",
+    "locationBus": "Bus",
+    "locationBusDesc": "5-min walk from Mapo-gu Office bus stop"
   },
   "Network": {
     "heroTitle": "International Peace Network",
