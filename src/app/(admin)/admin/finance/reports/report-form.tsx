@@ -10,6 +10,7 @@ import {
   ExternalLink,
   Eye,
   EyeOff,
+  FileDown,
   FileText,
   Link2,
   Loader2,
@@ -49,6 +50,7 @@ import {
 } from '@/components/ui/dialog'
 import {
   generateReport,
+  generateReportPdf,
   toggleReportPublish,
   updateReportPdfUrl,
   deleteReport,
@@ -84,6 +86,7 @@ export const ReportForm = ({ reports, pendingCount }: Props) => {
   const [isPending, startTransition] = useTransition()
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
   const [pdfDialog, setPdfDialog] = useState<{ id: string; url: string } | null>(null)
+  const [isGenerating, setIsGenerating] = useState<string | null>(null)
 
   // 서버 props를 로컬 상태로 관리 (낙관적 업데이트용)
   const [localReports, setLocalReports] = useState<ReportRow[]>(reports)
@@ -139,6 +142,21 @@ export const ReportForm = ({ reports, pendingCount }: Props) => {
         router.refresh() // 실패 시 원상복구
       }
     })
+  }
+
+  // PDF 자동 생성
+  const handleGeneratePdf = async (reportId: string) => {
+    setIsGenerating(reportId)
+    const result = await generateReportPdf(reportId)
+    setIsGenerating(null)
+    if (result.success && result.pdfUrl) {
+      setLocalReports((prev) =>
+        prev.map((r) => (r.id === reportId ? { ...r, pdfUrl: result.pdfUrl! } : r)),
+      )
+      toast.success('PDF가 생성되어 저장되었습니다.')
+    } else {
+      toast.error(result.message ?? 'PDF 생성 실패')
+    }
   }
 
   // 삭제 (낙관적 업데이트)
@@ -311,7 +329,21 @@ export const ReportForm = ({ reports, pendingCount }: Props) => {
                             variant="ghost"
                             size="icon"
                             className="h-7 w-7"
-                            title="PDF URL 설정"
+                            title="PDF 자동 생성"
+                            disabled={isGenerating === r.id}
+                            onClick={() => handleGeneratePdf(r.id)}
+                          >
+                            {isGenerating === r.id ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <FileDown className="h-3.5 w-3.5" />
+                            )}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            title="PDF URL 직접 입력"
                             onClick={() =>
                               setPdfDialog({ id: r.id, url: r.pdfUrl ?? '' })
                             }

@@ -6,7 +6,11 @@ import { revalidatePath } from 'next/cache'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { expenseSchema, updateExpenseSchema, budgetSchema, reportSchema } from '@/lib/validations/finance'
-import { deleteReceipt } from '@/lib/supabase/storage'
+import { createElement } from 'react'
+import { renderToBuffer } from '@react-pdf/renderer'
+
+import { deleteReceipt, uploadReportPdf } from '@/lib/supabase/storage'
+import { FinanceReportPdf } from '@/components/pdf/FinanceReportPdf'
 
 export type ExpenseActionResult = {
   success: boolean
@@ -25,6 +29,12 @@ export type BudgetActionResult = {
 export type ReportActionResult = {
   success: boolean
   message: string
+}
+
+export type ReportPdfResult = {
+  success: boolean
+  message?: string
+  pdfUrl?: string
 }
 
 const EXPENSES_PATH = '/admin/finance/expenses'
@@ -389,6 +399,61 @@ export async function updateReportPdfUrl(
   } catch (error: unknown) {
     console.error('[Finance] updateReportPdfUrl failed:', error)
     return { success: false, message: 'PDF URL 저장 중 오류가 발생했습니다' }
+  }
+}
+
+// ─── 결산 보고서 PDF 자동 생성 ───────────────────────
+
+export async function generateReportPdf(reportId: string): Promise<ReportPdfResult> {
+  await requireAdmin()
+
+  try {
+    // 1) DB에서 보고서 + 지출 집계 로드
+    const report = await prisma.financeReport.findUnique({ where: { id: reportId } })
+    if (!report) {
+      return { success: false, message: '보고서를 찾을 수 없습니다' }
+    }
+
+    const yearStart = new Date(`${report.year}-01-01`)
+    const yearEnd = new Date(`${report.year + 1}-01-01`)
+
+    const rawBreakdown = await prisma.expense.groupBy({
+      by: ['category'],
+      where: { status: 'CONFIRMED', date: { gte: yearStart, lt: yearEnd } },
+      _sum: { amount: true },
+      orderBy: { _sum: { amount: 'desc' } },
+    })
+    const breakdown = rawBreakdown.map((b) => ({
+      category: b.category,
+      amount: b._sum.amount ?? 0,
+    }))
+
+    // 2) PDF 렌더링 (서버사이드)
+    const element = createElement(FinanceReportPdf, {
+      year: report.year,
+      totalIncome: report.totalIncome,
+      totalExpense: report.totalExpense,
+      breakdown,
+    })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const pdfBuffer = await renderToBuffer(element as any)
+
+    // 3) Supabase Storage 업로드 → 공개 URL 획득
+    const baseUrl = await uploadReportPdf(report.year, Buffer.from(pdfBuffer))
+    // 브라우저 캐시 버스팅: 재생성 시 항상 최신 파일을 표시
+    const pdfUrl = `${baseUrl}?v=${Date.now()}`
+
+    // 4) DB pdfUrl 업데이트 + 캐시 무효화
+    await prisma.financeReport.update({ where: { id: reportId }, data: { pdfUrl } })
+    revalidatePath(REPORTS_PATH)
+    revalidatePath(`/transparency/${report.year}`)
+    revalidatePath('/transparency')
+
+    return { success: true, pdfUrl }
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error)
+    console.error('[Finance] generateReportPdf failed:', msg)
+    return { success: false, message: `PDF 생성 실패: ${msg}` }
   }
 }
 
