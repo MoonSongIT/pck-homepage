@@ -39,8 +39,8 @@ export const authConfig = {
     },
     authorized({ auth, request }) {
       const isLoggedIn = !!auth?.user
-      // locale prefix 제거 (en만 prefix 사용, ko는 prefix 없음)
-      const pathname = request.nextUrl.pathname.replace(/^\/(en)(?=\/|$)/, '') || '/'
+      // locale prefix 제거 (ko, en 모두 prefix 사용)
+      const pathname = request.nextUrl.pathname.replace(/^\/(ko|en)(?=\/|$)/, '') || '/'
 
       // 관리자 전용 경로
       if (pathname.startsWith('/admin') || pathname.startsWith('/api/finance')) {
