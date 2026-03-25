@@ -88,9 +88,9 @@ const HeroSection = ({ className }: { className?: string }) => {
       (HERO_CONFIG.typingDuration + HERO_CONFIG.typingPause) * 1000,
     )
     return () => clearInterval(interval)
-  }, [])
+  }, [typingTexts.length])
 
-  // 키보드 내비게이션
+  // 키보드 내비게이션 (setCurrentSlide는 안정적인 state setter)
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'ArrowLeft') {
       setCurrentSlide((prev) =>
@@ -100,7 +100,7 @@ const HeroSection = ({ className }: { className?: string }) => {
     if (e.key === 'ArrowRight') {
       setCurrentSlide((prev) => (prev + 1) % HERO_SLIDES.length)
     }
-  }, [])
+  }, [setCurrentSlide])
 
   const currentText = typingTexts[textIndex]
   const activeVariants = shouldReduceMotion

@@ -7,6 +7,11 @@ const handleI18nRouting = createMiddleware(routing)
 const { auth } = NextAuth(authConfig)
 
 export default auth((request) => {
+  // 관리자 경로는 i18n 라우팅 스킵 (auth만 적용)
+  if (request.nextUrl.pathname.startsWith('/admin')) {
+    return
+  }
+
   // i18n 라우팅 처리
   return handleI18nRouting(request)
 })
