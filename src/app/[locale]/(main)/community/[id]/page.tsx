@@ -21,7 +21,12 @@ export async function generateMetadata({
   if (!post) return { title: '게시글을 찾을 수 없습니다' }
 
   return {
-    title: `${post.title} | 커뮤니티 | 팍스크리스티코리아`,
+    title: `${post.title} | 커뮤니티`,
+    description: `팍스크리스티코리아 커뮤니티 게시글 — ${post.title}`,
+    openGraph: {
+      title: `${post.title} | 커뮤니티`,
+      description: `팍스크리스티코리아 커뮤니티 게시글 — ${post.title}`,
+    },
   }
 }
 

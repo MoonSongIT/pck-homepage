@@ -9,9 +9,14 @@ import type { Education } from '@/types/sanity'
 export const revalidate = 3600
 
 export const metadata: Metadata = {
-  title: '평화학교 | 팍스크리스티코리아',
+  title: '평화학교',
   description:
     '팍스크리스티코리아 평화학교는 비폭력 평화사상을 체계적으로 배우고 실천하는 교육 프로그램입니다.',
+  openGraph: {
+    title: '평화학교 | 팍스크리스티코리아',
+    description: '비폭력 평화사상을 체계적으로 배우고 실천하는 교육 프로그램입니다.',
+    images: [{ url: '/api/og?title=평화학교', width: 1200, height: 630 }],
+  },
 }
 
 export default async function EducationPage({

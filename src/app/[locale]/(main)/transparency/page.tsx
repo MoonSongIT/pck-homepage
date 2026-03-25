@@ -5,8 +5,13 @@ import { prisma } from '@/lib/prisma'
 import { TransparencyContent } from './transparency-content'
 
 export const metadata: Metadata = {
-  title: '재정 투명성 | 팍스크리스티코리아',
+  title: '재정 투명성',
   description: '팍스크리스티코리아 연도별 결산 보고서를 공개합니다. 후원금의 투명한 관리를 약속합니다.',
+  openGraph: {
+    title: '재정 투명성 | 팍스크리스티코리아',
+    description: '연도별 결산 보고서를 공개합니다. 후원금의 투명한 관리를 약속합니다.',
+    images: [{ url: '/api/og?title=재정 투명성', width: 1200, height: 630 }],
+  },
 }
 
 export const revalidate = 3600 // 1시간 ISR

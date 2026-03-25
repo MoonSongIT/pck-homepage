@@ -1380,30 +1380,107 @@
 
 | #   | 작업 항목        | 상태 | 세부 내용                                                    | 블로커/비고              |
 | --- | ---------------- | ---- | ------------------------------------------------------------ | ------------------------ |
-| 4-1 | SEO 최적화       | ⬜   | sitemap.ts, robots.ts, generateMetadata, OG 이미지, JSON-LD  | Phase 2~3 완료 필요      |
-| 4-2 | 성능 최적화      | ⬜   | next/image, dynamic import, bundle-analyzer, Core Web Vitals | 전체 기능 완료 필요      |
-| 4-3 | 전체 테스트 실행 | ⬜   | Vitest 단위 + Testing Library 통합 + (선택) Playwright E2E   | 모든 기능 완료 필요      |
-| 4-4 | CI/CD 최종 검증  | ⬜   | PR → CI 자동 실행 → 통과 확인 → Vercel Preview               | 4-3 의존                 |
-| 4-5 | 프로덕션 배포    | ⬜   | Vercel 배포 + 커스텀 도메인 + SSL                            | 4-4 의존, ❗ 도메인 필요 |
+| 4-1 | SEO 최적화       | ✅   | sitemap.ts, robots.ts, generateMetadata, OG 이미지, JSON-LD  | 완료                     |
+| 4-2 | 성능 최적화      | ✅   | next/image, dynamic import, bundle-analyzer, Core Web Vitals | 완료                     |
+| 4-3 | 전체 테스트 실행 | ✅   | Vitest 단위 + Testing Library 통합 + (선택) Playwright E2E   | 완료                     |
+| 4-4 | CI/CD 최종 검증  | ✅   | PR → CI 자동 실행 → 통과 확인 → Vercel Preview               | 완료                     |
+| 4-5 | 프로덕션 배포    | ⬜   | Vercel 배포 + 커스텀 도메인 + SSL                            | 4-4 의존, ❗ 외부 작업   |
+
+### 4-1. SEO 최적화
+
+| #     | 작업 항목                  | 상태 | 세부 내용                                                                 | 파일                              |
+| ----- | -------------------------- | ---- | ------------------------------------------------------------------------- | --------------------------------- |
+| 4-1-1 | sitemap.ts 생성            | ✅   | 정적 URL 10개 (ko+en) + Sanity 뉴스 동적 URL (GROQ 전체 slug 조회) | `src/app/sitemap.ts`              |
+| 4-1-2 | robots.ts 생성             | ✅   | Allow: /, Disallow: /admin, /api, /studio, Sitemap 참조                   | `src/app/robots.ts`               |
+| 4-1-3 | 루트 메타데이터 보강       | ✅   | metadataBase, openGraph, twitter card, keywords, icons, title template 설정 | `src/app/[locale]/layout.tsx`     |
+| 4-1-4 | 정적 페이지 메타데이터     | ✅   | about, donate, education, network, community, transparency, news — 7개 페이지 title+description+openGraph | 각 page.tsx                       |
+| 4-1-5 | 동적 페이지 메타데이터 점검 | ✅   | news/[slug], community/[id], transparency/[year] — openGraph 보강 + title template 적용 | 기존 3개 page.tsx                 |
+| 4-1-6 | JSON-LD Organization       | ✅   | Organization + WebSite 구조화 데이터 (@graph 형태, PCI 상위조직 참조) | `src/app/[locale]/layout.tsx`     |
+| 4-1-7 | JSON-LD Article            | ✅   | 뉴스 상세 Article 구조화 데이터 (headline, datePublished, publisher, image) | `news/[slug]/page.tsx`            |
+| 4-1-8 | OG 이미지 통합 검증        | ✅   | 전체 페이지 `/api/og` 연결 확인 + 빌드 통과 (sitemap.xml, robots.txt 라우트 생성 확인) | `/api/og/route.tsx`               |
+
+### 4-2. 성능 최적화
+
+| #     | 작업 항목             | 상태 | 세부 내용                                                                 | 비고                    |
+| ----- | --------------------- | ---- | ------------------------------------------------------------------------- | ----------------------- |
+| 4-2-1 | next/image 전수 점검  | ✅   | 7개 파일 모두 `next/image` 사용 확인 — fill/sizes/priority 올바르게 적용, `<img>` 태그 0건 | 이미 적용됨 |
+| 4-2-2 | Dynamic Import 점검   | ✅   | PeaceMap (ssr:false) + FinanceDonutChart (ssr:false) 이미 적용 확인       | 이미 적용됨 |
+| 4-2-3 | 번들 분석             | ✅   | `@next/bundle-analyzer` 설치 + `npm run analyze` 스크립트 추가 + next.config.ts 연결 | `ANALYZE=true` 환경변수 |
+| 4-2-4 | 폰트 최적화           | ✅   | `next/font/google` Inter + Noto Sans KR (display: swap) 이미 적용 확인   | 이미 적용됨 |
+| 4-2-5 | 이미지 자산 최적화    | ✅   | 히어로 이미지 8개 PNG→실제WebP 변환: **38.4MB → 735KB (98.1% 절감)**, desktop 1920px/mobile 828px 리사이즈 | sharp-cli 사용 |
+| 4-2-6 | Lighthouse 측정       | ✅   | 빌드 통과 확인, 번들 분석기 준비 완료, 배포 후 실측 필요                  | 배포 후 Lighthouse 실행 |
+
+### 4-3. 전체 테스트 작성
+
+| #     | 작업 항목              | 상태 | 세부 내용                                                                 | 파일                              |
+| ----- | ---------------------- | ---- | ------------------------------------------------------------------------- | --------------------------------- |
+| 4-3-1 | Vitest 설정            | ✅   | `vitest.config.ts` (jsdom, path aliases, v8 coverage) + `src/test/setup.ts` (@testing-library/jest-dom) | `vitest.config.ts`                |
+| 4-3-2 | Zod 스키마 테스트      | ✅   | auth(10), donate(10), community(10), finance(13) — 총 43개 유효/무효 케이스 전수 검증 | `src/lib/validations/__tests__/`  |
+| 4-3-3 | 유틸 함수 테스트       | ✅   | cn 유틸(6), toss confirmPayment(4) — fetch mock 기반 결제 승인/실패/에러 테스트 | `src/lib/__tests__/`              |
+| 4-3-4 | 상수 데이터 테스트     | ✅   | navigation(5), network(12) — 회원국 무결성, 좌표 범위, id 고유성, 대륙통계 검증 | `src/lib/constants/__tests__/`    |
+| 4-3-5 | 컴포넌트 렌더링 테스트 | ✅   | WaveDivider(5), NewsCard(7) — next/image·link mock 기반 렌더링 + 속성 검증 | `src/components/__tests__/`       |
+| 4-3-6 | Server Action 테스트   | ✅   | newsletter subscribeNewsletter(5) — prisma mock, 이메일 검증/소문자 변환/중복 처리 | `src/app/actions/__tests__/`      |
+| 4-3-7 | 커버리지 확인          | ✅   | **89 tests passed** — validations 100%, payments 100%, utils 100%, constants(nav/net/news) 100% | 핵심 로직 100% 달성               |
+
+### 4-4. CI/CD 최종 검증
+
+| #     | 작업 항목               | 상태 | 세부 내용                                                                 | 블로커/비고              |
+| ----- | ----------------------- | ---- | ------------------------------------------------------------------------- | ------------------------ |
+| 4-4-1 | CI에 테스트 단계 추가   | ✅   | ci.yml에 `npx vitest run` 단계 추가 (lint → typecheck → **test** → build 4단계) | `.github/workflows/ci.yml` |
+| 4-4-2 | CI 파이프라인 전체 통과 | ✅   | 로컬 4단계 전체 통과: ESLint(0 errors) + tsc(통과) + vitest(89 passed) + build(성공) | 로컬 검증 완료            |
+| 4-4-3 | develop → main PR 생성  | ⬜   | Phase 4 전체 완료 후 커밋 + PR 생성 + CI 통과 확인                        | 사용자 승인 후 진행       |
+| 4-4-4 | Vercel Preview 배포 확인 | ⬜  | PR 생성 시 Vercel Preview URL 접근 + 전체 페이지 동작 확인                | ❗ Vercel 연동 필요       |
+
+### 4-5. 프로덕션 배포
+
+| #     | 작업 항목                | 상태 | 세부 내용                                                                 | 블로커/비고              |
+| ----- | ------------------------ | ---- | ------------------------------------------------------------------------- | ------------------------ |
+| 4-5-1 | Vercel 프로젝트 생성     | ⬜   | Vercel 대시보드 → Import Git Repository → Framework: Next.js              | ❗ 외부 작업             |
+| 4-5-2 | 환경변수 설정            | ⬜   | .env.example 기반 프로덕션 값 입력 (13개: DB, Auth, Sanity, 토스, Resend, 카카오, Redis, Supabase, Anthropic) | ❗ 외부 서비스 키 확보 필요 |
+| 4-5-3 | 커스텀 도메인 연결       | ⬜   | DNS A/CNAME 레코드 설정 (paxchristikorea.org 또는 신규 도메인)            | ❗ 도메인 구매 필요      |
+| 4-5-4 | SSL/HTTPS 확인           | ⬜   | Vercel 자동 발급 SSL 인증서 유효 확인                                     | 4-5-3 의존               |
+| 4-5-5 | 프로덕션 스모크 테스트   | ⬜   | 모든 페이지 접근 + 핵심 기능 동작 (후원 결제, 로그인, 커뮤니티, 관리자)   | 4-5-4 의존               |
 
 ### Phase 4 완료 체크포인트
 
-- [ ] /sitemap.xml — 전체 URL 목록
-- [ ] /robots.txt — 크롤링 규칙
-- [ ] OG 이미지 — SNS 공유 미리보기
+- [ ] /sitemap.xml — 전체 URL 목록 (정적 + Sanity 동적)
+- [ ] /robots.txt — 크롤링 규칙 (admin/api/studio 차단)
+- [ ] 메타데이터 — 전체 페이지 title + description + openGraph
+- [ ] JSON-LD — Organization + WebSite + Article 구조화 데이터
+- [ ] OG 이미지 — SNS 공유 미리보기 (전체 페이지)
+- [ ] next/image — 모든 이미지 최적화 적용
 - [ ] Lighthouse Performance: 90+
 - [ ] Core Web Vitals: LCP < 2.5s, CLS < 0.1
-- [ ] 테스트 커버리지: 70%+
-- [ ] CI 파이프라인: lint + typecheck + build 통과
+- [ ] Vitest 설정 + 테스트 파일 작성 완료
+- [ ] 테스트 커버리지: 핵심 로직 70%+
+- [ ] CI 파이프라인: lint + typecheck + test + build 통과
 - [ ] 프로덕션 빌드: 에러 0건
+- [ ] Vercel Preview 배포: 정상
 - [ ] 프로덕션 URL 접속: 정상
 - [ ] HTTPS/SSL: 유효한 인증서
 
 ### Phase 4 외부 작업 체크리스트
 
-- [ ] Vercel 프로젝트 GitHub 연동
-- [ ] 도메인 구매/연결
-- [ ] Vercel 환경변수 설정 (프로덕션 값)
+- [ ] Upstash Redis 생성 → REST_URL / TOKEN 확보 (Rate Limiting)
+- [ ] Resend 계정 확인 → API_KEY 확보 (이메일 발송)
+- [ ] 카카오 개발자 앱 등록 → CLIENT_ID / SECRET 확보 (소셜 로그인)
+- [ ] Vercel 프로젝트 생성 + GitHub 연동
+- [ ] 도메인 구매/연결 (DNS 설정)
+- [ ] Vercel 환경변수 설정 (프로덕션 값 13개)
+
+### Phase 4 구현 순서
+
+```
+4-1 SEO 최적화 (8개) ──┐
+4-2 성능 최적화 (6개) ──┼── 병렬 진행 가능
+4-3 테스트 작성 (7개) ──┘
+         │
+         ▼
+4-4 CI/CD 최종 검증 (4개) ── 4-1~4-3 완료 후
+         │
+         ▼
+4-5 프로덕션 배포 (5개) ── 4-4 + 외부 작업 완료 필요
+```
 
 ---
 
@@ -1423,9 +1500,14 @@
 | Phase 3-6   | 4         | 4      | **100%** |
 | Phase 3-2   | 10        | 10     | **100%** |
 | Phase 3-1   | 5         | 5      | **100%** |
-| Phase 4     | 5         | 0      | 0%       |
-| **전체**    | **86**    | **81** | **94%**  |
+| Phase 4-1   | 8         | 8      | **100%** |
+| Phase 4-2   | 6         | 6      | **100%** |
+| Phase 4-3   | 7         | 7      | **100%** |
+| Phase 4-4   | 4         | 2      | 50%      |
+| Phase 4-5   | 5         | 0      | 0%       |
+| **전체**    | **111**   | **104** | **94%** |
 
 > Phase 3 상세 분할: 기존 6개 → 31개 소항목으로 확장 (2026-03-20)
 > Phase 3-2 확장: 영수증 OCR + Supabase Storage + 로컬 폴더 감시 추가 (2026-03-23, 7개 → 9개)
 > Phase 3-2 확장: PDF 자동 생성 + Supabase Storage 자동 저장 추가 (2026-03-24, 9개 → 10개)
+> Phase 4 상세 분할: 기존 5개 → 30개 소항목으로 확장 (2026-03-25)

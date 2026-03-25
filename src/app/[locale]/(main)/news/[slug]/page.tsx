@@ -29,19 +29,20 @@ export async function generateMetadata({
 
   try {
     const post = await client.fetch<Post | null>(POST_QUERY, { slug })
-    if (!post) return { title: '게시글 없음 | 팍스크리스티코리아' }
+    if (!post) return { title: '게시글 없음' }
 
     const ogImageUrl = post.mainImage
       ? imagePresets.ogImage(post.mainImage).url()
       : `/api/og?title=${encodeURIComponent(post.title)}&category=${post.category}`
 
     return {
-      title: `${post.title} | 팍스크리스티코리아`,
+      title: post.title,
       description:
         post.excerpt || '팍스크리스티코리아의 소식과 활동을 전합니다.',
       openGraph: {
         title: post.title,
-        description: post.excerpt || '',
+        description: post.excerpt || '팍스크리스티코리아의 소식과 활동을 전합니다.',
+        type: 'article',
         images: [{ url: ogImageUrl, width: 1200, height: 630 }],
       },
     }
@@ -67,5 +68,44 @@ export default async function NewsDetailPage({
 
   if (!post) notFound()
 
-  return <NewsDetailContent post={post} />
+  const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://paxchristikorea.org'
+  const ogImageUrl = post.mainImage
+    ? imagePresets.ogImage(post.mainImage).url()
+    : `${BASE_URL}/api/og?title=${encodeURIComponent(post.title)}&category=${post.category}`
+
+  const articleJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: post.title,
+    description: post.excerpt || '',
+    image: ogImageUrl,
+    datePublished: post.publishedAt,
+    author: {
+      '@type': 'Organization',
+      name: '팍스크리스티코리아',
+      url: BASE_URL,
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: '팍스크리스티코리아',
+      logo: {
+        '@type': 'ImageObject',
+        url: `${BASE_URL}/images/logo.png`,
+      },
+    },
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': `${BASE_URL}/news/${post.slug?.current}`,
+    },
+  }
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
+      />
+      <NewsDetailContent post={post} />
+    </>
+  )
 }

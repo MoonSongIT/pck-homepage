@@ -8,7 +8,7 @@ on:
 
 jobs:
   quality:
-    name: Lint, Type Check, Build
+    name: Lint, Type Check, Test, Build
     runs-on: ubuntu-latest
 
     steps:
@@ -32,6 +32,9 @@ jobs:
 
       - name: TypeScript type check
         run: npx tsc --noEmit
+
+      - name: Unit & Integration Tests
+        run: npx vitest run
 
       - name: Build
         run: npm run build

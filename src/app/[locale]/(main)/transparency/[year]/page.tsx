@@ -16,8 +16,13 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { year } = await params
   return {
-    title: `${year}년 결산 보고서 | 팍스크리스티코리아`,
+    title: `${year}년 결산 보고서`,
     description: `팍스크리스티코리아 ${year}년도 수입·지출 결산 보고서`,
+    openGraph: {
+      title: `${year}년 결산 보고서 | 팍스크리스티코리아`,
+      description: `${year}년도 수입·지출 결산 보고서를 확인하세요.`,
+      images: [{ url: `/api/og?title=${year}년 결산 보고서`, width: 1200, height: 630 }],
+    },
   }
 }
 
