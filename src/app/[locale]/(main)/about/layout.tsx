@@ -12,6 +12,7 @@ const AboutLayout = ({ children }: { children: React.ReactNode }) => {
     { labelKey: 'navAbout' as const, href: '/about' },
     { labelKey: 'navHistory' as const, href: '/about/history' },
     { labelKey: 'navTeam' as const, href: '/about/team' },
+    { labelKey: 'navLocation' as const, href: '/about/location' },
   ]
 
   return (
