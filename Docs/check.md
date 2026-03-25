@@ -1,6 +1,6 @@
 # PCK 웹사이트 리뉴얼 — 진도 체크리스트
 
-> 최종 수정: 2026-03-25 (Phase 3 완료 체크포인트 및 외부 작업 체크리스트 업데이트, 투명성 페이지 PDF 생성 기능 완료)
+> 최종 수정: 2026-03-25 (Phase 4-1~4-4 완료, 배포 가이드 작성, postinstall 추가)
 > 상태 표시: ⬜ 미시작 | 🔄 진행 중 | ✅ 완료 | ❌ 블로커 | ⏭️ 건너뜀
 
 ---
@@ -1428,18 +1428,18 @@
 | ----- | ----------------------- | ---- | ------------------------------------------------------------------------- | ------------------------ |
 | 4-4-1 | CI에 테스트 단계 추가   | ✅   | ci.yml에 `npx vitest run` 단계 추가 (lint → typecheck → **test** → build 4단계) | `.github/workflows/ci.yml` |
 | 4-4-2 | CI 파이프라인 전체 통과 | ✅   | 로컬 4단계 전체 통과: ESLint(0 errors) + tsc(통과) + vitest(89 passed) + build(성공) | 로컬 검증 완료            |
-| 4-4-3 | develop → main PR 생성  | ⬜   | Phase 4 전체 완료 후 커밋 + PR 생성 + CI 통과 확인                        | 사용자 승인 후 진행       |
-| 4-4-4 | Vercel Preview 배포 확인 | ⬜  | PR 생성 시 Vercel Preview URL 접근 + 전체 페이지 동작 확인                | ❗ Vercel 연동 필요       |
+| 4-4-3 | develop → main PR 생성  | ✅   | Phase 4 커밋 (`3b12fe3`) + develop 푸시 + PR #13 생성 완료                | https://github.com/MoonSongIT/pck-homepage/pull/13 |
+| 4-4-4 | Vercel Preview 배포 확인 | ⬜  | PR 생성 시 Vercel Preview URL 접근 + 전체 페이지 동작 확인                | ❗ Vercel 연동 후 확인 → `Docs/deployment-guide.md` 참조 |
 
 ### 4-5. 프로덕션 배포
 
 | #     | 작업 항목                | 상태 | 세부 내용                                                                 | 블로커/비고              |
 | ----- | ------------------------ | ---- | ------------------------------------------------------------------------- | ------------------------ |
-| 4-5-1 | Vercel 프로젝트 생성     | ⬜   | Vercel 대시보드 → Import Git Repository → Framework: Next.js              | ❗ 외부 작업             |
-| 4-5-2 | 환경변수 설정            | ⬜   | .env.example 기반 프로덕션 값 입력 (13개: DB, Auth, Sanity, 토스, Resend, 카카오, Redis, Supabase, Anthropic) | ❗ 외부 서비스 키 확보 필요 |
-| 4-5-3 | 커스텀 도메인 연결       | ⬜   | DNS A/CNAME 레코드 설정 (paxchristikorea.org 또는 신규 도메인)            | ❗ 도메인 구매 필요      |
-| 4-5-4 | SSL/HTTPS 확인           | ⬜   | Vercel 자동 발급 SSL 인증서 유효 확인                                     | 4-5-3 의존               |
-| 4-5-5 | 프로덕션 스모크 테스트   | ⬜   | 모든 페이지 접근 + 핵심 기능 동작 (후원 결제, 로그인, 커뮤니티, 관리자)   | 4-5-4 의존               |
+| 4-5-1 | Vercel 프로젝트 생성     | ⬜   | `Docs/deployment-guide.md` §4 참조 — Import Git Repo + Framework: Next.js + postinstall: prisma generate | ❗ 외부 작업             |
+| 4-5-2 | 환경변수 설정            | ⬜   | `Docs/deployment-guide.md` §3 참조 — 필수 12개 + 선택 4개 = 총 16개       | ❗ 외부 서비스 키 확보 필요 |
+| 4-5-3 | DB 마이그레이션          | ⬜   | `prisma migrate deploy` (프로덕션 DB) + 관리자 계정 시드                   | 4-5-1 의존               |
+| 4-5-4 | 커스텀 도메인 + SSL      | ⬜   | `Docs/deployment-guide.md` §5 참조 — DNS A/CNAME 설정 + Let's Encrypt 자동 | ❗ 도메인 구매 필요      |
+| 4-5-5 | 프로덕션 스모크 테스트   | ⬜   | `Docs/deployment-guide.md` §7 참조 — 10개 페이지 + 8개 기능 + SEO + 보안 검증 | 4-5-4 의존               |
 
 ### Phase 4 완료 체크포인트
 
@@ -1461,12 +1461,18 @@
 
 ### Phase 4 외부 작업 체크리스트
 
-- [ ] Upstash Redis 생성 → REST_URL / TOKEN 확보 (Rate Limiting)
-- [ ] Resend 계정 확인 → API_KEY 확보 (이메일 발송)
-- [ ] 카카오 개발자 앱 등록 → CLIENT_ID / SECRET 확보 (소셜 로그인)
-- [ ] Vercel 프로젝트 생성 + GitHub 연동
-- [ ] 도메인 구매/연결 (DNS 설정)
-- [ ] Vercel 환경변수 설정 (프로덕션 값 13개)
+> 📄 상세 절차: **`Docs/deployment-guide.md`** 참조
+
+- [ ] Sanity.io 프로젝트 생성 → PROJECT_ID / DATASET / API_TOKEN 확보 (§2-2)
+- [ ] Resend 계정 확인 → API_KEY 확보 + 도메인 인증 (§2-4)
+- [ ] 카카오 개발자 앱 등록 → CLIENT_ID / SECRET 확보 (§2-5, 선택)
+- [ ] Upstash Redis 생성 → REST_URL / TOKEN 확보 (§2-6, 선택)
+- [ ] Vercel 프로젝트 생성 + GitHub 연동 (§4-1)
+- [ ] Vercel 환경변수 설정 — 필수 12개 + 선택 4개 (§4-2)
+- [ ] 도메인 구매/연결 — DNS A/CNAME 설정 (§5)
+- [ ] DB 마이그레이션 — `prisma migrate deploy` (§6)
+- [ ] 관리자 계정 시드 — role: ADMIN (§6-2)
+- [ ] 프로덕션 스모크 테스트 수행 (§7)
 
 ### Phase 4 구현 순서
 
@@ -1503,11 +1509,13 @@
 | Phase 4-1   | 8         | 8      | **100%** |
 | Phase 4-2   | 6         | 6      | **100%** |
 | Phase 4-3   | 7         | 7      | **100%** |
-| Phase 4-4   | 4         | 2      | 50%      |
+| Phase 4-4   | 4         | 3      | 75%      |
 | Phase 4-5   | 5         | 0      | 0%       |
-| **전체**    | **111**   | **104** | **94%** |
+| **전체**    | **111**   | **105** | **95%** |
 
 > Phase 3 상세 분할: 기존 6개 → 31개 소항목으로 확장 (2026-03-20)
 > Phase 3-2 확장: 영수증 OCR + Supabase Storage + 로컬 폴더 감시 추가 (2026-03-23, 7개 → 9개)
 > Phase 3-2 확장: PDF 자동 생성 + Supabase Storage 자동 저장 추가 (2026-03-24, 9개 → 10개)
 > Phase 4 상세 분할: 기존 5개 → 30개 소항목으로 확장 (2026-03-25)
+> Phase 4 배포 가이드 작성: `Docs/deployment-guide.md` — Vercel/도메인/환경변수/스모크테스트 전체 절차 (2026-03-25)
+> Phase 4 postinstall 추가: `prisma generate` — Vercel 빌드 시 Prisma Client 자동 생성 (2026-03-25)
