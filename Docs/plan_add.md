@@ -1,3 +1,38 @@
+# 추가 기능 구현 계획
+
+---
+
+## Feature 2: 모바일 영수증 사진 촬영 기능
+
+### 개요
+
+지출 등록 페이지(`/admin/finance/expenses/new`)의 영수증 스캔 탭에서
+모바일 기기 사용 시 '사진 촬영' 버튼을 표시하여 카메라로 바로 영수증을 찍고 OCR 분석하는 기능.
+
+### 구현 방식
+
+- HTML `<input type="file" capture="environment">` 속성 활용
+- `capture="environment"` → 후면 카메라 바로 실행
+- 모바일에서만 표시: Tailwind `sm:hidden` 클래스 적용
+- 촬영된 이미지는 기존 `processFile()` 파이프라인으로 동일하게 OCR 처리
+
+### 변경 파일
+
+| 파일 | 작업 |
+|------|------|
+| `src/components/organisms/ReceiptUploader.tsx` | 수정 — Camera 아이콘 import, cameraRef 추가, 사진촬영 버튼 + hidden input(capture) 추가 |
+
+### 기술 상세
+
+- `lucide-react`의 `Camera` 아이콘 사용
+- `cameraRef`로 별도의 `<input capture="environment">` 참조
+- 파일 선택과 동일한 `handleChange` 핸들러 재사용
+- 데스크탑(`sm:` 이상)에서는 버튼 숨김 처리
+
+---
+
+## Feature 1: 오시는 길 탭 추가
+
 # 오시는 길 탭 추가 — 구현 계획
 
 ## 개요
