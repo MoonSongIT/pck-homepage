@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { Pencil, Trash2, Receipt, ExternalLink, CheckCheck } from 'lucide-react'
+import { Pencil, Trash2, Receipt, Eye, CheckCheck } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
@@ -25,6 +25,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import ExpenseEditDialog, { type ExpenseRow } from '@/components/organisms/ExpenseEditDialog'
 import { deleteExpense, bulkConfirmExpenses } from '@/app/actions/finance'
 import { EXPENSE_CATEGORY_LABELS, EXPENSE_STATUS } from '@/lib/constants/finance'
@@ -48,6 +54,7 @@ const ExpenseTable = ({ expenses }: Props) => {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null)
   const [editTarget, setEditTarget] = useState<ExpenseRow | null>(null)
+  const [previewReceipt, setPreviewReceipt] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
   const pendingRows = expenses.filter((e) => e.status === 'PENDING_REVIEW')
@@ -204,15 +211,14 @@ const ExpenseTable = ({ expenses }: Props) => {
                   </TableCell>
                   <TableCell className="text-center">
                     {expense.receipt ? (
-                      <a
-                        href={expense.receipt}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                      <button
+                        type="button"
+                        onClick={() => setPreviewReceipt(expense.receipt)}
                         className="inline-flex h-7 w-7 items-center justify-center rounded text-peace-sky hover:bg-peace-sky/10"
                         aria-label="영수증 보기"
                       >
-                        <ExternalLink className="h-3.5 w-3.5" />
-                      </a>
+                        <Eye className="h-3.5 w-3.5" />
+                      </button>
                     ) : (
                       <span className="text-gray-300">—</span>
                     )}
@@ -273,6 +279,23 @@ const ExpenseTable = ({ expenses }: Props) => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* 영수증 이미지 미리보기 팝업 */}
+      <Dialog open={previewReceipt !== null} onOpenChange={(open) => { if (!open) setPreviewReceipt(null) }}>
+        <DialogContent className="max-w-lg p-4 sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>영수증 미리보기</DialogTitle>
+          </DialogHeader>
+          {previewReceipt && (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={previewReceipt}
+              alt="영수증 이미지"
+              className="max-h-[75vh] w-full rounded-lg object-contain"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   )
 }
