@@ -174,10 +174,10 @@ const Header = () => {
                 href={item.href}
                 role="menuitem"
                 className={cn(
-                  'rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-foreground',
+                  'rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-peace-sky',
                   pathname === item.href
                     ? 'text-peace-sky'
-                    : 'text-foreground/80'
+                    : 'text-peace-navy dark:text-foreground/80'
                 )}
                 {...(pathname === item.href ? { 'aria-current': 'page' as const } : {})}
               >
@@ -191,10 +191,10 @@ const Header = () => {
                 href="/community"
                 role="menuitem"
                 className={cn(
-                  'rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-foreground',
+                  'rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-peace-sky',
                   pathname.startsWith('/community')
                     ? 'text-peace-sky'
-                    : 'text-foreground/80'
+                    : 'text-peace-navy dark:text-foreground/80'
                 )}
                 {...(pathname.startsWith('/community') ? { 'aria-current': 'page' as const } : {})}
               >

@@ -223,7 +223,7 @@ const HeroSection = ({ className }: { className?: string }) => {
               asChild
               size="lg"
               variant="outline"
-              className="border-peace-cream/30 text-peace-cream hover:bg-peace-cream/10"
+              className="border-white bg-white/15 text-white backdrop-blur-sm hover:bg-white/25"
             >
               <Link href="/about">{t('Common.learnMore')}</Link>
             </Button>

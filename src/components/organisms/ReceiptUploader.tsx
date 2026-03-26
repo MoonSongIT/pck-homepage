@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useState } from 'react'
-import { Upload, Loader2, ImageIcon } from 'lucide-react'
+import { Upload, Loader2, ImageIcon, Camera } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
@@ -27,6 +27,7 @@ const ReceiptUploader = ({ onScanComplete, onError }: Props) => {
   const [isScanning, setIsScanning] = useState(false)
   const [preview, setPreview] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const cameraRef = useRef<HTMLInputElement>(null)
 
   const validateFile = (file: File): string | null => {
     if (!RECEIPT_CONFIG.allowedTypes.includes(file.type as never)) {
@@ -153,9 +154,9 @@ const ReceiptUploader = ({ onScanComplete, onError }: Props) => {
         )}
       </div>
 
-      {/* 파일 선택 버튼 (보조) */}
+      {/* 파일 선택 / 사진 촬영 버튼 */}
       {!isScanning && !preview && (
-        <div className="flex justify-center">
+        <div className="flex justify-center gap-2">
           <Button
             type="button"
             variant="outline"
@@ -164,6 +165,26 @@ const ReceiptUploader = ({ onScanComplete, onError }: Props) => {
           >
             파일 선택
           </Button>
+          {/* 모바일 전용 카메라 촬영 버튼 */}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-1.5 sm:hidden"
+            onClick={() => cameraRef.current?.click()}
+          >
+            <Camera className="h-4 w-4" />
+            사진 촬영
+          </Button>
+          <input
+            ref={cameraRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={handleChange}
+            className="hidden"
+            disabled={isScanning}
+          />
         </div>
       )}
     </div>
