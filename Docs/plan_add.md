@@ -2,6 +2,40 @@
 
 ---
 
+## Feature 3: 영수증 이미지 팝업 미리보기
+
+### 개요
+
+제경비 관리 테이블(`ExpenseTable`)에서 영수증 아이콘(ExternalLink) 클릭 시
+새 탭으로 이동하는 대신, Dialog 팝업으로 영수증 이미지를 바로 보여주는 기능.
+
+### 현재 동작
+
+- `ExpenseTable.tsx` 206~218행: `<a href={receipt} target="_blank">` → 새 탭에서 이미지 열림
+
+### 구현 방식
+
+- shadcn/ui `Dialog` 컴포넌트를 활용한 이미지 팝업
+- 영수증 아이콘 클릭 → state에 선택된 영수증 URL 저장 → Dialog open
+- Dialog 내부에 `<img>` 태그로 이미지 표시 (object-contain, max-h 제한)
+- 닫기: 오버레이 클릭 / X 버튼 / ESC 키
+
+### 변경 파일
+
+| 파일 | 작업 |
+|------|------|
+| `src/components/organisms/ExpenseTable.tsx` | 수정 — `<a>` 태그를 `<button>` + Dialog로 교체, 영수증 미리보기 state 추가 |
+
+### 기술 상세
+
+- `useState<string | null>` 로 선택된 영수증 URL 관리
+- `Dialog` + `DialogContent`로 모달 팝업
+- 이미지: `object-contain`, `max-h-[80vh]`, `rounded-lg`
+- ExternalLink 아이콘을 Eye(보기) 아이콘으로 변경 고려
+- 기존 `<a>` 태그 제거 → `<button onClick>` 으로 교체
+
+---
+
 ## Feature 2: 모바일 영수증 사진 촬영 기능
 
 ### 개요
