@@ -121,7 +121,7 @@ export const LoginForm = () => {
 
         <Button
           type="submit"
-          className="w-full bg-peace-navy hover:bg-peace-navy/90"
+          className="w-full bg-peace-navy text-white hover:bg-peace-navy/90"
           disabled={isPending}
         >
           {isPending ? (
@@ -152,7 +152,7 @@ export const LoginForm = () => {
       <Button
         type="button"
         variant="outline"
-        className="w-full border-yellow-400 bg-yellow-300 text-gray-900 hover:bg-yellow-400"
+        className="w-full border-yellow-400 bg-yellow-300 text-gray-900 hover:bg-yellow-400 dark:border-yellow-500 dark:bg-yellow-400 dark:text-gray-900 dark:hover:bg-yellow-300"
         onClick={handleKakaoLogin}
       >
         <MessageCircle className="mr-2 h-4 w-4" />
