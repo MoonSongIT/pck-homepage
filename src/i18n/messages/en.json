@@ -14,7 +14,10 @@
     "siteNavigation": "Site navigation menu",
     "newWindow": "{label} (opens in new window)",
     "homeAriaLabel": "Pax Christi Korea Home",
-    "logoAlt": "Pax Christi Korea Logo"
+    "logoAlt": "Pax Christi Korea Logo",
+    "admin": "Admin",
+    "studio": "Studio",
+    "desktopOnly": "Please use a desktop browser for admin features"
   },
   "Nav": {
     "about": "About",

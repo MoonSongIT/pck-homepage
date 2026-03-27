@@ -4,7 +4,7 @@ import { useState, useEffect, useSyncExternalStore } from 'react'
 import { useTheme } from 'next-themes'
 import { useTranslations, useLocale } from 'next-intl'
 import { useSession, signOut } from 'next-auth/react'
-import { Phone, Mail, Sun, Moon, Instagram, Youtube, Facebook, LogIn, User } from 'lucide-react'
+import { Phone, Mail, Sun, Moon, Instagram, Youtube, Facebook, LogIn, User, Shield, Palette } from 'lucide-react'
 
 import { Link, usePathname, useRouter } from '@/i18n/navigation'
 import { Button } from '@/components/ui/button'
@@ -35,6 +35,9 @@ const Header = () => {
   const { theme, setTheme } = useTheme()
   const { data: session, status } = useSession()
   const isAuthenticated = status === 'authenticated'
+  const userRole = session?.user?.role as string | undefined
+  const isAdmin = userRole === 'ADMIN'
+  const isEditor = userRole === 'EDITOR'
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50)
@@ -136,6 +139,25 @@ const Header = () => {
             {mounted && (
               isAuthenticated ? (
                 <div className="flex items-center gap-2">
+                  {isAdmin && (
+                    <a
+                      href="/admin"
+                      className="flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium text-peace-orange transition-colors hover:text-peace-orange/80"
+                    >
+                      <Shield className="size-3" />
+                      {t('Common.admin')}
+                    </a>
+                  )}
+                  {(isAdmin || isEditor) && (
+                    <a
+                      href="/studio"
+                      className="flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium text-peace-sky transition-colors hover:text-peace-sky/80"
+                    >
+                      <Palette className="size-3" />
+                      {t('Common.studio')}
+                    </a>
+                  )}
+                  <div className="mx-0.5 h-3.5 w-px bg-border" />
                   <span className="flex items-center gap-1 text-xs text-muted-foreground">
                     <User className="size-3" />
                     {session.user?.name || t('Common.member')}

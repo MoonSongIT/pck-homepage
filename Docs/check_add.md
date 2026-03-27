@@ -2,6 +2,125 @@
 
 ---
 
+## Feature 5: 역할별 Admin/Studio 버튼 표시
+
+### 구현 체크
+
+- [x] Header — ADMIN: Admin + Studio 버튼 표시
+- [x] Header — EDITOR: Studio 버튼만 표시
+- [x] Header — MEMBER: 버튼 미표시
+- [x] MobileNav — ADMIN/EDITOR: 버튼 표시 + 토스트 메시지
+- [x] 미들웨어 — `/studio` EDITOR 접근 허용
+- [x] 번역 키 추가 (ko.json, en.json)
+
+### 기능 체크
+
+- [x] 데스크탑: Admin 버튼 클릭 → `/admin` 이동
+- [x] 데스크탑: Studio 버튼 클릭 → `/studio` 이동
+- [x] 모바일: Admin 버튼 클릭 → `/admin` 이동 (허용)
+- [x] 모바일: Studio 버튼 클릭 → 토스트 메시지 "데스크탑에서 이용해 주세요" 표시
+- [x] EDITOR 사용자 `/studio` 접근 허용
+- [x] EDITOR 사용자 `/admin` 접근 차단
+- [x] MEMBER 사용자 Admin/Studio 버튼 미표시
+
+### 빌드 체크
+
+- [x] TypeScript 타입 오류 없음
+- [x] 프로덕션 빌드 성공
+
+---
+
+## Feature 4: Sanity CMS 내장형 Studio 연동
+
+### Step 1: 외부 설정 (수동)
+
+- [x] sanity.io/manage에서 프로젝트 생성 (`PCKHomePage`, ID: `zochskv5`)
+- [x] Project ID 확보 (`zochskv5`)
+- [x] API 토큰 생성 (Editor 권한)
+- [x] CORS Origins 설정 (`https://pck-homepage.vercel.app` + `localhost:3000`)
+
+### Step 2: 환경변수
+
+- [x] `.env.local`에 `NEXT_PUBLIC_SANITY_PROJECT_ID=zochskv5` 설정
+- [x] `.env.local`에 `SANITY_API_TOKEN` 설정
+- [x] 환경변수 적용 확인 (dev 서버 재시작)
+
+### Step 3: 패키지 설치
+
+- [x] `sanity` 패키지 설치
+- [x] `@sanity/vision` 패키지 설치
+- [x] `npm run build` 정상 확인
+
+### Step 4: 스키마 구현 체크
+
+- [x] `src/sanity/schemaTypes/post.ts` — 뉴스/활동 스키마 (7필드)
+- [x] `src/sanity/schemaTypes/education.ts` — 평화학교 스키마 (9필드)
+- [x] `src/sanity/schemaTypes/teamMember.ts` — 임원진 스키마 (5필드)
+- [x] `src/sanity/schemaTypes/timeline.ts` — 연혁 스키마 (3필드)
+- [x] `src/sanity/schemaTypes/index.ts` — 전체 스키마 export
+- [x] 기존 `src/types/sanity.ts` 타입과 필드명 일치 확인
+- [x] 기존 `src/lib/sanity/queries.ts` GROQ 쿼리와 필드명 일치 확인
+
+### Step 5: Studio 설정 체크
+
+- [x] `sanity.config.ts` 생성 (프로젝트 루트)
+- [x] `src/app/studio/[[...tool]]/page.tsx` 생성 (Studio 라우트, `'use client'` + NextStudio)
+- [x] `src/app/studio/[[...tool]]/layout.tsx` 생성 (metadata + viewport)
+- [x] 중복 `<html>` 태그 렌더링하던 상위 `studio/layout.tsx` 제거
+
+### Step 6: Next.js 설정 체크
+
+- [x] `next.config.ts`에 `cdn.sanity.io` remotePatterns 추가 (기존 설정 확인)
+
+### Step 7: Studio 기능 체크
+
+- [x] `localhost:3000/studio` 접속 시 Sanity Studio 로드 (로그인 화면 정상 표시)
+- [x] ADMIN 미인증 시 `/studio` 접근 차단 (로그인 페이지로 리다이렉트)
+- [ ] 좌측 메뉴에 스키마 4개 표시 (뉴스/활동, 평화학교 교육, 임원진, 연혁)
+- [ ] 각 스키마에서 문서 생성 가능
+- [ ] 이미지 업로드 정상 동작
+- [ ] Portable Text 에디터 정상 동작
+- [ ] Vision 플러그인에서 GROQ 쿼리 테스트 가능
+
+### Step 8: 샘플 데이터 체크
+
+- [x] post 데이터 입력 완료 (Sanity Studio에서 관리 중)
+- [x] teamMember 데이터 입력 완료
+- [x] timeline 데이터 입력 완료
+- [x] education 데이터 입력 완료
+
+### Step 9: 실데이터 연동 체크
+
+- [x] 홈 LatestNews — `LATEST_POSTS_QUERY` 연동 (ISR 1시간)
+- [x] 연혁 페이지 — `TIMELINE_QUERY` 연동 (ISR 1시간)
+- [x] 임원진 페이지 — `TEAM_MEMBERS_QUERY` 연동 (ISR 1시간)
+- [x] 뉴스 목록 — `POSTS_PAGINATED_QUERY` + 페이지네이션 동작
+- [x] 뉴스 상세 — `POST_QUERY` + Portable Text 렌더링 정상
+- [x] 평화학교 목록 — `EDUCATIONS_QUERY` 연동
+- [ ] 평화학교 상세 — `EDUCATION_QUERY` 페이지 미구현 (쿼리는 준비됨)
+
+### 빌드 체크
+
+- [x] TypeScript 타입 오류 없음 (`npx tsc --noEmit`)
+- [x] 프로덕션 빌드 성공 (`npm run build`)
+- [x] `/studio` 라우트 정상 생성
+- [x] Sanity 이미지 로드 정상 (`cdn.sanity.io`)
+- [ ] 다크모드에서 Studio 및 연동 페이지 정상 표시
+
+### 반응형 체크
+
+- [ ] 뉴스 목록/상세 모바일 레이아웃 정상
+- [ ] 임원진 카드 모바일 레이아웃 정상
+- [ ] 연혁 타임라인 모바일 레이아웃 정상
+
+### 접근성 체크
+
+- [ ] 뉴스 카드 키보드 네비게이션 가능
+- [ ] 이미지 alt 텍스트 Sanity에서 가져와 적용
+- [ ] Portable Text 본문 시맨틱 HTML 렌더링
+
+---
+
 ## Feature 3: 영수증 이미지 팝업 미리보기
 
 ### 구현 체크

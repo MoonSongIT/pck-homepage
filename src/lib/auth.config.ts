@@ -49,6 +49,11 @@ export const authConfig = {
         return isLoggedIn && auth?.user?.role === 'ADMIN'
       }
 
+      // Studio 경로: ADMIN + EDITOR 접근 허용
+      if (pathname.startsWith('/studio')) {
+        return isLoggedIn && (auth?.user?.role === 'ADMIN' || auth?.user?.role === 'EDITOR')
+      }
+
       // 로그인 필수 경로
       if (pathname.startsWith('/community') || pathname.startsWith('/api/donate')) {
         return isLoggedIn
