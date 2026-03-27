@@ -4,7 +4,8 @@ import { useState } from 'react'
 import { useTheme } from 'next-themes'
 import { useSession, signOut } from 'next-auth/react'
 import { useTranslations, useLocale } from 'next-intl'
-import { Menu, Phone, Mail, LogIn, LogOut, User, Sun, Moon } from 'lucide-react'
+import { Menu, Phone, Mail, LogIn, LogOut, User, Sun, Moon, Shield, Palette } from 'lucide-react'
+import { toast } from 'sonner'
 
 import { Link, usePathname, useRouter } from '@/i18n/navigation'
 
@@ -31,6 +32,9 @@ const MobileNav = () => {
   const { theme, setTheme } = useTheme()
   const { data: session, status } = useSession()
   const isAuthenticated = status === 'authenticated'
+  const userRole = session?.user?.role as string | undefined
+  const isAdmin = userRole === 'ADMIN'
+  const isEditor = userRole === 'EDITOR'
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -86,21 +90,52 @@ const MobileNav = () => {
         {/* 로그인 상태 */}
         <div className="px-4">
           {isAuthenticated ? (
-            <div className="flex items-center justify-between">
-              <span className="flex items-center gap-2 text-sm text-foreground">
-                <User className="size-4 text-peace-sky" />
-                {session.user?.name || t('Common.member')}
-              </span>
-              <button
-                onClick={() => {
-                  setOpen(false)
-                  signOut({ callbackUrl: '/' })
-                }}
-                className="flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
-              >
-                <LogOut className="size-4" />
-                {t('Common.logout')}
-              </button>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="flex items-center gap-2 text-sm text-foreground">
+                  <User className="size-4 text-peace-sky" />
+                  {session.user?.name || t('Common.member')}
+                </span>
+                <button
+                  onClick={() => {
+                    setOpen(false)
+                    signOut({ callbackUrl: '/' })
+                  }}
+                  className="flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <LogOut className="size-4" />
+                  {t('Common.logout')}
+                </button>
+              </div>
+              {(isAdmin || isEditor) && (
+                <div className="flex items-center gap-2">
+                  {isAdmin && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 text-peace-orange border-peace-orange/30"
+                      asChild
+                    >
+                      <a href="/admin" onClick={() => setOpen(false)}>
+                        <Shield className="mr-1.5 size-3.5" />
+                        {t('Common.admin')}
+                      </a>
+                    </Button>
+                  )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 text-peace-sky border-peace-sky/30"
+                    onClick={() => {
+                      setOpen(false)
+                      toast.info(t('Common.desktopOnly'))
+                    }}
+                  >
+                    <Palette className="mr-1.5 size-3.5" />
+                    {t('Common.studio')}
+                  </Button>
+                </div>
+              )}
             </div>
           ) : (
             <Link

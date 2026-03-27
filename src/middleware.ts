@@ -7,8 +7,11 @@ const handleI18nRouting = createMiddleware(routing)
 const { auth } = NextAuth(authConfig)
 
 export default auth((request) => {
-  // 관리자 경로는 i18n 라우팅 스킵 (auth만 적용)
-  if (request.nextUrl.pathname.startsWith('/admin')) {
+  // 관리자 경로 및 Studio는 i18n 라우팅 스킵 (auth만 적용)
+  if (
+    request.nextUrl.pathname.startsWith('/admin') ||
+    request.nextUrl.pathname.startsWith('/studio')
+  ) {
     return
   }
 
@@ -17,5 +20,5 @@ export default auth((request) => {
 })
 
 export const config = {
-  matcher: ['/((?!api|_next|_vercel|studio|.*\\..*).*)',],
+  matcher: ['/((?!api|_next|_vercel|.*\\..*).*)',],
 }
