@@ -46,4 +46,26 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       clientSecret: process.env.KAKAO_CLIENT_SECRET,
     }),
   ],
+  callbacks: {
+    ...authConfig.callbacks,
+    // 카카오 이메일 미제공 케이스 차단
+    async signIn({ user, account }) {
+      if (account?.provider === 'kakao' && !user.email) {
+        return '/login?error=EmailRequired'
+      }
+      return true
+    },
+    // 최초 로그인 시 DB에서 실제 role 조회 (카카오 OAuth role 버그 수정)
+    async jwt({ token, user, account }) {
+      if (account && user) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: user.id as string },
+          select: { role: true },
+        })
+        token.role = dbUser?.role ?? 'MEMBER'
+        token.id = user.id as string
+      }
+      return token
+    },
+  },
 })
