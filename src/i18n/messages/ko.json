@@ -14,7 +14,10 @@
     "siteNavigation": "사이트 내비게이션 메뉴",
     "newWindow": "{label} (새 창)",
     "homeAriaLabel": "팍스크리스티코리아 홈",
-    "logoAlt": "팍스크리스티코리아 로고"
+    "logoAlt": "팍스크리스티코리아 로고",
+    "admin": "Admin",
+    "studio": "Studio",
+    "desktopOnly": "관리 기능은 데스크탑에서 이용해 주세요"
   },
   "Nav": {
     "about": "단체소개",
