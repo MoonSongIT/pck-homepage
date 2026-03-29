@@ -128,7 +128,7 @@ export const RegisterForm = () => {
 
         <Button
           type="submit"
-          className="w-full bg-peace-navy hover:bg-peace-navy/90"
+          className="w-full bg-peace-navy text-white hover:bg-peace-navy/90"
           disabled={isPending}
         >
           {isPending ? (

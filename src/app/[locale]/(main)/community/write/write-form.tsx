@@ -121,7 +121,7 @@ export const WriteForm = ({
           </Button>
           <Button
             type="submit"
-            className="bg-peace-navy hover:bg-peace-navy/90"
+            className="bg-peace-navy text-white hover:bg-peace-navy/90"
             disabled={isPending}
           >
             {isPending ? (

@@ -217,7 +217,7 @@ const CommentForm = ({ postId }: { postId: string }) => {
       <Button
         type="submit"
         size="sm"
-        className="self-end bg-peace-navy hover:bg-peace-navy/90"
+        className="self-end bg-peace-navy text-white hover:bg-peace-navy/90"
         disabled={isPending}
       >
         {isPending ? (
