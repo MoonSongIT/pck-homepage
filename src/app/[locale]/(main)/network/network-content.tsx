@@ -220,7 +220,7 @@ const NetworkContent = () => {
                   <ExternalLink className="ml-1.5 size-4" aria-hidden="true" />
                 </a>
               </Button>
-              <Button asChild className="bg-peace-orange hover:bg-peace-orange/90">
+              <Button asChild className="bg-peace-orange text-white hover:bg-peace-orange/90">
                 <Link href="/about">{t('pckAbout')}</Link>
               </Button>
             </motion.div>

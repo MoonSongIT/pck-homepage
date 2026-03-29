@@ -16,7 +16,16 @@ export const LoginForm = () => {
   const router = useRouter()
   const callbackUrl = searchParams.get('callbackUrl') || '/'
 
-  const [error, setError] = useState('')
+  const urlError = searchParams.get('error')
+  const urlErrorMessage = urlError === 'EmailRequired'
+    ? '카카오 계정에 이메일이 등록되어 있지 않습니다. 카카오 계정 설정에서 이메일을 등록하거나, 이메일로 로그인해주세요.'
+    : urlError === 'OAuthAccountNotLinked'
+      ? '이미 다른 방법으로 가입된 이메일입니다. 기존 로그인 방식을 이용해주세요.'
+      : urlError
+        ? '로그인 중 오류가 발생했습니다. 다시 시도해주세요.'
+        : ''
+
+  const [error, setError] = useState(urlErrorMessage)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [isPending, setIsPending] = useState(false)
   const [showPassword, setShowPassword] = useState(false)

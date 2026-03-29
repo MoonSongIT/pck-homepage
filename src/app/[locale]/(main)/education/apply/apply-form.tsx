@@ -214,7 +214,7 @@ const ApplyForm = () => {
                       <Button
                         type="submit"
                         disabled={isPending}
-                        className="bg-peace-orange hover:bg-peace-orange/90 sm:order-2"
+                        className="bg-peace-orange text-white hover:bg-peace-orange/90 sm:order-2"
                       >
                         {isPending ? (
                           <>
@@ -322,7 +322,7 @@ const SuccessMessage = () => (
         <Button asChild variant="outline">
           <Link href="/education">교육 목록 보기</Link>
         </Button>
-        <Button asChild className="bg-peace-orange hover:bg-peace-orange/90">
+        <Button asChild className="bg-peace-orange text-white hover:bg-peace-orange/90">
           <Link href="/">홈으로</Link>
         </Button>
       </div>

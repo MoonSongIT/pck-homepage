@@ -128,7 +128,7 @@ export const CommunityList = ({
             ))}
           </div>
 
-          <Button asChild className="bg-peace-orange hover:bg-peace-orange/90">
+          <Button asChild className="bg-peace-orange text-white hover:bg-peace-orange/90">
             <Link href={`/community/write?board=${currentBoard}`}>
               <PenLine className="mr-2 h-4 w-4" />
               {COMMUNITY_CONFIG.writeButton}
@@ -148,7 +148,7 @@ export const CommunityList = ({
             <p className="text-gray-500 dark:text-gray-400">
               {COMMUNITY_CONFIG.emptyMessage}
             </p>
-            <Button asChild className="mt-4 bg-peace-orange hover:bg-peace-orange/90">
+            <Button asChild className="mt-4 bg-peace-orange text-white hover:bg-peace-orange/90">
               <Link href="/community/write">첫 글을 작성해 보세요</Link>
             </Button>
           </div>

@@ -166,7 +166,7 @@ const ExpenseEditDialog = ({ expense, open, onOpenChange }: Props) => {
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
               취소
             </Button>
-            <Button type="submit" disabled={isPending} className="bg-peace-navy hover:bg-peace-navy/90">
+            <Button type="submit" disabled={isPending} className="bg-peace-navy text-white hover:bg-peace-navy/90">
               {isPending ? '저장 중...' : '저장'}
             </Button>
           </div>
