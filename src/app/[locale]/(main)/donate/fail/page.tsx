@@ -51,7 +51,7 @@ export default async function DonateFailPage({ params, searchParams }: Props) {
               <div className="mt-8 flex gap-3">
                 <Button
                   asChild
-                  className="bg-peace-orange hover:bg-peace-orange/90"
+                  className="bg-peace-orange text-white hover:bg-peace-orange/90"
                 >
                   <Link href="/donate">{t('retryText')}</Link>
                 </Button>

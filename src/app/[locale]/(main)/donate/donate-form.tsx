@@ -410,7 +410,7 @@ const DonateForm = () => {
                       disabled={
                         isPending || isPaymentLoading || !isAmountValid
                       }
-                      className="w-full bg-peace-orange hover:bg-peace-orange/90"
+                      className="w-full bg-peace-orange text-white hover:bg-peace-orange/90"
                       size="lg"
                     >
                       {isPending || isPaymentLoading ? (

@@ -256,7 +256,7 @@ const EducationCard = ({ education }: { education: Education }) => {
           {status === 'recruiting' && (
             <Button
               asChild
-              className="shrink-0 bg-peace-orange hover:bg-peace-orange/90"
+              className="shrink-0 bg-peace-orange text-white hover:bg-peace-orange/90"
             >
               <Link href={`/education/apply?cohort=${education._id}`}>
                 신청하기

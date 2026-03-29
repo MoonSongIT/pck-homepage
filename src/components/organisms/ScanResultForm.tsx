@@ -229,7 +229,7 @@ const ScanResultForm = ({ scanResult, onReset }: Props) => {
           <Button
             type="submit"
             disabled={isPending}
-            className="bg-peace-navy hover:bg-peace-navy/90"
+            className="bg-peace-navy text-white hover:bg-peace-navy/90"
           >
             {isPending ? '저장 중...' : '지출 등록'}
           </Button>

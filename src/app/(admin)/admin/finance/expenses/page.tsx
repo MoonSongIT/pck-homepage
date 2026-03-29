@@ -100,7 +100,7 @@ const ExpensesPage = async ({ searchParams }: { searchParams: Promise<SearchPara
             )}
           </div>
         </div>
-        <Button asChild className="shrink-0 bg-peace-navy hover:bg-peace-navy/90">
+        <Button asChild className="shrink-0 bg-peace-navy text-white hover:bg-peace-navy/90">
           <Link href="/admin/finance/expenses/new">
             <Plus className="mr-1.5 h-4 w-4" />
             새 지출 등록

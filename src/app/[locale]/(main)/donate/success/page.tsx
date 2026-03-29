@@ -145,7 +145,7 @@ export default async function DonateSuccessPage({
                 </Button>
                 <Button
                   asChild
-                  className="bg-peace-orange hover:bg-peace-orange/90"
+                  className="bg-peace-orange text-white hover:bg-peace-orange/90"
                 >
                   <Link href="/">{t('goHome')}</Link>
                 </Button>
