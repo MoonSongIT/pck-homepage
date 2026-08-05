@@ -56,6 +56,7 @@ model User {
   posts                 CommunityPost[]
   comments              Comment[]
   educationApplications EducationApplication[]
+  passwordResetTokens   PasswordResetToken[]
 
   @@map("users")
 }
@@ -98,6 +99,21 @@ model VerificationToken {
 
   @@unique([identifier, token])
   @@map("verification_tokens")
+}
+
+model PasswordResetToken {
+  id         String    @id @default(cuid())
+  userId     String
+  codeHash   String
+  expiresAt  DateTime
+  attempts   Int       @default(0)
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("password_reset_tokens")
 }
 
 // ─── Donation ────────────────────────────────────────

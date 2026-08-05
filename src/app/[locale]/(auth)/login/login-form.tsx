@@ -142,6 +142,11 @@ export const LoginForm = () => {
           {fieldErrors.password && (
             <p className="text-sm text-red-500">{fieldErrors.password}</p>
           )}
+          <div className="text-right">
+            <Link href="/find-password" className="text-sm text-peace-sky hover:underline">
+              비밀번호를 잊으셨나요?
+            </Link>
+          </div>
         </div>
 
         <Button

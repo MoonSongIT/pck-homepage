@@ -33,6 +33,22 @@ export const ocrRateLimit = redis
     })
   : null
 
+export const passwordResetRequestRateLimit = redis
+  ? new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(3, '10 m'),
+      prefix: 'pw-reset-request',
+    })
+  : null
+
+export const passwordResetVerifyRateLimit = redis
+  ? new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(5, '10 m'),
+      prefix: 'pw-reset-verify',
+    })
+  : null
+
 export async function checkRateLimit(
   limiter: Ratelimit | null,
   identifier: string,
