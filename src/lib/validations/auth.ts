@@ -17,5 +17,29 @@ export const registerSchema = z
     path: ['confirmPassword'],
   })
 
+export const requestResetSchema = z.object({
+  email: z.string().email('올바른 이메일 형식이 아닙니다'),
+})
+
+export const verifyResetCodeSchema = z.object({
+  email: z.string().email('올바른 이메일 형식이 아닙니다'),
+  code: z.string().regex(/^\d{6}$/, '인증 코드는 숫자 6자리입니다'),
+})
+
+export const resetPasswordSchema = z
+  .object({
+    email: z.string().email('올바른 이메일 형식이 아닙니다'),
+    code: z.string().regex(/^\d{6}$/, '인증 코드는 숫자 6자리입니다'),
+    newPassword: z.string().min(8, '비밀번호는 8자 이상이어야 합니다'),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: '비밀번호가 일치하지 않습니다',
+    path: ['confirmPassword'],
+  })
+
 export type LoginInput = z.infer<typeof loginSchema>
 export type RegisterInput = z.infer<typeof registerSchema>
+export type RequestResetInput = z.infer<typeof requestResetSchema>
+export type VerifyResetCodeInput = z.infer<typeof verifyResetCodeSchema>
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>
