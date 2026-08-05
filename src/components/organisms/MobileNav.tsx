@@ -6,6 +6,7 @@ import { useSession, signOut } from 'next-auth/react'
 import { useTranslations, useLocale } from 'next-intl'
 import { Menu, Phone, Mail, LogIn, LogOut, User, Sun, Moon, Shield, Palette } from 'lucide-react'
 import { toast } from 'sonner'
+import NextLink from 'next/link'
 
 import { Link, usePathname, useRouter } from '@/i18n/navigation'
 
@@ -112,10 +113,10 @@ const MobileNav = () => {
                       className="flex-1 text-peace-orange border-peace-orange/30"
                       asChild
                     >
-                      <Link href="/admin" onClick={() => setOpen(false)}>
+                      <NextLink href="/admin" onClick={() => setOpen(false)}>
                         <Shield className="mr-1.5 size-3.5" />
                         {t('Common.admin')}
-                      </Link>
+                      </NextLink>
                     </Button>
                   )}
                   <Button

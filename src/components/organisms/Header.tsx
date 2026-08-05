@@ -18,6 +18,8 @@ import {
   Palette,
 } from 'lucide-react'
 
+import NextLink from 'next/link'
+
 import { Link, usePathname, useRouter } from '@/i18n/navigation'
 import { Button } from '@/components/ui/button'
 import { Logo } from '@/components/atoms/Logo'
@@ -156,22 +158,22 @@ const Header = () => {
               (isAuthenticated ? (
                 <div className="flex items-center gap-2">
                   {isAdmin && (
-                    <Link
+                    <NextLink
                       href="/admin"
                       className="flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium text-peace-orange transition-colors hover:text-peace-orange/80"
                     >
                       <Shield className="size-3" />
                       {t('Common.admin')}
-                    </Link>
+                    </NextLink>
                   )}
                   {(isAdmin || isEditor) && (
-                    <Link
+                    <NextLink
                       href="/studio"
                       className="flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium text-peace-sky transition-colors hover:text-peace-sky/80"
                     >
                       <Palette className="size-3" />
                       {t('Common.studio')}
-                    </Link>
+                    </NextLink>
                   )}
                   <div className="mx-0.5 h-3.5 w-px bg-border" />
                   <span className="flex items-center gap-1 text-xs text-muted-foreground">
