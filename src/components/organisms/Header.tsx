@@ -4,7 +4,19 @@ import { useState, useEffect, useSyncExternalStore } from 'react'
 import { useTheme } from 'next-themes'
 import { useTranslations, useLocale } from 'next-intl'
 import { useSession, signOut } from 'next-auth/react'
-import { Phone, Mail, Sun, Moon, Instagram, Youtube, Facebook, LogIn, User, Shield, Palette } from 'lucide-react'
+import {
+  Phone,
+  Mail,
+  Sun,
+  Moon,
+  Instagram,
+  Youtube,
+  Facebook,
+  LogIn,
+  User,
+  Shield,
+  Palette,
+} from 'lucide-react'
 
 import { Link, usePathname, useRouter } from '@/i18n/navigation'
 import { Button } from '@/components/ui/button'
@@ -116,7 +128,9 @@ const Header = () => {
                 onClick={() => router.replace(pathname, { locale: 'ko' })}
                 className={cn(
                   'rounded px-1.5 py-0.5 transition-colors',
-                  locale === 'ko' ? 'text-foreground font-semibold' : 'text-muted-foreground hover:text-foreground'
+                  locale === 'ko'
+                    ? 'text-foreground font-semibold'
+                    : 'text-muted-foreground hover:text-foreground'
                 )}
               >
                 KO
@@ -126,7 +140,9 @@ const Header = () => {
                 onClick={() => router.replace(pathname, { locale: 'en' })}
                 className={cn(
                   'rounded px-1.5 py-0.5 transition-colors',
-                  locale === 'en' ? 'text-foreground font-semibold' : 'text-muted-foreground hover:text-foreground'
+                  locale === 'en'
+                    ? 'text-foreground font-semibold'
+                    : 'text-muted-foreground hover:text-foreground'
                 )}
               >
                 EN
@@ -136,8 +152,8 @@ const Header = () => {
             <div className="mx-1.5 h-3.5 w-px bg-border" />
 
             {/* 로그인/사용자 정보 */}
-            {mounted && (
-              isAuthenticated ? (
+            {mounted &&
+              (isAuthenticated ? (
                 <div className="flex items-center gap-2">
                   {isAdmin && (
                     <Link
@@ -177,8 +193,7 @@ const Header = () => {
                   <LogIn className="size-3" />
                   {t('Common.login')}
                 </Link>
-              )
-            )}
+              ))}
           </div>
         </div>
       </div>
