@@ -59,9 +59,7 @@ const MobileNav = () => {
               onClick={() => setOpen(false)}
               className={cn(
                 'border-b border-border/50 py-3.5 text-base font-medium transition-colors hover:text-peace-sky',
-                pathname === item.href
-                  ? 'text-peace-sky'
-                  : 'text-foreground'
+                pathname === item.href ? 'text-peace-sky' : 'text-foreground'
               )}
               {...(pathname === item.href ? { 'aria-current': 'page' as const } : {})}
             >
@@ -74,9 +72,7 @@ const MobileNav = () => {
               onClick={() => setOpen(false)}
               className={cn(
                 'border-b border-border/50 py-3.5 text-base font-medium transition-colors hover:text-peace-sky',
-                pathname.startsWith('/community')
-                  ? 'text-peace-sky'
-                  : 'text-foreground'
+                pathname.startsWith('/community') ? 'text-peace-sky' : 'text-foreground'
               )}
               {...(pathname.startsWith('/community') ? { 'aria-current': 'page' as const } : {})}
             >
@@ -191,7 +187,9 @@ const MobileNav = () => {
             }}
             className={cn(
               'rounded px-2 py-1 text-sm transition-colors',
-              locale === 'ko' ? 'font-semibold text-foreground' : 'text-muted-foreground hover:text-foreground'
+              locale === 'ko'
+                ? 'font-semibold text-foreground'
+                : 'text-muted-foreground hover:text-foreground'
             )}
           >
             KO
@@ -204,7 +202,9 @@ const MobileNav = () => {
             }}
             className={cn(
               'rounded px-2 py-1 text-sm transition-colors',
-              locale === 'en' ? 'font-semibold text-foreground' : 'text-muted-foreground hover:text-foreground'
+              locale === 'en'
+                ? 'font-semibold text-foreground'
+                : 'text-muted-foreground hover:text-foreground'
             )}
           >
             EN
