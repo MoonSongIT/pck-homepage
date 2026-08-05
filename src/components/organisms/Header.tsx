@@ -140,22 +140,22 @@ const Header = () => {
               isAuthenticated ? (
                 <div className="flex items-center gap-2">
                   {isAdmin && (
-                    <a
+                    <Link
                       href="/admin"
                       className="flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium text-peace-orange transition-colors hover:text-peace-orange/80"
                     >
                       <Shield className="size-3" />
                       {t('Common.admin')}
-                    </a>
+                    </Link>
                   )}
                   {(isAdmin || isEditor) && (
-                    <a
+                    <Link
                       href="/studio"
                       className="flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium text-peace-sky transition-colors hover:text-peace-sky/80"
                     >
                       <Palette className="size-3" />
                       {t('Common.studio')}
-                    </a>
+                    </Link>
                   )}
                   <div className="mx-0.5 h-3.5 w-px bg-border" />
                   <span className="flex items-center gap-1 text-xs text-muted-foreground">

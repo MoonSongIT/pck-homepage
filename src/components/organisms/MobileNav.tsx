@@ -116,10 +116,10 @@ const MobileNav = () => {
                       className="flex-1 text-peace-orange border-peace-orange/30"
                       asChild
                     >
-                      <a href="/admin" onClick={() => setOpen(false)}>
+                      <Link href="/admin" onClick={() => setOpen(false)}>
                         <Shield className="mr-1.5 size-3.5" />
                         {t('Common.admin')}
-                      </a>
+                      </Link>
                     </Button>
                   )}
                   <Button
